@@ -1,0 +1,229 @@
+.driver-header-name-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  margin-right: 1.2rem;
+  position: relative;
+  min-width: 80px;
+}
+.driver-header-name-wrap.clickable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.driver-header-name-wrap.clickable:hover .driver-header-ime {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.driver-header-name-wrap[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  top: 120%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  padding: 7px 18px;
+  border-radius: 9px;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px 0 rgba(30,64,175,0.13);
+  z-index: 200;
+  opacity: 0.97;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+.driver-header-ime {
+  font-size: 1.13rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: 0.2px;
+  line-height: 1.1;
+}
+.driver-header-tour {
+  font-size: 0.98rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 1px;
+  letter-spacing: 0.1px;
+  line-height: 1.1;
+}
+.premium-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.48rem 1.3rem 0.48rem 1.1rem;
+  background: linear-gradient(90deg, #e0e7ff 0%, #dbeafe 100%);
+  color: #2563eb;
+  border-radius: 0.9rem;
+  font-weight: 700;
+  font-size: 1.09rem;
+  text-decoration: none;
+  border: none;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(30,64,175,0.09);
+  position: relative;
+  outline: none;
+}
+.premium-logout-btn:hover, .premium-logout-btn:focus {
+  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(30,64,175,0.16);
+  transform: translateY(-2px) scale(1.04);
+}
+.logout-svg-wrap {
+  display: flex;
+  align-items: center;
+  margin-right: 0.2rem;
+}
+.logout-label {
+  font-weight: 700;
+  font-size: 1.09rem;
+  letter-spacing: 0.04em;
+}
+.driver-header-logout {
+  position: relative;
+}
+.driver-header-logout[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  top: 120%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 0.98rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px 0 rgba(30,64,175,0.13);
+  z-index: 200;
+  opacity: 0.97;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+/* Kompaktan header bez nepotrebnog prostora */
+.driver-header {
+  margin: 0;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: transparent;
+  position: relative;
+}
+
+/* Poravnanje imena i Odjava dugmeta u jedan red */
+.driver-header-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.6rem;
+  width: 100%;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
+}
+/* Efekat animacije i hovera prebačen na ime vozača */
+.driver-header-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.05rem;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transition: box-shadow 0.25s, transform 0.22s cubic-bezier(.4,0,.2,1);
+}
+.driver-header-name:hover {
+  transform: scale(1.13) rotate(-2deg);
+  box-shadow: 0 4px 16px 0 rgba(30,64,175,0.18), 0 0 0 4px #e0e7ff;
+  background: linear-gradient(90deg, #e0e7ff 0%, #f8fafc 100%);
+  border-radius: 8px;
+}
+.driver-header-name::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: -6px; top: -6px; right: -6px; bottom: -6px;
+  border-radius: 8px;
+  border: 2px solid rgba(30,64,175,0.10);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s;
+}
+.driver-header-name:hover::after {
+  opacity: 1;
+  border-color: #a5b4fc;
+}
+/* Ove linije su bile pogrešno van bloka, uklonjene */
+/* Istaknuti Odjava dugme sa animiranim hover efektom */
+.driver-header-logout {
+  margin-left: 2.2rem;
+  background: none;
+  border: none;
+  color: #1e40af;
+  font-weight: 600;
+  font-size: 1.01rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  padding: 0.38rem 1.1rem 0.38rem 0.7rem;
+  border-radius: 6px;
+  transition: background 0.18s, color 0.18s, box-shadow 0.22s, transform 0.18s;
+  outline: none;
+  position: relative;
+  z-index: 1;
+}
+.driver-header-logout:hover, .driver-header-logout:focus-visible {
+  background: linear-gradient(90deg, #e0e7ff 60%, #c7d2fe 100%);
+  color: #0e1a4f;
+  box-shadow: 0 4px 18px 0 rgba(30,64,175,0.16), 0 0 0 3px #a5b4fc;
+  transform: scale(1.10) translateY(-2px);
+}
+.driver-header-logout svg {
+  transition: filter 0.18s, transform 0.18s;
+}
+.driver-header-logout:hover svg, .driver-header-logout:focus-visible svg {
+  filter: drop-shadow(0 0 2px #a5b4fc);
+  transform: scale(1.13) rotate(-8deg);
+}
+
+/* UKLONJEN GRADIENT KOJI PRAVI PRAZNI PROSTOR
+.driver-header::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0; right: 0; bottom: -16px; height: 18px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(30,64,175,0.09) 0%, rgba(255,255,255,0) 100%);
+  z-index: 99;
+}
+*/
+
+.driver-header-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.05rem;
+}
+
+.driver-header-tour {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 0.98em;
+}
+.driver-header-logout {
+  background: none;
+  border: none;
+  color: #1e40af;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.2em 0.7em;
+  border-radius: 999px;
+  transition: background 0.15s;
+}
+.driver-header-logout:hover {
+  background: #e0e7ff;
+}

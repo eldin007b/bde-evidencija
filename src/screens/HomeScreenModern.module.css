@@ -1,0 +1,236 @@
+/* src/screens/HomeScreenModern.module.css */
+.homeScreenModern {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-dark) 0%, #1e293b 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.homeScreenModern::before,
+.homeScreenModern::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.homeScreenModern::before {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
+}
+
+.homeScreenModern::after {
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+}
+
+/* Mobile fixed sidebar that appears below header/nav */
+.mobileSidebarContainer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  /* Semi-opaque dark background so inner sidebar components are visible on mobile
+    while still allowing some page background to show through. Matches desktop contrast. */
+  background: rgba(15,23,42,0.72); /* near --bg-dark with opacity */
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  color: white;
+  z-index: 1120; /* above nav (1100) but below header (1000 has been earlier); ensure proper stacking */
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.2);
+  padding-top: 20px;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+.mobileOverlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.25);
+  /* keep overlay below header/nav/sidebar so those controls remain clickable */
+  z-index: 1080;
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: minmax(340px, 420px) 1fr;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: calc(100vh - 120px);
+  position: relative;
+  z-index: 1;
+}
+
+.sidebarColumn {
+  position: sticky;
+  top: var(--space-6);
+  height: fit-content;
+  max-height: calc(100vh - var(--space-6) * 2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.mapColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 600px;
+}
+
+.mapContainer {
+  flex: 1;
+  min-height: 500px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+}
+
+/* 📱 MOBILE (portrait) – < 768px */
+@media (max-width: 767px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    max-width: none;
+    margin: 0;
+    min-height: auto;
+  }
+
+  .sidebarColumn {
+    position: relative;
+    order: 1;
+    margin-bottom: var(--space-4);
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .mapColumn {
+    order: 2;
+    min-height: 0;
+  }
+
+  .mapContainer {
+    min-height: 200px;
+    margin-top: -8px;
+  }
+
+  .homeScreenModernSidebarOpen .mainGrid {
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+  }
+
+  .homeScreenModernSidebarOpen .sidebarColumn {
+    margin-bottom: var(--space-2);
+  }
+}
+
+/* 📱 MOBILE LANDSCAPE – 480px–767px */
+@media (min-width: 480px) and (max-width: 767px) {
+  .mapContainer {
+    min-height: 250px;
+  }
+}
+
+/* 💻 TABLET – 768px–1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mainGrid {
+    grid-template-columns: minmax(320px, 380px) 1fr;
+    gap: var(--space-5);
+    padding: var(--space-5);
+  }
+
+  .sidebarColumn {
+    top: var(--space-5);
+    max-height: calc(100vh - var(--space-5) * 2);
+  }
+}
+
+/* 🖥️ DESKTOP – 1024px–1439px */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  /* Nema promene – koristi default */
+}
+
+/* 🖥️ ULTRA-WIDE – ≥1440px */
+@media (min-width: 1440px) {
+  .mainGrid {
+    grid-template-columns: 420px 1fr;
+    gap: var(--space-8);
+    padding: var(--space-8);
+  }
+}
+
+/* Loading & Empty states */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border-light);
+}
+
+.loadingContent {
+  text-align: center;
+  color: var(--text-muted-dark);
+}
+
+.loadingSpinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--glass-border-light);
+  border-top: 3px solid var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--space-4);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--text-muted-dark);
+}
+
+.emptyStateIcon {
+  font-size: 4rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+/* Scrollbar */
+.sidebarColumn::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebarColumn::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebarColumn::-webkit-scrollbar-thumb {
+  background: var(--glass-border-light);
+  border-radius: 3px;
+}
+.sidebarColumn::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-500);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

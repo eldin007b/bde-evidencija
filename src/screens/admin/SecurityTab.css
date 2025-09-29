@@ -1,0 +1,22 @@
+/* SecurityTab.css */
+.security-container {
+  padding: 16px;
+  background: #fff;
+}
+.security-title {
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+.security-action {
+  margin-bottom: 16px;
+}
+.security-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.security-input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}

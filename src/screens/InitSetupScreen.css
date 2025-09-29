@@ -1,0 +1,256 @@
+/* InitSetupScreen.css */
+.init-setup-screen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.setup-container {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.setup-header {
+  margin-bottom: 40px;
+}
+
+.setup-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  object-fit: contain;
+  background: #f8fafc;
+  padding: 12px;
+  border: 3px solid #e5e7eb;
+}
+
+.setup-header h1 {
+  color: #1f2937;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.setup-header p {
+  color: #6b7280;
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.setup-form {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 30px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.tour-input {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 18px;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 2px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.tour-input:focus {
+  outline: none;
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+.driver-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px;
+  background: #f0f9ff;
+  border: 2px solid #0ea5e9;
+  border-radius: 12px;
+  color: #0c4a6e;
+  font-weight: 600;
+  flex-wrap: wrap;
+}
+
+.driver-preview.admin-preview {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.preview-icon {
+  font-size: 20px;
+}
+
+.preview-text {
+  font-size: 16px;
+}
+
+.role-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-badge.driver {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.role-badge.admin {
+  background: #fbbf24;
+  color: #92400e;
+}
+
+.admin-notice {
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.language-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.language-option {
+  display: block;
+  cursor: pointer;
+}
+
+.language-option input[type="radio"] {
+  display: none;
+}
+
+.language-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.language-option input[type="radio"]:checked + .language-label {
+  border-color: #1e3a8a;
+  background: #f0f9ff;
+  color: #1e3a8a;
+}
+
+.language-flag {
+  font-size: 20px;
+}
+
+.language-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: #fef2f2;
+  border: 2px solid #fca5a5;
+  border-radius: 12px;
+  color: #dc2626;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.error-icon {
+  font-size: 18px;
+}
+
+.setup-button {
+  width: 100%;
+  padding: 18px;
+  background: #1e3a8a;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 20px;
+}
+
+.setup-button:hover:not(:disabled) {
+  background: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+.setup-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.setup-info {
+  text-align: center;
+}
+
+.setup-info p {
+  color: #6b7280;
+  font-size: 12px;
+  margin: 0;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .init-setup-screen {
+    padding: 20px 16px;
+  }
+  
+  .setup-container {
+    padding: 30px 24px;
+  }
+  
+  .setup-header h1 {
+    font-size: 28px;
+  }
+  
+  .language-options {
+    grid-template-columns: 1fr;
+  }
+}

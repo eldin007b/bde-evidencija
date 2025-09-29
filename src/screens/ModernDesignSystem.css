@@ -1,0 +1,230 @@
+/* ModernDesignSystem.css */
+/* 🎨 MODERN DESIGN SYSTEM - B&D Evidencija 2024 */
+/* ✅ Optimizovano za performance, accessibility i sve uređaje */
+
+:root {
+  /* 🌈 COLOR SYSTEM - Modern palette */
+  --primary-50: #f0f9ff;
+  --primary-100: #e0f2fe;
+  --primary-500: #0ea5e9;
+  --primary-600: #0284c7;
+  --primary-700: #0369a1;
+  
+  --secondary-500: #f59e0b;
+  --secondary-600: #d97706;
+  
+  --accent-500: #06b6d4;
+  --accent-600: #0891b2;
+  
+  /* 🏔️ GLASS MORPHISM VARIJABLE */
+  --glass-bg-light: rgba(255, 255, 255, 0.1);
+  --glass-bg-dark: rgba(0, 0, 0, 0.2);
+  --glass-border-light: rgba(255, 255, 255, 0.2);
+  --glass-border-dark: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  
+  /* 🌓 DARK MODE TOKENS */
+  --bg-dark: #0f172a;
+  --surface-dark: #1e293b;
+  --text-dark: #f1f5f9;
+  --text-muted-dark: #94a3b8;
+  
+  /* 📏 SPACING SYSTEM */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  
+  /* 📐 BORDER RADIUS */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  
+  /* 🔄 TRANSITIONS */
+  --transition-fast: 0.15s ease-out;
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s ease-out;
+  
+  /* 📱 BREAKPOINTS */
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+  --large: 1280px;
+}
+
+/* 🎭 GLASS MORPHISM UTILITY CLASSES */
+.glass-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-button {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border-light);
+  transition: all var(--transition-normal);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* 🌈 GRADIENT UTILITIES */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--accent-500) 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(135deg, var(--secondary-500) 0%, #f97316 100%);
+}
+
+.gradient-dark {
+  background: linear-gradient(135deg, var(--bg-dark) 0%, #1e293b 100%);
+}
+
+/* ✨ MODERN SHADOWS */
+.shadow-glass {
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(255, 255, 255, 0.1) inset;
+}
+
+.shadow-floating {
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* 🎪 MODERN ANIMATIONS */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(14, 165, 233, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(14, 165, 233, 0.6); }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+.glow-animation {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.slide-in {
+  animation: slideIn 0.6s ease-out;
+}
+
+/* 🔧 UTILITY CLASSES */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 📱 RESPONSIVE TYPOGRAPHY */
+.typography-display {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.typography-heading {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.typography-title {
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.typography-body {
+  font-size: clamp(1rem, 2.5vw, 1.125rem);
+  line-height: 1.6;
+}
+
+.typography-caption {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  color: var(--text-muted-dark);
+}
+
+/* ♿ ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 🌗 DARK MODE SUPPORT */
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: var(--glass-bg-dark);
+    border-color: var(--glass-border-dark);
+  }
+}
+
+/* 🖥️ DESKTOP OPTIMIZATIONS */
+@media (min-width: 1024px) {
+  .desktop-optimized {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}

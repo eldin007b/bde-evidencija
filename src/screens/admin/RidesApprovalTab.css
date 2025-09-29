@@ -1,0 +1,150 @@
+/* RidesApprovalTab.css */
+.rides-approval-container {
+  padding: 16px;
+  background: #fff;
+  height: 100%;
+}
+
+.rides-approval-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.rides-approval-header h2 {
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.error-message {
+  background: #ffe6e6;
+  border: 1px solid #ff9999;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  color: #cc0000;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #666;
+}
+
+.rides-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 16px;
+}
+
+.ride-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ride-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ride-card.pending {
+  border-left: 4px solid #ff9800;
+  background: #fffde7;
+}
+
+.ride-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.driver-name {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+}
+
+.ride-details {
+  margin-bottom: 16px;
+}
+
+.detail-item {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ride-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ride-actions button {
+  flex: 1;
+  min-width: 80px;
+}
+
+.ride-modal-details {
+  padding: 8px 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row .label {
+  font-weight: 600;
+  color: #555;
+  min-width: 120px;
+}
+
+.detail-row .value {
+  color: #333;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .rides-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .rides-approval-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .ride-actions {
+    flex-direction: column;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .detail-row .value {
+    text-align: left;
+  }
+}

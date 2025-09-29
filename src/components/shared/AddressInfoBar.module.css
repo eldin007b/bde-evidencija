@@ -1,0 +1,189 @@
+:root {
+  --bg-primary: #232b3b;
+  --bg-secondary: #181f2e;
+  --accent: #1e90ff;
+  --accent-hover: #2563eb;
+  --accent-light: #0ea5e9;
+  --text-primary: #fff;
+  --text-placeholder: #b0b8c9;
+  --shadow-btn: 0 2px 8px #1e90ff22;
+  --shadow-input: 0 2px 8px #0ea5e930;
+  --shadow-heavy: 0 4px 24px #0ea5e930;
+  --border-accent: 1.5px solid #1e90ff33;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+.zoomGroup {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-btn);
+  border: var(--border-accent);
+  padding: 3px 7px;
+  margin-right: 14px;
+}
+
+.infoBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
+  font-size: 1.13rem;
+  font-weight: 500;
+  box-shadow: 0 4px 24px #0003;
+  margin: 0;
+  min-height: 54px;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.barBtn {
+  background: var(--bg-primary);
+  color: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  width: 38px;
+  height: 38px;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-btn);
+  transition: background 0.18s, color 0.18s;
+  user-select: none;
+  appearance: none;
+}
+
+.barBtn:hover {
+  background: var(--accent);
+  color: var(--text-primary);
+}
+
+.barBtn:active {
+  background: var(--accent-hover);
+}
+
+.barBtn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.inputWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.addressInput {
+  width: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1.08rem;
+  font-weight: 500;
+  padding: 10px 16px;
+  box-shadow: var(--shadow-input);
+  outline: none;
+  transition: background 0.18s, color 0.18s;
+  appearance: none;
+}
+
+.addressInput::placeholder {
+  color: var(--text-placeholder);
+  opacity: 0.7; /* malo blijedje za bolji UX */
+}
+
+.addressInput:focus {
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-input);
+}
+
+.navigateBtn {
+  background: var(--accent);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+  box-shadow: var(--shadow-btn);
+  margin-left: 10px;
+  user-select: none;
+  appearance: none;
+}
+
+.navigateBtn:hover {
+  background: var(--accent-hover);
+}
+
+.navigateBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--bg-primary);
+  color: #666;
+}
+
+.suggestionsBox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 110%;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-heavy);
+  border: var(--border-accent);
+  margin-top: 2px;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+
+  /* Scrollbar stilovi */
+  scrollbar-width: thin;
+  scrollbar-color: #1e90ff55 var(--bg-primary);
+}
+
+.suggestionsBox::-webkit-scrollbar {
+  width: 6px;
+}
+
+.suggestionsBox::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+.suggestionsBox::-webkit-scrollbar-thumb {
+  background-color: #1e90ff55;
+  border-radius: 3px;
+}
+
+.suggestionItem {
+  padding: 13px 18px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--bg-primary);
+  font-size: 16.5px;
+  color: var(--text-primary);
+  background: transparent;
+  transition: background 0.18s, color 0.18s;
+}
+
+.suggestionItem:hover,
+.suggestionItem:focus {
+  background: #1e90ff22;
+  color: var(--accent);
+}
+
+.suggestionItem:last-child {
+  border-bottom: none; /* ukloni rub s posljednjeg elementa */
+}

@@ -1,0 +1,52 @@
+/* StatisticsCards.css - Shared statistics cards style za sve screen komponente */
+
+.stats-cards {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.stats-card {
+  background: rgba(255,255,255,0.9);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(76,76,76,0.08);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 140px;
+  min-height: 80px;
+}
+
+.stats-card-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #222;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.stats-card-label {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+}
+
+.stats-card-icon {
+  color: #1976d2;
+  opacity: 0.9;
+}
+
+/* Responsive design */
+@media screen and (max-width: 600px) {
+  .stats-cards {
+    flex-direction: column;
+  }
+  
+  .stats-card {
+    width: 100%;
+  }
+}

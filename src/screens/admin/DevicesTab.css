@@ -1,0 +1,33 @@
+/* DevicesTab.css */
+.devices-container {
+  padding: 16px;
+  background: #fff;
+}
+.devices-title {
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+.devices-grid {
+  display: grid;
+  gap: 12px;
+}
+.device-card {
+  background: #e9ecef;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.device-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.device-info {
+  color: #bbb;
+  font-size: 13px;
+}
+.device-actions {
+  display: flex;
+  margin-top: 10px;
+  gap: 8px;
+}

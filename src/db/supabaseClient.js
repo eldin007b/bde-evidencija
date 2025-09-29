@@ -1,0 +1,157 @@
+// Dohvati osnovne statistike iz Supabase
+export async function getQuickStatsCloud() {
+  // Prilagodi prema strukturi tvoje tabele/statistike
+  const { data, error } = await supabase
+    .from('quick_stats')
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+// Dohvati sve praznike za godinu iz Supabase
+export async function getAllHolidaysCloud(year) {
+  const { data, error } = await supabase
+    .from('holidays')
+    .select('*')
+    .eq('deleted', 0)
+    .gte('date', `${year}-01-01`)
+    .lte('date', `${year}-12-31`);
+  if (error) throw error;
+  return data || [];
+}
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase setup
+const SUPABASE_URL = 'https://dsltpiupbfopyvuiqffg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzbHRwaXVwYmZvcHl2dWlxZmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5Mjc3MzcsImV4cCI6MjA2NTUwMzczN30.suu_OSbTBSEkM3YMiPDFIAgDnX3bDavcD8BX4ZfYZxw';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Hard delete za extra_rides_pending na Supabase po original_id
+export async function deleteExtraRidePendingCloud(original_id) {
+  const { error } = await supabase.from('extra_rides_pending').delete().eq('original_id', original_id);
+  if (error) throw error;
+  return true;
+}
+
+// Hard delete za extra_rides na Supabase po original_id
+export async function deleteExtraRideCloud(original_id) {
+  const { error } = await supabase.from('extra_rides').delete().eq('original_id', original_id);
+  if (error) throw error;
+  return true;
+}
+
+// Cloud helper funkcije
+export async function addDriver(driver) {
+  return await supabase.from('drivers').insert([driver]);
+}
+export async function getAllDeliveriesCloud(year, month) {
+  let query = supabase.from('deliveries').select('*').eq('deleted', 0);
+  
+  if (year && month !== undefined) {
+    // Filtriraj po godini i mesecu ako su prosleđeni
+    query = query
+      .gte('date', `${year}-${String(month + 1).padStart(2, '0')}-01`)
+      .lt('date', `${year}-${String(month + 2).padStart(2, '0')}-01`);
+  }
+  
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+export async function getAllDriversCloud() {
+  const { data, error } = await supabase
+    .from('drivers')
+    .select('*')
+    .eq('deleted', 0)
+    .eq('aktivan', true)
+    .order('tura');
+  if (error) throw error;
+  return data || [];
+}
+
+// Dohvati vozača po turi (kodu vozača)
+export async function getDriverByTura(tura) {
+  const { data, error } = await supabase
+    .from('drivers')
+    .select('*')
+    .eq('tura', tura)
+    .eq('deleted', 0)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Dodaj novu dostavu
+export async function addDeliveryCloud(delivery) {
+  const { data, error } = await supabase
+    .from('deliveries')
+    .insert([delivery])
+    .select();
+  if (error) throw error;
+  return data;
+}
+
+// Ažuriraj postojeću dostavu
+export async function updateDeliveryCloud(id, delivery) {
+  const { data, error } = await supabase
+    .from('deliveries')
+    .update(delivery)
+    .eq('id', id)
+    .select();
+  if (error) throw error;
+  return data;
+}
+
+// Dohvati dostave po vozaču
+export async function getDeliveriesByDriverCloud(driverName, year, month) {
+  let query = supabase
+    .from('deliveries')
+    .select('*')
+    .eq('deleted', 0)
+    .eq('driver', driverName);
+  
+  if (year) {
+    query = query.gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
+  }
+  
+  if (month !== undefined) {
+    const monthPadded = String(month + 1).padStart(2, '0');
+    query = query.gte('date', `${year}-${monthPadded}-01`).lte('date', `${year}-${monthPadded}-31`);
+  }
+  
+  const { data, error } = await query.order('date', { ascending: true });
+  if (error) throw error;
+  
+  // Transformiraj podatke za DriversScreen format prema tabeli strukturi
+  return (data || []).map(delivery => ({
+    date: delivery.date,
+    stopovi: delivery.produktivitaet_stops || 0,
+    paketi: delivery.zustellung_paketi || 0,
+    pickup: delivery.pickup_paketi || 0,
+    reklamacije: delivery.probleme_prva ? 1 : 0, // Broj reklamacija
+    efikasnost: delivery.zustellung_proc ? parseInt(delivery.zustellung_proc) : 0,
+    stopH: delivery.produktivitaet_stops_pro_std || 0
+  }));
+}
+export async function deleteDriverCloud(driverId) {
+  const { error } = await supabase.from('drivers').delete().eq('id', driverId);
+  if (error) throw error;
+  return true;
+}
+export async function updateDriverCloud(driverId, data) {
+  const { error } = await supabase.from('drivers').update(data).eq('id', driverId);
+  if (error) throw error;
+  return true;
+}
+// Device approvals
+export async function getDeviceApprovals() {
+  const { data, error } = await supabase.from('device_approvals').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+export async function blockDevice(device_id) {
+  const { error } = await supabase.from('device_approvals').update({ blocked: true }).eq('device_id', device_id);
+  if (error) throw error;
+  return true;
+}

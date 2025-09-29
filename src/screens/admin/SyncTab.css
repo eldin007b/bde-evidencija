@@ -1,0 +1,45 @@
+/* SyncTab.css */
+.sync-container {
+  padding: 16px;
+  background: #f4f4f4;
+}
+.sync-title {
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+.sync-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.sync-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.sync-checkbox {
+  margin-left: 12px;
+}
+.sync-input {
+  margin-left: 8px;
+  width: 60px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 5px;
+}
+.sync-status {
+  margin-top: 10px;
+  color: #555;
+  font-size: 13px;
+}
+.sync-github-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+.sync-github-status {
+  margin-top: 10px;
+  color: #28a745;
+  font-weight: bold;
+}

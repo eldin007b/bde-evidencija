@@ -1,0 +1,111 @@
+/* DriversScreen.css - moderni stilovi za PWA verziju vozača */
+
+.drivers-bg-gradient {
+  min-height: 100vh;
+  padding-top: var(--app-header-height, 80px);
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.drivers-main-content {
+  background: rgba(255,255,255,0.97);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(76,76,76,0.18);
+  padding: 32px 24px 24px 24px;
+  max-width: 900px;
+  width: 100%;
+  margin: 32px auto;
+  position: relative;
+}
+
+.drivers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.drivers-header h1 {
+  font-size: 2rem;
+  color: #1976d2;
+  margin: 0;
+}
+.drivers-filters {
+  display: flex;
+  gap: 12px;
+}
+.drivers-filters select {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+.drivers-table-wrapper {
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+.drivers-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(76,76,76,0.08);
+}
+.drivers-table th, .drivers-table td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+.drivers-table th {
+  background: #e3f3ff;
+  color: #1976d2;
+  font-weight: bold;
+}
+.drivers-table-loading {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.drivers-add-btn {
+  background: linear-gradient(90deg, #1976d2 60%, #42a5f5 100%);
+  color: #fff;
+  border: none;
+  border-radius: 13px;
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.12);
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: box-shadow 0.2s;
+}
+.drivers-add-btn:hover {
+  box-shadow: 0 4px 16px rgba(33,150,243,0.18);
+}
+
+.drivers-modal-form {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(76,76,76,0.12);
+  min-width: 320px;
+}
+.drivers-modal-form h2 {
+  color: #1976d2;
+  margin-bottom: 18px;
+}
+.drivers-modal-form button {
+  background: linear-gradient(90deg, #f44336 60%, #e57373 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 12px;
+}

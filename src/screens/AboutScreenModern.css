@@ -1,0 +1,276 @@
+/* AboutScreenModern.css */
+.aboutScreenModern {
+  min-height: 100vh;
+  padding-top: var(--app-header-height, 80px);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--accent-500) 100%);
+  display: flex;
+  align-items: flex-start; /* PROMIJENIO SA center NA flex-start */
+  justify-content: center;
+  padding: var(--space-4);
+  position: relative;
+}
+
+.aboutContainerModern {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-5);
+  width: 100%;
+  max-width: 95vw; /* KORISTI 95% ŠIRINE EKRANA */
+  margin: var(--space-4) auto;
+  box-shadow: var(--shadow-floating);
+  animation: slideIn 0.6s ease-out;
+}
+
+/* MOBILE - MALO MANJA ŠIRINA */
+@media (max-width: 480px) {
+  .aboutContainerModern {
+    max-width: 92vw;
+    padding: var(--space-4);
+    margin: var(--space-3) auto;
+  }
+}
+
+/* TABLET - OPTIMIZIRANA ŠIRINA */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .aboutContainerModern {
+    max-width: 90vw;
+    padding: var(--space-6);
+    margin: var(--space-5) auto;
+  }
+}
+
+/* DESKTOP - MAKSIMALNA ŠIRINA */
+@media (min-width: 1025px) {
+  .aboutContainerModern {
+    max-width: min(1200px, 95vw); /* MAX 1200px ILI 95% EKRANA */
+    padding: var(--space-7);
+    margin: var(--space-6) auto;
+  }
+}
+
+/* GRID LAYOUT ZA BOLJE ISKORIŠTENJE PROSTORA NA ŠIREM EKRANU */
+.aboutGridModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+@media (max-width: 768px) {
+  .aboutGridModern {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+/* FULL WIDTH ELEMENTI */
+.fullWidthCard {
+  grid-column: 1 / -1;
+}
+
+/* OSTALI STILOVI OSTAJU ISTI */
+.aboutHeaderModern {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.aboutLogoModern {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-xl);
+  margin: 0 auto var(--space-4) auto;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(10px);
+  border: 2px solid var(--glass-border-light);
+  padding: var(--space-3);
+  animation: float 6s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aboutTitleModern {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--text-dark);
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.aboutSubtitleModern {
+  color: var(--text-dark);
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.glassCardModern {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  transition: var(--transition-normal);
+  height: fit-content;
+}
+
+.glassCardModern:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-floating);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* STATS GRID - BOLJE RASPOOREDJIVANJE */
+.statsGridModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+}
+
+.statItemModern {
+  text-align: center;
+  padding: var(--space-4);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.statNumberModern {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  display: block;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.statLabelModern {
+  font-size: 1rem;
+  color: var(--text-dark);
+  margin-top: var(--space-2);
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* TECH STACK - BOLJE RASPOOREDJIVANJE */
+.techStackModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.techTagModern {
+  padding: var(--space-3);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg);
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* CONTACT BUTTONS - BOLJE POZICIONIRANJE */
+.contactButtonsModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.contactButtonModern {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-lg);
+  color: var(--text-dark);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: var(--transition-normal);
+  cursor: pointer;
+  min-height: 55px;
+}
+
+.contactButtonModern:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* CHANGELOG - BOLJI LAYOUT */
+.changelogListModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .changelogListModern {
+    grid-template-columns: 1fr;
+  }
+}
+
+.changelogItemModern {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border-left: 4px solid var(--primary-500);
+  transition: var(--transition-normal);
+}
+
+.changelogItemModern:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.changelogHeaderModern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.changelogVersionModern {
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+}
+
+.changelogDateModern {
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.changelogDetailsModern {
+  color: var(--text-dark);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.aboutFooterModern {
+  text-align: center;
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.footerTextModern {
+  color: var(--text-dark);
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.footerSubtextModern {
+  color: var(--text-dark);
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: var(--space-1);
+}

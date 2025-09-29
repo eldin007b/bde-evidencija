@@ -1,0 +1,27 @@
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #1e90ff;
+}
+.textBlock {
+  display: flex;
+  flex-direction: column;
+}
+.name {
+  font-weight: 600;
+  color: #e0e6f7;
+}
+.points {
+  background: #1e90ff;
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}

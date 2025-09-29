@@ -1,0 +1,376 @@
+/* SidebarModern.module.css */
+.sidebarModern {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  height: 100%;
+}
+
+/* Driver Card */
+.driverCardModern {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--accent-500) 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-floating);
+}
+
+.driverCardModern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.driverCardModern:hover::before {
+  left: 100%;
+}
+
+.driverCardModern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(14, 165, 233, 0.3);
+}
+
+.driverCardModern.switching {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.driverHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.driverAvatar {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.avatarIcon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.loadingSpinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border: 3px solid transparent;
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+.driverInfo {
+  flex: 1;
+}
+
+.driverName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-1) 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.driverTour {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.driverTarget {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: rgba(255, 255, 255, 0.2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+}
+
+.targetIcon {
+  font-size: 1.2rem;
+}
+
+.targetValue {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.targetLabel {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.driverHint {
+  text-align: center;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: var(--space-2);
+}
+
+/* Statistics Section */
+.statsSectionModern {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--glass-shadow);
+}
+
+.statsTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-4) 0;
+  color: var(--text-dark);
+  text-align: center;
+}
+
+.statsGridModern {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.statCardModern {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: var(--transition-normal);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.statCardModern:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.statHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.statIcon {
+  font-size: 1.2rem;
+}
+
+.statPeriod {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--text-muted-dark);
+}
+
+.statValue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.statValue.positive {
+  color: var(--success);
+}
+
+.statValue.negative {
+  color: var(--error);
+}
+
+.statValue.neutral {
+  color: var(--text-dark);
+}
+
+.trendIcon, .successIcon, .warningIcon {
+  font-size: 0.8rem;
+}
+
+/* New semantic classes for sidebar stat coloring */
+.statGood {
+  color: var(--success, #10b981); /* green */
+}
+
+.statBad {
+  color: var(--error, #ef4444); /* red */
+}
+
+/* blinking for attention (used for complaints > 0) */
+.blink {
+  animation: sidebar-blink 1s step-end infinite;
+}
+
+@keyframes sidebar-blink {
+  50% { opacity: 0.15; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blink { animation: none; }
+}
+
+/* Quick Actions */
+.quickActionsModern {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--glass-shadow);
+}
+
+.actionsTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-4) 0;
+  color: var(--text-dark);
+  text-align: center;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.actionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.actionBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.actionBtn span {
+  font-size: 1.2rem;
+}
+
+/* 📱 MOBILE STYLES */
+@media (max-width: 768px) {
+  .sidebarModern {
+    gap: var(--space-4);
+  }
+  /* Compact driver header for mobile: single row, smaller avatar and tighter spacing */
+  .driverCardModern {
+    padding: var(--space-3);
+    border-radius: calc(var(--radius-lg));
+  }
+
+  .driverHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    text-align: left;
+  }
+
+  .driverAvatar {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    min-width: 44px;
+  }
+
+  .driverInfo {
+    flex: 1;
+    margin: 0 var(--space-3);
+    min-width: 0;
+  }
+
+  .driverName {
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.1;
+  }
+
+  .driverTour {
+    font-size: 0.82rem;
+    margin: 0;
+    opacity: 0.9;
+  }
+
+  .driverTarget {
+    align-self: auto;
+    padding: var(--space-1) var(--space-2);
+    background: rgba(255,255,255,0.12);
+    border-radius: var(--radius-md);
+    gap: var(--space-1);
+  }
+  
+  .actionsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actionBtn {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+/* 💻 TABLET STYLES */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .driverHeader {
+    gap: var(--space-3);
+  }
+  
+  .driverAvatar {
+    width: 50px;
+    height: 50px;
+    font-size: 1.3rem;
+  }
+  
+  .driverName {
+    font-size: 1.1rem;
+  }
+}

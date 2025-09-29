@@ -1,0 +1,25 @@
+/* GitHubTab.css */
+.github-container {
+  padding: 10px;
+  background: #f4f4f4;
+}
+.github-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.github-action {
+  margin-bottom: 10px;
+}
+.github-status {
+  margin-top: 10px;
+  padding: 10px;
+  background: #e9ecef;
+  border-radius: 5px;
+  border: 2px solid #007bff;
+  color: #007bff;
+  font-weight: bold;
+}
+.github-history-title {
+  font-weight: bold;
+  margin-top: 20px;
+}

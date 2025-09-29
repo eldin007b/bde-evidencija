@@ -1,0 +1,103 @@
+/* AdminPanelScreen.css - moderni stilovi za PWA admin panel */
+
+.admin-panel-container {
+  background: rgba(255,255,255,0.97);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(76,76,76,0.18);
+  padding: 0;
+  max-width: 1000px;
+  width: 100%;
+  margin: 32px auto;
+  position: relative;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-tab-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: linear-gradient(90deg, #1769aa 60%, #42a5f5 100%);
+  border-radius: 18px 18px 0 0;
+  padding: 8px 0;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+}
+.admin-tab {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  padding: 10px 18px;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.admin-tab.active {
+  background: #fff;
+  color: #1769aa;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.12);
+}
+.admin-tab-icon {
+  font-size: 1.4rem;
+}
+.admin-tab-label {
+  font-size: 1rem;
+}
+
+.admin-tab-content {
+  padding: 24px;
+  background: #f7fafd;
+  border-radius: 0 0 18px 18px;
+  min-height: 400px;
+  flex: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .admin-panel-container {
+    margin: 16px;
+    border-radius: 12px;
+  }
+  
+  .admin-tab-bar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 12px 8px;
+    border-radius: 12px 12px 0 0;
+  }
+  
+  .admin-tab {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+  
+  .admin-tab-icon {
+    font-size: 1.2rem;
+  }
+  
+  .admin-tab-label {
+    font-size: 0.8rem;
+  }
+  
+  .admin-tab-content {
+    padding: 16px;
+    border-radius: 0 0 12px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-tab {
+    flex-direction: column;
+    gap: 2px;
+    min-width: 70px;
+  }
+  
+  .admin-tab-label {
+    font-size: 0.7rem;
+  }
+}

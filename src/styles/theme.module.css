@@ -1,0 +1,13 @@
+/* Central theme variables for the app */
+:root{
+  --bg: rgba(18,20,28,0.6);
+  --panel-bg: rgba(35,38,58,0.86);
+  --accent: #3bb0ff;
+  --accent2: #a78bfa;
+  --text: #e6eef9;
+  --muted: #a8b3c7;
+  --card-bg: #23263a;
+  --card-border: rgba(59,176,255,0.08);
+  --card-shadow: rgba(0,0,0,0.35);
+  --glass: rgba(255,255,255,0.02);
+}

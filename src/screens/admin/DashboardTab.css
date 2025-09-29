@@ -1,0 +1,22 @@
+/* DashboardTab.css */
+.dashboard-container {
+  padding: 24px;
+  background: #f7fafd;
+}
+.dashboard-title {
+  color: #1769aa;
+  text-align: center;
+  margin-bottom: 18px;
+}
+.dashboard-cards {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.dashboard-action {
+  margin-bottom: 24px;
+}
+.dashboard-reset {
+  background: #c62828;
+  color: #fff;
+}

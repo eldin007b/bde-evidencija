@@ -1,0 +1,115 @@
+/* ExtraRidesApprovalTab.css */
+.extra-rides-approval-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 25px;
+  margin: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.extra-rides-approval-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.extra-rides-approval-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.extra-rides-approval-filter {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: white;
+  font-size: 14px;
+}
+
+.extra-rides-approval-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #666;
+}
+
+.extra-rides-approval-empty {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.extra-rides-approval-empty-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.extra-rides-approval-table {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.extra-rides-approval-table th {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  background: #f8f9fa;
+}
+
+.extra-rides-approval-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.extra-rides-approval-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+}
+
+.extra-rides-approval-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.extra-rides-approval-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.extra-rides-approval-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.extra-rides-approval-btn-approve {
+  background: #28A745;
+  color: white;
+}
+
+.extra-rides-approval-btn-reject {
+  background: #DC3545;
+  color: white;
+}
+
+.extra-rides-approval-btn-delete {
+  background: #6C757D;
+  color: white;
+}

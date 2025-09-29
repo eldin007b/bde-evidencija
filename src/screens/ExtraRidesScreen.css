@@ -1,0 +1,128 @@
+/* ExtraRidesScreen.css - moderni stilovi za PWA verziju ekstra vožnji */
+
+.extra-bg-gradient {
+  min-height: 100vh;
+  padding-top: var(--app-header-height, 80px);
+  background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.extra-main-content {
+  background: rgba(255,255,255,0.97);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(76,76,76,0.18);
+  padding: 32px 24px 24px 24px;
+  max-width: 900px;
+  width: 100%;
+  margin: 32px auto;
+  position: relative;
+}
+
+.extra-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.extra-header h1 {
+  font-size: 2.2rem;
+  color: #ff9800;
+  margin: 0;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
+}
+.extra-filters {
+  display: flex;
+  gap: 12px;
+}
+.extra-filters select {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: Arial, sans-serif;
+}
+
+.extra-table-wrapper {
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+.extra-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(76,76,76,0.08);
+}
+.extra-table th, .extra-table td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  font-size: 1.1rem;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
+}
+.extra-table th {
+  background: #fffbe3;
+  color: #ff9800;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
+}
+.extra-table tr.pending-row {
+  background: linear-gradient(90deg, #ffe3e3 60%, #fffbe3 100%);
+}
+.extra-table-loading {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.extra-add-btn {
+  background: linear-gradient(90deg, #ff9800 60%, #ffb74d 100%);
+  color: #fff;
+  border: none;
+  border-radius: 13px;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 2px 8px rgba(255,152,0,0.12);
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: box-shadow 0.2s;
+}
+.extra-add-btn:hover {
+  box-shadow: 0 4px 16px rgba(255,152,0,0.18);
+}
+
+.extra-modal-form {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(76,76,76,0.12);
+  min-width: 320px;
+}
+.extra-modal-form h2 {
+  color: #ff9800;
+  margin-bottom: 18px;
+  font-size: 1.4rem;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
+}
+.extra-modal-form button {
+  background: linear-gradient(90deg, #f44336 60%, #e57373 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: Arial, sans-serif;
+  cursor: pointer;
+  margin-top: 12px;
+}
