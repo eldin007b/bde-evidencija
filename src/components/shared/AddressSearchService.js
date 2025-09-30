@@ -33,11 +33,34 @@ export async function searchAddresses(query) {
       }
     ]
   };
-  const res = await fetch('/vor-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(VAO_BODY)
-  });
-  const data = await res.json();
-  return data?.svcResL?.[0]?.res?.match?.locL || [];
+  try {
+    const res = await fetch('/vor-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(VAO_BODY)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data?.svcResL?.[0]?.res?.match?.locL || [];
+    }
+  } catch (err) {
+    console.warn('VAO proxy failed, falling back to Nominatim', err);
+  }
+
+  // Fallback: use Nominatim search API (less rich but works from static hosts)
+  try {
+    const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=8&accept-language=de`;
+    const r = await fetch(nomUrl, { headers: { 'User-Agent': 'bde-evidencija/1.0 (+https://eldin007b.github.io/bde-evidencija)' } });
+    if (!r.ok) return [];
+    const json = await r.json();
+    // Convert nominatim results to expected VAO-like minimal shape
+    return json.map(item => ({
+      name: item.display_name,
+      nameFormatted: { text: item.display_name },
+      crd: { x: Math.round(item.lon * 1e6), y: Math.round(item.lat * 1e6) }
+    }));
+  } catch (err) {
+    console.warn('Nominatim fallback failed', err);
+    return [];
+  }
 }

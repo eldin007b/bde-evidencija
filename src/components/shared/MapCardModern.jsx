@@ -182,11 +182,12 @@ const MapCardModern = ({
       }
       
       if (selectedMarker.hafasUrl || selectedMarker.hafasHtml) {
-        const proxyBase = ENV.API_BASE_URL ? ENV.API_BASE_URL.replace(/\/$/, '') : 'http://localhost:4000';
-        const proxyUrl = `${proxyBase}/hafas/parse`;
+        const proxyBase = ENV.API_BASE_URL ? ENV.API_BASE_URL.replace(/\/$/, '') : '';
+        const proxyUrl = proxyBase ? `${proxyBase}/hafas/parse` : '/hafas/parse';
         (async () => {
           try {
             const body = selectedMarker.hafasHtml ? { html: selectedMarker.hafasHtml } : { url: selectedMarker.hafasUrl };
+            // Try proxy if available; if not, just skip HAFAS parsing on static hosts
             const r = await fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (r.ok) {
               const json = await r.json();
@@ -197,9 +198,11 @@ const MapCardModern = ({
                 durationText: json.durationText || null, 
                 provider: 'HAFAS' 
               });
+            } else {
+              console.warn('HAFAS proxy returned non-ok response, skipping HAFAS parse');
             }
           } catch (err) {
-            console.warn('HAFAS proxy error', err);
+            console.warn('HAFAS proxy error - likely not available on static host', err);
           }
         })();
       }
@@ -431,6 +434,7 @@ const MapCardModern = ({
       };
 
       try {
+        // Try local proxy/VAO first
         const geoRes = await fetch(VAO_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -459,7 +463,7 @@ const MapCardModern = ({
           return { address: line1, city: line2 };
         }
       } catch (err) {
-        console.warn('reverseGeocode LocGeoPos error', err);
+        console.warn('reverseGeocode LocGeoPos error - proxy may be unavailable on static host', err);
       }
 
       // 2) Fallback to LocMatch (if LocGeoPos didn't return address)
@@ -523,7 +527,25 @@ const MapCardModern = ({
           return { address: line1, city: line2 };
         }
       } catch (err) {
-        console.warn('reverseGeocode LocMatch error', err);
+        console.warn('reverseGeocode LocMatch error - proxy may be unavailable on static host', err);
+      }
+
+      // If VAO proxy didn't provide result, try public Nominatim reverse geocode as fallback
+      try {
+        const nomUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de&addressdetails=1`;
+        const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'bde-evidencija/1.0 (+https://eldin007b.github.io/bde-evidencija)' } });
+        if (nomRes.ok) {
+          const nomJson = await nomRes.json();
+          const display = nomJson.display_name || '';
+          if (display) {
+            const parts = display.split(',');
+            const line1 = parts[0].trim();
+            const line2 = parts.slice(1).join(',').trim();
+            return { address: line1, city: line2 };
+          }
+        }
+      } catch (err) {
+        console.warn('Nominatim reverse fallback failed', err);
       }
 
       return { address: '', city: '' };
