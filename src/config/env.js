@@ -33,7 +33,8 @@ if (typeof window !== 'undefined') {
     isProduction: !ENV.API_BASE_URL?.includes('localhost'),
     hasGitHubToken: !!ENV.GITHUB_TOKEN,
     gitHubRepo: ENV.GITHUB_REPO,
-    workflowFile: ENV.WORKFLOW_FILE
+    workflowFile: ENV.WORKFLOW_FILE,
+    deploymentReady: !!ENV.MAPQUEST_API_KEY && !!ENV.SUPABASE_URL && !!ENV.SUPABASE_KEY
   });
 }
 
