@@ -27,10 +27,12 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          # Primary: Use secret, Fallback: Use hardcoded (for now)
           VITE_MAPQUEST_API_KEY: ${{ secrets.VITE_MAPQUEST_API_KEY }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          # Note: env.js has hardcoded fallback if secrets are empty
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
