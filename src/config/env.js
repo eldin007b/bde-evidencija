@@ -19,10 +19,20 @@ const ENV = {
 // MapQuest API key (default set to provided key for local/dev; override via env vars in production)
 ENV.MAPQUEST_API_KEY = _env.VITE_MAPQUEST_API_KEY || _env.REACT_APP_MAPQUEST_API_KEY || _procEnv.REACT_APP_MAPQUEST_API_KEY || 'HFcTXnwL6PW3Snh7rVohjnYopqvPhCL5';
 
-// GitHub configuration for admin dashboard (disabled for security)
-ENV.GITHUB_TOKEN = ''; // Always empty to prevent secrets in bundle
+// GitHub configuration for admin dashboard
+ENV.GITHUB_TOKEN = _env.VITE_GITHUB_TOKEN || _env.REACT_APP_GITHUB_TOKEN || _procEnv.REACT_APP_GITHUB_TOKEN || ''; // Read from environment
 ENV.GITHUB_REPO = _env.VITE_GITHUB_REPO || _env.REACT_APP_GITHUB_REPO || _procEnv.REACT_APP_GITHUB_REPO || 'eldin007b/gls-scraper';
 ENV.WORKFLOW_FILE = _env.VITE_WORKFLOW_FILE || _env.REACT_APP_WORKFLOW_FILE || _procEnv.REACT_APP_WORKFLOW_FILE || 'scraper.yml';
+
+// Debug GitHub config (only show if token exists)
+if (typeof window !== 'undefined' && ENV.GITHUB_TOKEN) {
+  console.log('🔗 GitHub config loaded:', {
+    hasToken: !!ENV.GITHUB_TOKEN,
+    tokenLength: ENV.GITHUB_TOKEN.length,
+    repo: ENV.GITHUB_REPO,
+    workflow: ENV.WORKFLOW_FILE
+  });
+}
 
 // Optional routing strategy and a single endpoint (voranachb) to normalize routing
 

@@ -29,6 +29,16 @@ const DashboardTab = () => {
   const GITHUB_REPO = ENV.GITHUB_REPO;
   const WORKFLOW_FILE = ENV.WORKFLOW_FILE;
 
+  // Debug GitHub config
+  useEffect(() => {
+    console.log('🔗 DashboardTab GitHub config:', {
+      hasToken: !!GITHUB_TOKEN,
+      tokenLength: GITHUB_TOKEN?.length || 0,
+      repo: GITHUB_REPO,
+      workflow: WORKFLOW_FILE
+    });
+  }, [GITHUB_TOKEN, GITHUB_REPO, WORKFLOW_FILE]);
+
   // Funkcija za čitanje pending vožnji iz Supabase
   const fetchPendingRides = useCallback(async () => {
     setPendingRidesLoading(true);
@@ -165,6 +175,26 @@ const DashboardTab = () => {
       }
     } catch (error) {
       console.error('Greška prilikom dohvaćanja statusa workflow-a:', error);
+      
+      // Detaljniji error handling
+      if (error.response) {
+        console.error('GitHub API response error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        });
+        
+        if (error.response.status === 401) {
+          console.error('GitHub token je neispravan ili je istekao');
+        } else if (error.response.status === 404) {
+          console.error('Repository ili workflow nije pronađen');
+        }
+      } else if (error.request) {
+        console.error('Nema odgovora od GitHub API-ja');
+      } else {
+        console.error('Greška u konfiguraciji GitHub zahtjeva');
+      }
+      
       return null;
     }
   };
@@ -286,7 +316,31 @@ const DashboardTab = () => {
       }
     } catch (error) {
       await saveGithubHistory('error', 'manual');
-      alert(`Greška: Neuspješno pokretanje GitHub Actions: ${error.message}`);
+      
+      // Detaljniji error handling
+      let errorMessage = 'Neuspješno pokretanje GitHub Actions';
+      
+      if (error.response) {
+        console.error('GitHub API response error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        });
+        
+        if (error.response.status === 401) {
+          errorMessage = 'GitHub token je neispravan ili je istekao';
+        } else if (error.response.status === 404) {
+          errorMessage = 'Repository ili workflow file nije pronađen';
+        } else if (error.response.status === 422) {
+          errorMessage = 'Workflow zahtjev je neispravan (možda je već pokrenut)';
+        } else {
+          errorMessage = `GitHub API greška: ${error.response.status} ${error.response.statusText}`;
+        }
+      } else if (error.request) {
+        errorMessage = 'Nema odgovora od GitHub API-ja - provjeri internet konekciju';
+      }
+      
+      alert(`Greška: ${errorMessage}`);
       setStatusLoading(false);
     } finally {
       setGithubLoading(false);
@@ -323,6 +377,11 @@ const DashboardTab = () => {
 
     // Funkcija za dohvaćanje GitHub workflow statusa
     const fetchWorkflowStatus = async () => {
+      if (!GITHUB_TOKEN) {
+        console.log('GitHub token nije postavljen, preskačem učitavanje workflow statusa');
+        return;
+      }
+      
       setStatusLoading(true);
       try {
         const status = await getLastWorkflowStatus();
@@ -454,10 +513,22 @@ const DashboardTab = () => {
             </p>
             <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
               GitHub token nije postavljen u environment varijablama.
+              <br />
+              Molimo administratora da postavi VITE_GITHUB_TOKEN u .env fajl.
             </p>
           </div>
         ) : (
           <>
+            <div style={{
+              background: '#d4edda',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '16px',
+              border: '1px solid #c3e6cb',
+              color: '#155724'
+            }}>
+              ✅ GitHub funkcionalnost je aktivna (Token: {GITHUB_TOKEN.substring(0, 8)}...)
+            </div>
             <p style={{ color: '#666', marginBottom: 16, fontSize: 14 }}>
               Status zadnjeg workflow-a i ručno pokretanje.
             </p>
