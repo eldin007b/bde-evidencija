@@ -5,6 +5,7 @@ const QuickActions = ({
   onRejectAll, 
   onExportData, 
   onRefreshAll,
+  onClearHistory,
   pendingCount = 0,
   loading = false 
 }) => {
@@ -138,6 +139,30 @@ const QuickActions = ({
         >
           🔄 Refresh
         </button>
+
+        {onClearHistory && (
+          <button
+            onClick={onClearHistory}
+            disabled={loading}
+            style={{
+              background: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            🗑️ Čisto
+          </button>
+        )}
       </div>
     </div>
   );

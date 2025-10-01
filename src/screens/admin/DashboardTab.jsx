@@ -137,6 +137,20 @@ const DashboardTab = () => {
     }
   };
 
+  // Funkcija za čišćenje GitHub historije
+  const clearGithubHistory = () => {
+    if (window.confirm('Da li ste sigurni da želite obrisati kompletnu historiju GitHub pokretanja?')) {
+      try {
+        localStorage.removeItem('github_scraper_history');
+        setHistory([]);
+        alert('Historija je uspješno obrisana.');
+      } catch (error) {
+        console.error('Greška pri brisanju historije:', error);
+        alert('Greška pri brisanju historije.');
+      }
+    }
+  };
+
   // Poboljšana funkcija za dohvaćanje workflow statusa
   const getLastWorkflowStatus = async () => {
     try {
@@ -435,6 +449,7 @@ const DashboardTab = () => {
         onRejectAll={handleRejectAll}
         onExportData={handleExportData}
         onRefreshAll={handleRefreshAll}
+        onClearHistory={clearGithubHistory}
         pendingCount={pendingRidesCount}
         loading={pendingRidesLoading}
       />
@@ -656,9 +671,31 @@ const DashboardTab = () => {
           border: '1px solid #e0e0e0',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-            <span role="img" aria-label="history" style={{ fontSize: 20, marginRight: 8 }}>📋</span>
-            <span style={{ fontWeight: 'bold', fontSize: 16, color: '#222' }}>Historija Pokretanja</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span role="img" aria-label="history" style={{ fontSize: 20, marginRight: 8 }}>📋</span>
+              <span style={{ fontWeight: 'bold', fontSize: 16, color: '#222' }}>Historija Pokretanja</span>
+            </div>
+            {history.length > 0 && (
+              <button
+                onClick={clearGithubHistory}
+                style={{
+                  background: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                🗑️ Obriši historiju
+              </button>
+            )}
           </div>
           <div style={{ maxHeight: 200, overflowY: 'auto' }}>
             {history.map((item, index) => (
