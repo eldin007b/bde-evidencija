@@ -4,6 +4,17 @@ const SB_URL = Deno.env.get("SB_URL");
 const SB_KEY = Deno.env.get("SB_KEY");
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
+    });
+  }
+
   let requestBody;
   let useJsonBody = false;
   try {
@@ -52,5 +63,13 @@ serve(async (req) => {
     body: JSON.stringify(requestBody)
   });
   const data = await response.json();
-  return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
+  
+  return new Response(JSON.stringify(data), { 
+    headers: { 
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    } 
+  });
 });
