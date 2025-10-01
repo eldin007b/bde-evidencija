@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import InfoCard from '../../components/common/InfoCard';
 import ActionButton from '../../components/common/ActionButton';
+import QuickActions from '../../components/common/QuickActions';
+import RealTimeStatus from '../../components/common/RealTimeStatus';
 import useSettings from '../../hooks/useSettings';
 import useDeviceApprovals from '../../hooks/useDeviceApprovals';
 import { useSyncContext } from '../../context/SyncContext.jsx';
@@ -128,13 +130,19 @@ const DashboardTab = () => {
   // Poboljšana funkcija za dohvaćanje workflow statusa
   const getLastWorkflowStatus = async () => {
     try {
+      // Provjeri da li je GitHub token postavljen
+      if (!GITHUB_TOKEN) {
+        console.warn('GitHub token nije postavljen - GitHub funkcionalnost je onemogućena');
+        return null;
+      }
+
       const response = await axios.get(
         `https://api.github.com/repos/${GITHUB_REPO}/actions/runs`,
         {
           headers: {
             'Authorization': `token ${GITHUB_TOKEN}`,
             'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'Evidencija-App/1.0.0',
+            // Uklonjen User-Agent jer browser ne dozvoljava postavljanje
           },
           params: { per_page: 1 },
         }
@@ -161,8 +169,90 @@ const DashboardTab = () => {
     }
   };
 
+  // Bulk operacije za admin
+  const handleApproveAll = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('extra_rides_pending')
+        .update({ status: 'approved' })
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      
+      alert(`Odobreno je ${data?.length || 0} vožnji`);
+      fetchPendingRides(); // Refresh podataka
+    } catch (error) {
+      console.error('Error approving all rides:', error);
+      alert('Greška pri odobravanju vožnji');
+    }
+  };
+
+  const handleRejectAll = async () => {
+    if (window.confirm('Da li ste sigurni da želite odbaciti sve pending vožnje?')) {
+      try {
+        const { data, error } = await supabase
+          .from('extra_rides_pending')
+          .update({ status: 'rejected' })
+          .eq('status', 'pending');
+
+        if (error) throw error;
+        
+        alert(`Odbačeno je ${data?.length || 0} vožnji`);
+        fetchPendingRides(); // Refresh podataka
+      } catch (error) {
+        console.error('Error rejecting all rides:', error);
+        alert('Greška pri odbacivanju vožnji');
+      }
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      // Export osnovnih podataka u CSV format
+      const { data: rides, error } = await supabase
+        .from('extra_rides_pending')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Kreiraj CSV content
+      const csvContent = [
+        'ID,Vozač,Datum,Status,Kreiran',
+        ...rides.map(ride => 
+          `${ride.id},${ride.vozac || 'N/A'},${ride.datum || 'N/A'},${ride.status},${ride.created_at}`
+        )
+      ].join('\n');
+
+      // Download CSV fajl
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `evidencija_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      alert('Podaci su izveženi u CSV fajl');
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Greška pri exportu podataka');
+    }
+  };
+
+  const handleRefreshAll = () => {
+    fetchPendingRides();
+    fetchOnlineUsers();
+  };
+
   // Poboljšana funkcija za pokretanje GitHub workflow-a
   const handleGitHubWorkflow = async () => {
+    // Provjeri da li je GitHub token postavljen
+    if (!GITHUB_TOKEN) {
+      alert('GitHub token nije postavljen. GitHub funkcionalnost je onemogućena za produkciju.');
+      return;
+    }
+
     setGithubLoading(true);
     setStatusLoading(true);
     setWorkflowStatus(null);
@@ -176,7 +266,7 @@ const DashboardTab = () => {
             'Authorization': `token ${GITHUB_TOKEN}`,
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json',
-            'User-Agent': 'Evidencija-App/1.0.0',
+            // Uklonjen User-Agent jer browser ne dozvoljava postavljanje
           },
         }
       );
@@ -280,6 +370,19 @@ const DashboardTab = () => {
         />
       </div>
 
+      {/* Quick Actions */}
+      <QuickActions
+        onApproveAll={handleApproveAll}
+        onRejectAll={handleRejectAll}
+        onExportData={handleExportData}
+        onRefreshAll={handleRefreshAll}
+        pendingCount={pendingRidesCount}
+        loading={pendingRidesLoading}
+      />
+
+      {/* Real-time Status */}
+      <RealTimeStatus />
+
       {/* Online korisnici sekcija */}
       {onlineUsers.length > 0 && (
         <div style={{
@@ -336,11 +439,30 @@ const DashboardTab = () => {
           <span role="img" aria-label="github" style={{ fontSize: 24, marginRight: 12 }}>🔗</span>
           <span style={{ fontWeight: 'bold', fontSize: 18, color: '#222' }}>GitHub Workflow</span>
         </div>
-        <p style={{ color: '#666', marginBottom: 16, fontSize: 14 }}>
-          Status zadnjeg workflow-a i ručno pokretanje.
-        </p>
         
-        <button
+        {!GITHUB_TOKEN ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '20px',
+            background: '#fff3cd',
+            borderRadius: '8px',
+            border: '1px solid #ffc107',
+            color: '#856404'
+          }}>
+            <p style={{ margin: 0, fontWeight: 'bold' }}>
+              ⚠️ GitHub funkcionalnost je onemogućena
+            </p>
+            <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+              GitHub token nije postavljen u environment varijablama.
+            </p>
+          </div>
+        ) : (
+          <>
+            <p style={{ color: '#666', marginBottom: 16, fontSize: 14 }}>
+              Status zadnjeg workflow-a i ručno pokretanje.
+            </p>
+            
+            <button
           onClick={handleGitHubWorkflow}
           disabled={githubLoading || statusLoading}
           style={{
@@ -383,6 +505,8 @@ const DashboardTab = () => {
         >
           {statusLoading ? 'Loading...' : 'Osvježi Status'}
         </button>
+        </>
+        )}
 
         {/* Workflow Status Display */}
         {statusLoading ? (
