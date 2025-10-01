@@ -183,7 +183,7 @@ const MapCardModern = ({
       
       if (selectedMarker.hafasUrl || selectedMarker.hafasHtml) {
         const proxyBase = ENV.API_BASE_URL ? ENV.API_BASE_URL.replace(/\/$/, '') : '';
-        const proxyUrl = proxyBase ? `${proxyBase}/hafas/parse` : '/hafas/parse';
+        const proxyUrl = proxyBase ? `${proxyBase}/hafas-parse` : '/hafas-parse';
         (async () => {
           try {
             const body = selectedMarker.hafasHtml ? { html: selectedMarker.hafasHtml } : { url: selectedMarker.hafasUrl };
@@ -397,7 +397,8 @@ const MapCardModern = ({
   const reverseGeocode = async (lat, lon) => {
     try {
       const { x, y } = projectTo3857(lat, lon);
-      const VAO_URL = '/vor-proxy';
+      const VAO_URL = `${ENV.API_BASE_URL}/vor-proxy`;
+      console.log('🌐 MapCardModern VAO_URL:', VAO_URL);
       const VAO_BODY_BASE = {
         id: 'ibwmnqg8g2kj8iwg',
         ver: '1.59',

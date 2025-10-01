@@ -1,7 +1,7 @@
 {
     "name":  "bdevidencija-pwa",
     "private":  true,
-    "version":  "3.0.0-build20251001-0338",
+    "version":  "4.0.0-fresh-deploy",
     "type":  "module",
     "homepage":  "https://eldin007b.github.io/bde-evidencija",
     "scripts":  {

@@ -2,6 +2,7 @@ import './ClickToVORAddress.popup.css';
 
 import { useMapEvents, Popup, CircleMarker } from 'react-leaflet';
 import { useState, useRef } from 'react';
+import ENV from '../../config/env';
 
 // EPSG:4326 (lat/lon) u EPSG:3857 (Web Mercator) - REVERSE ENGINEERED IZ VOR-a!
 function projectTo3857(lat, lon) {
@@ -12,7 +13,8 @@ function projectTo3857(lat, lon) {
   return { x, y };
 }
 
-const VAO_URL = '/vor-proxy';
+const VAO_URL = `${ENV.API_BASE_URL}/vor-proxy`;
+console.log('🌐 ClickToVORAddress VAO_URL:', VAO_URL);
 const VAO_BODY = {
   id: 'ibwmnqg8g2kj8iwg',
   ver: '1.59',

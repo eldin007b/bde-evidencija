@@ -24,10 +24,8 @@ async function postJson(url, body, timeout = DEFAULT_TIMEOUT) {
 
 // Expects origin { lat, lon } and dest { lat, lon }
 export async function fetchVoranachbRoute(origin, dest) {
-  const base = (ENV.VORANACHB_URL && ENV.VORANACHB_URL.length > 0) ? ENV.VORANACHB_URL.replace(/\/$/, '') : '';
-  if (!base) throw new Error('VORANACHB_URL not configured');
-  // Accept either a full URL (when VORANACHB_URL already contains path) or append /route
-  const url = base.includes('/route') ? base : `${base}/route`;
+  // Use Supabase route-proxy instead of external VORANACHB_URL
+  const url = `${ENV.API_BASE_URL}/route-proxy`;
 
   // payload tolerant: if origin/dest are strings (addresses) send them as address fields
   const payload = {};
@@ -43,7 +41,7 @@ export async function fetchVoranachbRoute(origin, dest) {
     durationSeconds: json.durationSeconds || json.duration || null,
     distanceText: json.distanceText || (json.distance ? `${(json.distance/1000).toFixed(1)} km` : null),
     durationText: json.durationText || (json.duration ? `${Math.round(json.duration/60)} min` : null),
-    provider: json.provider || 'VORANACHB'
+    provider: json.provider || 'ROUTE-PROXY'
   };
 }
 

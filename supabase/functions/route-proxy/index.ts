@@ -1,6 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-const SB_URL = Deno.env.get("SB_URL");
-const SB_KEY = Deno.env.get("SB_KEY");
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const toRad = (v) => (v * Math.PI) / 180;
   const R = 6371;
@@ -11,6 +9,17 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
   return Math.round(R * c * 1000);
 }
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
+    });
+  }
+
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
   let origin, dest;
   let parsed = false;
@@ -45,7 +54,22 @@ serve(async (req) => {
       distanceText: (meters>=1000?`${(meters/1000).toFixed(1)} km`:`${meters} m`),
       durationText: `${Math.round(durationSeconds/60)} min`,
       provider: "VORANACHB-MOCK"
-    }), { headers: { "Content-Type": "application/json" } });
+    }), { 
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      } 
+    });
   }
-  return new Response(JSON.stringify({ error: "origin and dest required" }), { status: 400 });
+  return new Response(JSON.stringify({ error: "origin and dest required" }), { 
+    status: 400,
+    headers: { 
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    } 
+  });
 });

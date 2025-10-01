@@ -5,6 +5,16 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/bde-evidencija/',
+  build: {
+    rollupOptions: {
+      output: {
+        // Force completely new filenames
+        entryFileNames: `assets/app-v4-[hash].js`,
+        chunkFileNames: `assets/chunk-v4-[hash].js`,
+        assetFileNames: `assets/asset-v4-[hash].[ext]`
+      }
+    }
+  },
   plugins: [
     react(),
     VitePWA({
@@ -12,14 +22,18 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/bde-evidencija/index.html',
         navigateFallbackDenylist: [/^\/bde-evidencija\/api/],
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        // Force cache invalidation
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: []
       },
       scope: '/bde-evidencija/',
       base: '/bde-evidencija/',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'BDEVidencija - Evidencija dostave',
-        short_name: 'BDEVidencija',
+        name: 'BDEVidencija - Evidencija dostave v4.0',
+        short_name: 'BDEVidencija v4',
         start_url: '/bde-evidencija/',
         scope: '/bde-evidencija/',
         display: 'standalone',

@@ -1,4 +1,6 @@
 // Servis za pretragu adresa (koristi VAO kao u MapView)
+import ENV from '../../config/env';
+
 export async function searchAddresses(query) {
   const VAO_BODY = {
     id: 'ibwmnqg8g2kj8iwg',
@@ -34,7 +36,7 @@ export async function searchAddresses(query) {
     ]
   };
   try {
-    const res = await fetch('/vor-proxy', {
+    const res = await fetch(`${ENV.API_BASE_URL}/vor-proxy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(VAO_BODY)
