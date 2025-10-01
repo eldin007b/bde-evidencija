@@ -24,28 +24,7 @@ ENV.GITHUB_TOKEN = ''; // Always empty to prevent secrets in bundle
 ENV.GITHUB_REPO = _env.VITE_GITHUB_REPO || _env.REACT_APP_GITHUB_REPO || _procEnv.REACT_APP_GITHUB_REPO || 'eldin007b/gls-scraper';
 ENV.WORKFLOW_FILE = _env.VITE_WORKFLOW_FILE || _env.REACT_APP_WORKFLOW_FILE || _procEnv.REACT_APP_WORKFLOW_FILE || 'scraper.yml';
 
-// Debug log for production
-if (typeof window !== 'undefined') {
-  console.log('🎉 NEW VERSION 4.0 - ENV Debug:', {
-    hasViteMapQuestKey: !!_env.VITE_MAPQUEST_API_KEY,
-    finalMapQuestKey: ENV.MAPQUEST_API_KEY ? `${ENV.MAPQUEST_API_KEY.substring(0, 8)}...` : 'undefined',
-    apiBaseUrl: ENV.API_BASE_URL,
-    isProduction: !ENV.API_BASE_URL?.includes('localhost'),
-    hasGitHubToken: !!ENV.GITHUB_TOKEN,
-    gitHubRepo: ENV.GITHUB_REPO,
-    workflowFile: ENV.WORKFLOW_FILE,
-    deploymentReady: !!ENV.MAPQUEST_API_KEY && !!ENV.SUPABASE_URL && !!ENV.SUPABASE_KEY,
-    voranachbUrl: ENV.VORANACHB_URL,
-    routeStrategy: ENV.ROUTE_STRATEGY,
-    allEnvVars: {
-      SUPABASE_URL: ENV.SUPABASE_URL,
-      API_BASE_URL: ENV.API_BASE_URL,
-      VORANACHB_URL: ENV.VORANACHB_URL
-    },
-    timestamp: new Date().toISOString(),
-    cacheBreaker: Math.random()
-  });
-}
+// Optional routing strategy and a single endpoint (voranachb) to normalize routing
 
 // Optional routing strategy and a single endpoint (voranachb) to normalize routing
 ENV.ROUTE_STRATEGY = _env.VITE_ROUTE_STRATEGY || _env.REACT_APP_ROUTE_STRATEGY || _procEnv.REACT_APP_ROUTE_STRATEGY || '';

@@ -14,7 +14,6 @@ function projectTo3857(lat, lon) {
 }
 
 const VAO_URL = `${ENV.API_BASE_URL}/vor-proxy`;
-console.log('🌐 ClickToVORAddress VAO_URL:', VAO_URL);
 const VAO_BODY = {
   id: 'ibwmnqg8g2kj8iwg',
   ver: '1.59',

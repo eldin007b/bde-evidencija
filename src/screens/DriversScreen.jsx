@@ -29,11 +29,6 @@ export default function DriversScreen() {
   // Vraćamo pravi useDrivers hook
   const { drivers, error, refreshDrivers } = useDrivers();
   
-  // Debug log za vozače
-  useEffect(() => {
-    // Debug kod uklonjen - vozači se automatski dohvaćaju iz hook-a
-  }, [drivers, error]);
-
   // Automatski bira vozača na osnovu tura koda iz localStorage
   useEffect(() => {
     if (drivers.length > 0 && !selectedDriver) {

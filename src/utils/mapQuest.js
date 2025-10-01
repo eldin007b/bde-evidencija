@@ -57,19 +57,16 @@ async function getRouteWithFallback(originLat, originLon, destLat, destLon) {
   // First try: Supabase proxy (preferred for production)
   if (ENV.API_BASE_URL && !ENV.API_BASE_URL.includes('localhost')) {
     try {
-      console.log('🌐 Using MapQuest via Supabase proxy (primary)');
       return await getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon);
     } catch (proxyError) {
-      console.warn('Supabase proxy failed, trying direct API fallback:', proxyError.message);
+      // Supabase proxy failed, trying direct API fallback
     }
   }
   
   // Second try: Direct API (fallback)
   try {
-    console.log('🔧 Using MapQuest direct API (fallback)');
     return await getRouteDirectAPI(originLat, originLon, destLat, destLon);
   } catch (directError) {
-    console.warn('Direct API also failed:', directError.message);
     throw new Error(`Both MapQuest methods failed. Proxy: ${proxyError?.message || 'not available'}, Direct: ${directError.message}`);
   }
 }
@@ -93,12 +90,6 @@ async function getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon) 
       }
     };
 
-    console.log('🌐 MapQuest proxy request:', {
-      url: `${ENV.API_BASE_URL}/mapquest-proxy`,
-      method: 'POST',
-      body: requestBody
-    });
-
     const response = await fetch(`${ENV.API_BASE_URL}/mapquest-proxy`, {
       method: 'POST',
       headers: {
@@ -107,27 +98,14 @@ async function getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon) 
       body: JSON.stringify(requestBody)
     });
 
-    console.log('📡 MapQuest proxy response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
     if (!response.ok) {
       throw new Error(`MapQuest proxy error: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('✅ MapQuest proxy success:', data);
     return formatMapQuestResponse(data);
 
   } catch (error) {
-    console.error('❌ MapQuest proxy detailed error:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      url: `${ENV.API_BASE_URL}/mapquest-proxy`
-    });
     throw error;
   }
 }
@@ -159,12 +137,6 @@ async function getRouteDirectAPI(originLat, originLon, destLat, destLon) {
       }
     };
 
-    console.log('🔧 MapQuest direct API request:', {
-      url: url.substring(0, url.indexOf('key=') + 12) + '...',
-      method: 'POST',
-      body: requestBody
-    });
-
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -173,30 +145,14 @@ async function getRouteDirectAPI(originLat, originLon, destLat, destLon) {
       body: JSON.stringify(requestBody)
     });
 
-    console.log('📡 MapQuest direct API response:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
-    });
-
     if (!response.ok) {
       throw new Error(`MapQuest API error: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('✅ MapQuest direct API success:', {
-      distance: data.route?.distance,
-      time: data.route?.time,
-      statusCode: data.info?.statuscode
-    });
     return formatMapQuestResponse(data);
 
   } catch (error) {
-    console.error('❌ MapQuest direct API error:', {
-      message: error.message,
-      name: error.name,
-      apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'undefined'
-    });
     throw error;
   }
 }
@@ -255,7 +211,6 @@ export async function getRouteFromAddresses(startAddress, endAddress) {
     return formatMapQuestResponse(data);
 
   } catch (error) {
-    console.warn('MapQuest address routing failed:', error.message);
     throw error;
   }
 }
