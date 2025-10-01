@@ -51,28 +51,26 @@ export async function getRouteFromMapQuest(originLat, originLon, destLat, destLo
 }
 
 /**
- * Smart routing with automatic fallback
+ * Smart routing with Supabase proxy preference
  */
 async function getRouteWithFallback(originLat, originLon, destLat, destLon) {
-  // First try: Direct API (most reliable for now)
+  // First try: Supabase proxy (preferred for production)
+  if (ENV.API_BASE_URL && !ENV.API_BASE_URL.includes('localhost')) {
+    try {
+      console.log('🌐 Using MapQuest via Supabase proxy (primary)');
+      return await getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon);
+    } catch (proxyError) {
+      console.warn('Supabase proxy failed, trying direct API fallback:', proxyError.message);
+    }
+  }
+  
+  // Second try: Direct API (fallback)
   try {
-    console.log('🔧 Using MapQuest direct API (primary)');
+    console.log('🔧 Using MapQuest direct API (fallback)');
     return await getRouteDirectAPI(originLat, originLon, destLat, destLon);
   } catch (directError) {
-    console.warn('Direct API failed, trying proxy fallback:', directError.message);
-    
-    // Second try: Proxy (if available)
-    if (ENV.API_BASE_URL && !ENV.API_BASE_URL.includes('localhost')) {
-      try {
-        console.log('🌐 Using MapQuest via Supabase proxy (fallback)');
-        return await getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon);
-      } catch (proxyError) {
-        console.warn('Proxy also failed:', proxyError.message);
-        throw new Error(`Both MapQuest methods failed. Direct: ${directError.message}, Proxy: ${proxyError.message}`);
-      }
-    } else {
-      throw directError;
-    }
+    console.warn('Direct API also failed:', directError.message);
+    throw new Error(`Both MapQuest methods failed. Proxy: ${proxyError?.message || 'not available'}, Direct: ${directError.message}`);
   }
 }
 
