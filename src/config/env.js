@@ -19,13 +19,21 @@ const ENV = {
 // MapQuest API key (default set to provided key for local/dev; override via env vars in production)
 ENV.MAPQUEST_API_KEY = _env.VITE_MAPQUEST_API_KEY || _env.REACT_APP_MAPQUEST_API_KEY || _procEnv.REACT_APP_MAPQUEST_API_KEY || 'HFcTXnwL6PW3Snh7rVohjnYopqvPhCL5';
 
+// GitHub configuration for admin dashboard
+ENV.GITHUB_TOKEN = _env.VITE_GITHUB_TOKEN || _env.REACT_APP_GITHUB_TOKEN || _procEnv.REACT_APP_GITHUB_TOKEN || '';
+ENV.GITHUB_REPO = _env.VITE_GITHUB_REPO || _env.REACT_APP_GITHUB_REPO || _procEnv.REACT_APP_GITHUB_REPO || 'eldin007b/gls-scraper';
+ENV.WORKFLOW_FILE = _env.VITE_WORKFLOW_FILE || _env.REACT_APP_WORKFLOW_FILE || _procEnv.REACT_APP_WORKFLOW_FILE || 'scraper.yml';
+
 // Debug log for production
 if (typeof window !== 'undefined') {
   console.log('🔧 ENV Debug:', {
     hasViteMapQuestKey: !!_env.VITE_MAPQUEST_API_KEY,
     finalMapQuestKey: ENV.MAPQUEST_API_KEY ? `${ENV.MAPQUEST_API_KEY.substring(0, 8)}...` : 'undefined',
     apiBaseUrl: ENV.API_BASE_URL,
-    isProduction: !ENV.API_BASE_URL?.includes('localhost')
+    isProduction: !ENV.API_BASE_URL?.includes('localhost'),
+    hasGitHubToken: !!ENV.GITHUB_TOKEN,
+    gitHubRepo: ENV.GITHUB_REPO,
+    workflowFile: ENV.WORKFLOW_FILE
   });
 }
 

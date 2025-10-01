@@ -7,6 +7,7 @@ import { useSyncContext } from '../../context/SyncContext.jsx';
 import { supabase } from '../../db/supabaseClient';
 import { format } from 'date-fns';
 import axios from 'axios';
+import ENV from '../../config/env';
 
 const DashboardTab = () => {
   const { isAutoSyncRunning } = useSyncContext();
@@ -21,9 +22,10 @@ const DashboardTab = () => {
   const [onlineUsersLoading, setOnlineUsersLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  // GitHub config - koristi iz .env
-  const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || process.env.VITE_GITHUB_TOKEN || '';
-  const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || process.env.VITE_GITHUB_REPO || '';
+  // GitHub config - koristi iz centralizirane ENV konfiguracije
+  const GITHUB_TOKEN = ENV.GITHUB_TOKEN;
+  const GITHUB_REPO = ENV.GITHUB_REPO;
+  const WORKFLOW_FILE = ENV.WORKFLOW_FILE;
 
   // Funkcija za čitanje pending vožnji iz Supabase
   const fetchPendingRides = useCallback(async () => {
