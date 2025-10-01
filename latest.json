@@ -1,0 +1,19 @@
+{
+  "version": "3.0.0",
+  "releaseDate": "2025-09-15",
+  "platform": "PWA",
+  "description": "Prelazak na Progressive Web App verziju",
+  "changelog": [
+    {
+      "version": "3.0.0",
+      "date": "2025-09-15",
+      "changes": [
+        "Kompletna migracija sa Android native na PWA",
+        "Modernizovani UI sa glassmorphism efektima",
+        "Cross-platform podrška",
+        "Poboljšane performanse",
+        "Responsive design optimizacija"
+      ]
+    }
+  ]
+}
