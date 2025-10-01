@@ -25,6 +25,17 @@ jobs:
         
       - name: Build project
         run: npm run build
+        env:
+          # Supabase configuration (required)
+          VITE_SUPABASE_URL: https://dsltpiupbfopyvuiqffg.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzbHRwaXVwYmZvcHl2dWlxZmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5Mjc3MzcsImV4cCI6MjA2NTUwMzczN30.suu_OSbTBSEkM3YMiPDFIAgDnX3bDavcD8BX4ZfYZxw
+          # API keys
+          VITE_MAPQUEST_API_KEY: HFcTXnwL6PW3Snh7rVohjnYopqvPhCL5
+          VITE_GOOGLE_MAPS_API_KEY: your_google_maps_api_key_here
+          # App configuration
+          VITE_APP_NAME: BDEVidencija
+          VITE_APP_VERSION: 3.0.0
+          VITE_ADMIN_USERS: eldin,eldin begic,admin
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
