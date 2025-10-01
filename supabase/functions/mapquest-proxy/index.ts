@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-const MAPQUEST_API_KEY = "HFcTXnwL6PW3Snh7rVohjnYopqvPhCL5";
+const MAPQUEST_API_KEY = Deno.env.get("MAPQUEST_API_KEY");
+const SB_URL = Deno.env.get("SB_URL");
+const SB_KEY = Deno.env.get("SB_KEY");
 
 serve(async (req) => {
   let requestBody;

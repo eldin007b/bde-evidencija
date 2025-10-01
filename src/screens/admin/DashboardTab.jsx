@@ -21,9 +21,9 @@ const DashboardTab = () => {
   const [onlineUsersLoading, setOnlineUsersLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  // GitHub config - onemogući za produkciju zbog sigurnosti
-  const GITHUB_TOKEN = '';
-  const GITHUB_REPO = 'eldin007b/gls-scraper';
+  // GitHub config - koristi iz .env
+  const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || process.env.VITE_GITHUB_TOKEN || '';
+  const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || process.env.VITE_GITHUB_REPO || '';
 
   // Funkcija za čitanje pending vožnji iz Supabase
   const fetchPendingRides = useCallback(async () => {

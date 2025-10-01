@@ -2,10 +2,124 @@
 import ENV from '../config/env';
 
 /**
+ * Format MapQuest response to consistent format
+ */
+function formatMapQuestResponse(data) {
+  // Check for API errors
+  if (data.info.statuscode !== 0) {
+    const errorMessages = {
+      400: 'Bad request',
+      401: 'Unauthorized - check API key',
+      403: 'Forbidden',
+      500: 'MapQuest server error'
+    };
+    throw new Error(`MapQuest API error ${data.info.statuscode}: ${errorMessages[data.info.statuscode] || data.info.messages?.join(', ') || 'Unknown error'}`);
+  }
+
+  const route = data.route;
+  
+  if (!route) {
+    throw new Error('No route data received from MapQuest');
+  }
+
+  // Format data to match Google Directions API structure
+  const distanceMeters = Math.round(route.distance * 1000); // km to meters
+  const durationSeconds = Math.round(route.time); // already seconds
+
+  return {
+    distanceMeters,
+    distanceText: formatDistance(distanceMeters),
+    durationSeconds,
+    durationText: formatDuration(durationSeconds),
+    // Additional MapQuest specific data if needed
+    mapQuestData: {
+      fuelUsed: route.fuelUsed,
+      realTime: route.hasRealTime,
+      sessionId: route.sessionId
+    }
+  };
+}
+
+/**
  * Get driving route info from MapQuest Directions API
+ * Uses direct API locally, Supabase proxy in production (hybrid approach)
  * Returns data in same format as Google Directions API for consistency
  */
 export async function getRouteFromMapQuest(originLat, originLon, destLat, destLon) {
+  // Smart hybrid approach with automatic fallback
+  return await getRouteWithFallback(originLat, originLon, destLat, destLon);
+}
+
+/**
+ * Smart routing with automatic fallback
+ */
+async function getRouteWithFallback(originLat, originLon, destLat, destLon) {
+  // First try: Direct API (most reliable for now)
+  try {
+    console.log('🔧 Using MapQuest direct API (primary)');
+    return await getRouteDirectAPI(originLat, originLon, destLat, destLon);
+  } catch (directError) {
+    console.warn('Direct API failed, trying proxy fallback:', directError.message);
+    
+    // Second try: Proxy (if available)
+    if (ENV.API_BASE_URL && !ENV.API_BASE_URL.includes('localhost')) {
+      try {
+        console.log('🌐 Using MapQuest via Supabase proxy (fallback)');
+        return await getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon);
+      } catch (proxyError) {
+        console.warn('Proxy also failed:', proxyError.message);
+        throw new Error(`Both MapQuest methods failed. Direct: ${directError.message}, Proxy: ${proxyError.message}`);
+      }
+    } else {
+      throw directError;
+    }
+  }
+}
+
+/**
+ * Get route via Supabase Edge Function proxy (for production)
+ */
+async function getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon) {
+  try {
+    const requestBody = {
+      locations: [
+        { latLng: { lat: originLat, lng: originLon } },
+        { latLng: { lat: destLat, lng: destLon } }
+      ],
+      options: {
+        routeType: 'fastest',
+        unit: 'k',
+        doReverseGeocode: false,
+        enhancesNarratives: false,
+        avoidTimedConditions: false
+      }
+    };
+
+    const response = await fetch(`${ENV.API_BASE_URL}/mapquest-proxy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`MapQuest proxy error: ${response.status} - ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return formatMapQuestResponse(data);
+
+  } catch (error) {
+    console.warn('MapQuest proxy failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get route directly from MapQuest API (for development)
+ */
+async function getRouteDirectAPI(originLat, originLon, destLat, destLon) {
   const apiKey = ENV.MAPQUEST_API_KEY;
   
   if (!apiKey || apiKey === 'your_mapquest_key_here') {
@@ -42,46 +156,11 @@ export async function getRouteFromMapQuest(originLat, originLon, destLat, destLo
     }
 
     const data = await response.json();
-
-    // Check for API errors
-    if (data.info.statuscode !== 0) {
-      const errorMessages = {
-        400: 'Bad request',
-        401: 'Unauthorized - check API key',
-        403: 'Forbidden',
-        500: 'MapQuest server error'
-      };
-      throw new Error(`MapQuest API error ${data.info.statuscode}: ${errorMessages[data.info.statuscode] || data.info.messages?.join(', ') || 'Unknown error'}`);
-    }
-
-    const route = data.route;
-    
-    if (!route) {
-      throw new Error('No route data received from MapQuest');
-    }
-
-  // Format data to match Google Directions API structure
-  // Note: MapQuest `route.distance` is in kilometers (when unit='k') and
-  // `route.time` is returned in seconds. Do not multiply by 60.
-  const distanceMeters = Math.round(route.distance * 1000); // km to meters
-  const durationSeconds = Math.round(route.time); // already seconds
-
-    return {
-      distanceMeters,
-      distanceText: formatDistance(distanceMeters),
-      durationSeconds,
-      durationText: formatDuration(durationSeconds),
-      // Additional MapQuest specific data if needed
-      mapQuestData: {
-        fuelUsed: route.fuelUsed,
-        realTime: route.hasRealTime,
-        sessionId: route.sessionId
-      }
-    };
+    return formatMapQuestResponse(data);
 
   } catch (error) {
-    console.warn('MapQuest routing failed:', error.message);
-    throw error; // Re-throw to allow fallback to other services
+    console.warn('MapQuest direct API failed:', error.message);
+    throw error;
   }
 }
 
@@ -115,8 +194,11 @@ function formatDuration(seconds) {
 
 /**
  * Alternative: Get route with addresses instead of coordinates
+ * Also uses hybrid approach
  */
 export async function getRouteFromAddresses(startAddress, endAddress) {
+  // For address-based routing, we'll use direct API for simplicity
+  // (Could be extended to support proxy as well)
   const apiKey = ENV.MAPQUEST_API_KEY;
   
   if (!apiKey) {
@@ -133,21 +215,7 @@ export async function getRouteFromAddresses(startAddress, endAddress) {
     }
 
     const data = await response.json();
-
-    if (data.info.statuscode !== 0) {
-      throw new Error(`MapQuest API error: ${data.info.messages?.join(', ') || 'Unknown error'}`);
-    }
-
-    const route = data.route;
-  const distanceMeters = Math.round(route.distance * 1000);
-  const durationSeconds = Math.round(route.time);
-
-    return {
-      distanceMeters,
-      distanceText: formatDistance(distanceMeters),
-      durationSeconds,
-      durationText: formatDuration(durationSeconds)
-    };
+    return formatMapQuestResponse(data);
 
   } catch (error) {
     console.warn('MapQuest address routing failed:', error.message);

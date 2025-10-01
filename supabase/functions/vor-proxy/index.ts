@@ -1,3 +1,7 @@
+// Primjer: dohvat GitHub tokena iz environmenta
+const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN");
+const SB_URL = Deno.env.get("SB_URL");
+const SB_KEY = Deno.env.get("SB_KEY");
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 

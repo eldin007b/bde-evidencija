@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+const SB_URL = Deno.env.get("SB_URL");
+const SB_KEY = Deno.env.get("SB_KEY");
 // Dummy parser, zamijeni regex iz hafasParser.js po potrebi
 function parseHafasConnectionHTML(html: string) {
   return { durationMinutes: 54, distanceMeters: 50900, durationText: "54 min", distanceText: "50.9 km" };

@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+const SB_URL = Deno.env.get("SB_URL");
+const SB_KEY = Deno.env.get("SB_KEY");
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const toRad = (v) => (v * Math.PI) / 180;
   const R = 6371;
