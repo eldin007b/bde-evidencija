@@ -8,7 +8,7 @@ const _procEnv = (typeof process !== 'undefined' && process.env) ? process.env :
 // keep the previously present hardcoded supabase values as final fallbacks (local dev convenience)
 const FALLBACK_SUPABASE_URL = 'https://dsltpiupbfopyvuiqffg.supabase.co';
 const FALLBACK_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzbHRwaXVwYmZvcHl2dWlxZmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5Mjc3MzcsImV4cCI6MjA2NTUwMzczN30.suu_OSbTBSEkM3YMiPDFIAgDnX3bDavcD8BX4ZfYZxw';
-const FALLBACK_API_BASE_URL = "https://dsltpiupbfopyvuiqffg.functions.supabase.co";
+const FALLBACK_API_BASE_URL = "https://dsltpiupbfopyvuiqffg.supabase.co/functions/v1";
 const ENV = {
   SUPABASE_URL: _env.VITE_SUPABASE_URL || _env.REACT_APP_SUPABASE_URL || _procEnv.REACT_APP_SUPABASE_URL || FALLBACK_SUPABASE_URL,
   SUPABASE_KEY: _env.VITE_SUPABASE_ANON_KEY || _env.VITE_SUPABASE_KEY || _env.REACT_APP_SUPABASE_KEY || _procEnv.REACT_APP_SUPABASE_KEY || FALLBACK_SUPABASE_KEY,
