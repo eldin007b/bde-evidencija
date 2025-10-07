@@ -1,0 +1,233 @@
+  align-self: stretch;
+  align-self: stretch;
+/* src/screens/HomeScreenModern.module.css */
+.homeScreenModern {
+  height: 100dvh;
+  min-height: 100dvh;
+  background: transparent; /* 🔧 Transparent jer body već ima gradient */
+  position: relative;
+  overflow-x: hidden;
+}
+
+.homeScreenModern::before,
+.homeScreenModern::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.homeScreenModern::before {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
+}
+
+.homeScreenModern::after {
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+}
+
+.mainGrid {
+  background: #ddffdd00;
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) 1fr; /* 🔧 Još užji sidebar: 300px→280px, 360px→320px */
+  gap: var(--space-6);
+  padding: 0 var(--space-6);
+  max-width: 1600px;
+  margin: 0 auto;
+  height: 100dvh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebarColumn {
+  background: #ffdddd00;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  align-self: stretch;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-3) - 5px);
+  overflow: visible;
+  box-shadow: var(--glass-shadow);
+}
+
+.mapColumn {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  height: 100%;
+  width: calc(100% + 20px); /* Proširi mapu desno za 20px */
+  max-width: calc(100% + 20px);
+  box-sizing: border-box;
+  margin-right: -20px; /* Kompenzacija za proširenje */
+}
+
+.mapContainer {
+  height: fit-content;
+  min-height: 400px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+}
+
+/* 📱 MOBILE (portrait) – < 768px */
+@media (max-width: 767px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    max-width: none;
+    margin: 0;
+    min-height: auto;
+  }
+
+  .sidebarColumn {
+    position: relative;
+    order: 1;
+    margin-bottom: var(--space-4);
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .mapColumn {
+    order: 2;
+    min-height: 0;
+  }
+
+  .mapContainer {
+    min-height: 200px;
+    margin-top: -8px;
+  }
+
+  .homeScreenModernSidebarOpen .mainGrid {
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+  }
+
+  .homeScreenModernSidebarOpen .sidebarColumn {
+    margin-bottom: var(--space-2);
+  }
+}
+
+/* 📱 MOBILE LANDSCAPE – 480px–767px */
+@media (min-width: 480px) and (max-width: 767px) {
+  .mapContainer {
+    min-height: 250px;
+  }
+}
+
+/* 💻 TABLET – 768px–1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mainGrid {
+    grid-template-columns: minmax(260px, 300px) 1fr; /* 🔧 Još užji za tablet: 280px→260px, 340px→300px */
+    gap: var(--space-5);
+    padding: var(--space-5);
+  }
+
+  .sidebarColumn {
+    top: var(--space-3);
+    max-height: calc(100vh - var(--space-3) * 2);
+  }
+}
+
+/* 🖥️ DESKTOP – 1024px–1439px */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .mapColumn {
+    height: fit-content; /* 🔧 Prilagodi visini sidebar-a */
+  }
+}
+
+/* 🖥️ ULTRA-WIDE – ≥1440px */
+@media (min-width: 1440px) {
+  .mainGrid {
+    grid-template-columns: 320px 1fr; /* 🔧 Još užji za ultra-wide: 360px→320px */
+    gap: var(--space-8);
+    padding: var(--space-8);
+  }
+  
+  .mapColumn {
+    min-height: 585px; /* 🔧 Skraćeno za još 5px: 590px→585px (ukupno -15px) */
+  }
+}
+
+/* Loading & Empty states */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border-light);
+}
+
+.loadingContent {
+  text-align: center;
+  color: var(--text-muted-dark);
+}
+
+.loadingSpinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--glass-border-light);
+  border-top: 3px solid var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--space-4);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--text-muted-dark);
+}
+
+.emptyStateIcon {
+  font-size: 4rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+/* Scrollbar */
+.sidebarColumn::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebarColumn::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebarColumn::-webkit-scrollbar-thumb {
+  background: var(--glass-border-light);
+  border-radius: 3px;
+}
+.sidebarColumn::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-500);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

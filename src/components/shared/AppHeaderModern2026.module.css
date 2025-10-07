@@ -1,0 +1,625 @@
+/* 📱 AppHeaderModern 2026 - Next-Gen PWA Navigation */
+/* ✨ MAINTAINING ALL EXISTING FUNCTIONALITY + MODERN ENHANCEMENTS */
+
+/* 🆕 2026: CSS Custom Properties for Header */
+:root {
+  --header-glass-bg: rgba(15, 23, 42, 0.85);
+  --header-glass-surface: rgba(15, 23, 42, 0.9);
+  --header-border-glass: rgba(255, 255, 255, 0.1);
+  --header-backdrop-blur: blur(32px) saturate(180%);
+  --header-shadow-float: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --header-transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --header-height-mobile: 60px;
+  --header-height-desktop: 70px;
+}
+
+/* 🎨 2026: Advanced Glassmorphism Header */
+.headerModern {
+  /* ✅ Keeping original positioning */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  
+  /* 🆕 2026: Enhanced glassmorphism */
+  background: 
+    linear-gradient(135deg, var(--header-glass-bg) 0%, var(--header-glass-surface) 100%),
+    radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+  backdrop-filter: var(--header-backdrop-blur);
+  -webkit-backdrop-filter: var(--header-backdrop-blur);
+  border-bottom: 1px solid var(--header-border-glass);
+  box-shadow: 
+    var(--header-shadow-float),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  /* 🆕 2026: Dynamic height */
+  height: var(--header-height-mobile);
+  
+  /* 🆕 2026: Smooth transitions */
+  transition: var(--header-transition);
+  
+  /* 🆕 2026: Subtle animation on scroll */
+  transform: translateY(0);
+}
+
+/* 🆕 2026: Enhanced header on scroll */
+.headerModern.scrolled {
+  background: 
+    linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 🆕 2026: Header content container */
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+  position: relative;
+}
+
+/* 🎨 2026: Enhanced Logo/Brand Section */
+.brandSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex-shrink: 0;
+  /* 🆕 2026: Ensure above shimmer */
+  position: relative;
+  z-index: 2;
+}
+
+.logo {
+  /* ✅ Keeping original properties */
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-on-dark);
+  text-decoration: none;
+  
+  /* 🆕 2026: Enhanced logo styling */
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.logo:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transform: scale(1.05);
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 🎨 2026: Enhanced Navigation */
+.navModern {
+  /* ✅ Keeping original desktop layout */
+  display: none;
+  align-items: center;
+  gap: var(--spacing-2);
+  
+  /* 🆕 2026: Glassmorphism nav container */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: var(--spacing-2);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  
+  /* 🆕 2026: Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.navModern:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* 🎨 2026: Enhanced Nav Items */
+.navItem {
+  /* ✅ Keeping original layout */
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text-on-dark);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  
+  /* 🆕 2026: Enhanced glassmorphism */
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  /* 🆕 2026: 3D transform transitions */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 🆕 2026: Nav item shimmer effect */
+.navItem::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent
+  );
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+/* 🆕 2026: Enhanced nav item hover */
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.navItem:hover::before {
+  left: 100%;
+}
+
+.navItem:active {
+  transform: translateY(-1px) scale(1.01);
+  transition: all 0.15s ease-out;
+}
+
+/* 🎨 2026: Enhanced Nav Icons */
+.navIcon {
+  width: 18px;
+  height: 18px;
+  /* 🆕 2026: Icon enhancement */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  transition: filter 0.3s ease;
+}
+
+.navItem:hover .navIcon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* 🎨 2026: Enhanced User Badge */
+.userBadge {
+  /* ✅ Keeping original layout */
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: 12px;
+  cursor: pointer;
+  
+  /* 🆕 2026: Glassmorphism badge */
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  
+  /* 🆕 2026: Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 🆕 2026: Enhanced badge hover */
+.userBadge:hover {
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.12) 100%);
+  transform: translateY(-2px) scale(1.05);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.userBadge:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* 🆕 2026: User Avatar */
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-on-dark);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  
+  /* 🆕 2026: 3D effect */
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.userBadge:hover .userAvatar {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 6px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.userName {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-on-dark);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.userPoints {
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 🎨 2026: Enhanced Mobile Toggle */
+.sidebarToggle {
+  /* ✅ Keeping original properties */
+  display: block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-2);
+  border-radius: 12px;
+  
+  /* 🆕 2026: Glassmorphism toggle */
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  /* 🆕 2026: Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+}
+
+/* 🆕 2026: Enhanced toggle hover */
+.sidebarToggle:hover {
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.sidebarToggle:active {
+  transform: scale(1.02);
+  transition: all 0.15s ease-out;
+}
+
+/* 🆕 2026: Hamburger menu lines */
+.hamburgerLines {
+  width: 24px;
+  height: 18px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hamburgerLine {
+  width: 100%;
+  height: 2px;
+  background: var(--text-on-dark);
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 🆕 2026: Animated hamburger to X */
+.sidebarToggle.active .hamburgerLine:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.sidebarToggle.active .hamburgerLine:nth-child(2) {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.sidebarToggle.active .hamburgerLine:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* 📱 2026: Enhanced Mobile Navigation */
+.mobileNav {
+  /* ✅ Keeping original mobile behavior */
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  
+  /* 🆕 2026: Advanced glassmorphism mobile nav */
+  background: 
+    linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  /* 🆕 2026: Smooth transitions */
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 🆕 2026: Open mobile nav state */
+.mobileNav.open {
+  max-height: 300px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobileNavContent {
+  padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+/* 🎨 2026: Enhanced Mobile Nav Items */
+.mobileNavItem {
+  /* ✅ Keeping original mobile layout */
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text-on-dark);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  
+  /* 🆕 2026: Mobile glassmorphism */
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  /* 🆕 2026: Stagger animation */
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: mobileNavItemEnter 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.mobileNavItem:nth-child(1) { animation-delay: 0.1s; }
+.mobileNavItem:nth-child(2) { animation-delay: 0.2s; }
+.mobileNavItem:nth-child(3) { animation-delay: 0.3s; }
+.mobileNavItem:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes mobileNavItemEnter {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.mobileNavItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
+}
+
+/* 🆕 2026: Toast Notification Enhancement */
+.toast {
+  position: fixed;
+  bottom: var(--spacing-4);
+  right: var(--spacing-4);
+  z-index: 2000;
+  
+  /* 🆕 2026: Glassmorphism toast */
+  background: 
+    linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  color: var(--text-on-dark);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  /* 🆕 2026: Entrance animation */
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  animation: toastEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes toastEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 💻 2026: Desktop Styles */
+@media (min-width: 769px) {
+  .headerModern {
+    height: var(--header-height-desktop);
+  }
+  
+  .navModern {
+    display: flex;
+  }
+  
+  .sidebarToggle {
+    display: none;
+  }
+  
+  .mobileNav {
+    display: none;
+  }
+  
+  .headerContent {
+    padding: 0 var(--spacing-6);
+  }
+}
+
+/* 📱 2026: Mobile Optimizations */
+@media (max-width: 768px) {
+  .headerModern {
+    /* 🆕 2026: Reduced blur for mobile performance */
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+  }
+  
+  .navModern {
+    display: none;
+  }
+  
+  .userBadge {
+    padding: var(--spacing-1) var(--spacing-2);
+    gap: var(--spacing-1);
+  }
+  
+  .userAvatar {
+    width: 28px;
+    height: 28px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .userName {
+    display: none; /* Hide on very small screens */
+  }
+  
+  .userPoints {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  /* 🆕 2026: Simplified mobile interactions */
+  .mobileNavItem:hover {
+    transform: none; /* Remove transform on touch devices */
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* 💻 2026: Tablet Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .navItem {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+  
+  .navIcon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* 🎯 2026: Large Desktop Enhancements */
+@media (min-width: 1200px) {
+  .headerContent {
+    padding: 0 var(--spacing-8);
+  }
+  
+  .navItem {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+  
+  .userBadge {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+  
+  .userAvatar {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* 🔧 2026: Performance Mode */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable all advanced effects for better performance */
+  .headerModern,
+  .navModern,
+  .navItem,
+  .userBadge,
+  .sidebarToggle,
+  .mobileNav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    animation: none;
+    transform: none;
+  }
+  
+  .headerModern {
+    background: var(--bg-dark);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .navModern {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .navItem,
+  .userBadge,
+  .sidebarToggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .mobileNav {
+    background: var(--bg-dark);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}

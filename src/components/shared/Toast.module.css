@@ -1,0 +1,39 @@
+.toastContainer {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 2000;
+  pointer-events: none; /* allow clicks through when hidden */
+}
+
+.toast {
+  pointer-events: auto;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity 200ms ease, transform 200ms ease;
+  max-width: 90vw;
+}
+
+.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}

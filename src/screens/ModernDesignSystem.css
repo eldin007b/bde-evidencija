@@ -1,0 +1,262 @@
+/* ModernDesignSystem.css */
+/* 🎨 MODERN DESIGN SYSTEM - B&D Evidencija 2025 */
+/* ✅ Extends main design-system.css with utility classes */
+/* 🔗 Import main design system first in main.jsx */
+
+/* Note: Base variables are defined in /src/styles/design-system.css */
+/* This file provides utility classes and component-specific helpers */
+
+/* �️ GLASS MORPHISM UTILITY CLASSES */
+.glass-card {
+  background: var(--glass-light);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-glass);
+}
+
+.glass-button {
+  background: var(--glass-light);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-glass);
+  transition: var(--transition-base);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 🌈 GRADIENT UTILITIES - Using Design System */
+.gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.gradient-warm {
+  background: var(--gradient-warm);
+}
+
+.gradient-cool {
+  background: var(--gradient-cool);
+}
+
+.gradient-dark {
+  background: var(--gradient-dark);
+}
+
+/* ✨ MODERN SHADOWS - Using Design System */
+.shadow-glass {
+  box-shadow: var(--shadow-glass);
+}
+
+.shadow-floating {
+  box-shadow: var(--shadow-floating);
+}
+
+.shadow-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+.shadow-2xl {
+  box-shadow: var(--shadow-2xl);
+}
+
+/* 🎪 MODERN ANIMATIONS - Using Design System */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: var(--shadow-glow-primary); }
+  50% { box-shadow: var(--shadow-glow-primary-strong); }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+.glow-animation {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.slide-in {
+  animation: var(--animation-slide-in);
+}
+
+.fade-in {
+  animation: var(--animation-fade-in);
+}
+
+.scale-in {
+  animation: var(--animation-scale-in);
+}
+
+.slide-up {
+  animation: var(--animation-slide-up);
+}
+
+/* 🔧 UTILITY CLASSES */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-warm {
+  background: var(--gradient-warm);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-cool {
+  background: var(--gradient-cool);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 📱 RESPONSIVE TYPOGRAPHY - Using Design System */
+.typography-display {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: var(--line-height-tight);
+}
+
+.typography-heading {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.typography-title {
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+}
+
+.typography-body {
+  font-size: clamp(1rem, 2.5vw, 1.125rem);
+  line-height: var(--line-height-relaxed);
+}
+
+.typography-caption {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  color: var(--text-secondary);
+}
+
+/* ♿ ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 🌗 DARK MODE SUPPORT - Using Design System */
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: var(--glass-dark);
+    border-color: var(--border-glass);
+  }
+  
+  .glass-button {
+    background: var(--glass-dark);
+  }
+}
+
+/* 🖥️ DESKTOP OPTIMIZATIONS - Using Design System */
+@media (min-width: 1024px) {
+  .desktop-optimized {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .desktop-padding {
+    padding: var(--spacing-8);
+  }
+  
+  .desktop-gap {
+    gap: var(--spacing-8);
+  }
+}
+
+/* 📱 MOBILE OPTIMIZATIONS */
+@media (max-width: 768px) {
+  .mobile-full-width {
+    width: 100%;
+  }
+  
+  .mobile-padding {
+    padding: var(--spacing-4);
+  }
+  
+  .mobile-gap {
+    gap: var(--spacing-3);
+  }
+  
+  .mobile-hide {
+    display: none !important;
+  }
+}
+
+/* 🎯 INTERACTIVE STATES */
+.interactive-scale:hover {
+  transform: scale(1.05);
+  transition: var(--transition-base);
+}
+
+.interactive-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  transition: var(--transition-base);
+}
+
+.interactive-glow:hover {
+  box-shadow: var(--shadow-glow-primary);
+  transition: var(--transition-base);
+}

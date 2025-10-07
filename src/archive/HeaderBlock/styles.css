@@ -1,0 +1,49 @@
+/* HeaderBlock.css - Shared header style za sve screen komponente */
+
+.header-block {
+  margin-bottom: 20px;
+}
+
+.header-title-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  justify-content: space-between;
+}
+
+.header-title-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-title {
+  font-size: 1.8rem;
+  color: #222;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Hide header title on mobile devices */
+@media (max-width: 768px) {
+  .header-title {
+    display: none !important;
+  }
+}
+
+.header-subtitle {
+  font-size: 0.95rem;
+  color: #888;
+  font-family: 'Roboto', sans-serif;
+  margin-top: 2px;
+}
+
+/* Icon style */
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1976d2;
+}

@@ -1,0 +1,37 @@
+.closeButtonModern {
+  position: absolute;
+  top: var(--space-4, 16px);
+  right: var(--space-4, 16px);
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dark, #222);
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease;
+  z-index: 10;
+}
+
+.closeButtonModern:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.06);
+}
+
+.closeButtonModern:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 480px) {
+  .closeButtonModern {
+    top: var(--space-3, 12px);
+    right: var(--space-3, 12px);
+    width: 40px;
+    height: 40px;
+  }
+}

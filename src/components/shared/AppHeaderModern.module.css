@@ -1,0 +1,374 @@
+/* 🎨 Modern user section for header, responsive for mobile/desktop - Using Design System */
+.userSectionModern {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--color-primary-500);
+  border-radius: var(--radius-md);
+}
+.logoutBtnModern {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: var(--color-error);
+  color: var(--text-on-primary);
+  border: none;
+  border-radius: var(--radius-button);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+.headerModern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--gradient-primary);
+  color: var(--text-on-primary);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  z-index: var(--z-sticky);
+  min-height: 80px;
+}
+/* Mobile Toggle - Using Design System */
+.sidebarToggle {
+  display: none;
+  background: transparent;
+  border: none;
+  padding: var(--spacing-2);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: var(--transition-base);
+}
+.sidebarToggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 3px;
+  background: var(--text-on-primary);
+  margin: var(--spacing-1) 0;
+  transition: var(--transition-base);
+  border-radius: var(--radius-xs);
+}
+/* Navigation - Using Design System */
+.navModern {
+  display: flex;
+  gap: var(--spacing-4);
+  flex: 1;
+  justify-content: center;
+  max-width: 800px;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: none;
+  border-radius: var(--radius-lg);
+  color: var(--text-on-primary);
+  cursor: pointer;
+  transition: var(--transition-base);
+  animation: var(--animation-slide-up);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  min-width: 140px;
+  text-decoration: none;
+}
+.navItem:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  background: rgba(255, 255, 255, 0.25);
+}
+.navIcon {
+  font-size: var(--font-size-xl);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.navText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.navTitle {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  text-shadow: var(--shadow-text);
+}
+.navDesc {
+  font-size: var(--font-size-xs);
+  opacity: 0.9;
+  text-shadow: var(--shadow-text-subtle);
+}
+/* Gradient classes for nav items - Using Design System */
+.gradient-primary {
+  background: var(--gradient-primary) !important;
+}
+.gradient-warm {
+  background: var(--gradient-warm) !important;
+}
+.gradient-cool {
+  background: var(--gradient-cool) !important;
+}
+.gradient-dark {
+  background: var(--gradient-dark) !important;
+}
+/* User Section - Using Design System */
+.userSectionModern {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  position: relative;
+}
+.userBadgeModern {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-4);
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: var(--transition-base);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 160px;
+}
+.userBadgeModern:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-circle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+.userInfo {
+  display: flex;
+  flex-direction: column;
+}
+.userName {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  text-shadow: var(--shadow-text);
+}
+.userTour {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+  text-shadow: var(--shadow-text-subtle);
+}
+.logoutBtnModern {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg);
+  color: var(--text-on-primary);
+  cursor: pointer;
+  transition: var(--transition-base);
+  backdrop-filter: blur(10px);
+  font-weight: var(--font-weight-semibold);
+}
+.logoutBtnModern:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+.toastModern {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: var(--radius-lg);
+  color: var(--text-on-primary);
+  animation: var(--animation-slide-in);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: var(--z-dropdown);
+}
+/* Animations - Using Design System */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* 📱 MOBILE STYLES - Using Design System */
+@media (max-width: 768px) {
+  /* exported helper class used by JSX to toggle mobile open state via CSS Modules */
+  /* minimal exported helper so JS can toggle this class via CSS Modules */
+  .mobileOpen { display: block; }
+  .headerModern {
+    padding: var(--spacing-3);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    /* allow nav to wrap below the header when opened */
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sidebarToggle {
+    display: block;
+    order: 1;
+  }
+  .navModern {
+    /* keep nav in the DOM but visually collapsed to avoid header reflow */
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    max-height: 0; /* collapsed */
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 260ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease;
+    order: 3;
+    width: 100%;
+    margin-top: 0;
+    padding: 0; /* collapsed state has no padding */
+    overflow: hidden; /* hide children when collapsed */
+  }
+  /* When mobile menu is opened, show icon-only buttons in a single horizontal row */
+  .navModern.mobileOpen,
+  .navModern.navMobileOpen {
+    max-height: 260px; /* large enough for a single row of icons */
+    opacity: 1;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    /* distribute icons evenly */
+    justify-content: space-around;
+    gap: var(--spacing-2);
+    width: 100%;
+    order: 3;
+    margin-top: 0;
+    padding: var(--spacing-2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    z-index: var(--z-sticky); /* above header content */
+    /* visually match header so it looks like an extension */
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-2xl);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+  /* icon-only style for nav items when mobile open */
+  .navModern.mobileOpen .navItem,
+  .navModern.navMobileOpen .navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* allow items to flex and distribute evenly */
+    flex: 1 1 0;
+    min-width: 64px;
+    padding: var(--spacing-2) var(--spacing-1);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+  }
+  /* hide text and show only icons */
+  .navModern.mobileOpen .navText,
+  .navModern.navMobileOpen .navText {
+    display: block;
+    text-align: center;
+    margin-top: var(--spacing-1);
+  }
+  .navModern.mobileOpen .navText .navTitle,
+  .navModern.navMobileOpen .navText .navTitle {
+    display: block;
+    font-size: var(--font-size-xs);
+    line-height: 1;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-on-primary);
+  }
+  /* hide the longer description under icon to keep compact */
+  .navModern.mobileOpen .navText .navDesc,
+  .navModern.navMobileOpen .navText .navDesc {
+    display: none;
+  }
+  .navModern.mobileOpen .navIcon svg,
+  .navModern.navMobileOpen .navIcon svg {
+    width: 28px;
+    height: 28px;
+    color: var(--text-on-primary);
+    fill: currentColor;
+  }
+  /* subtle scrollbar styling */
+  .navModern.mobileOpen::-webkit-scrollbar { height: 6px; }
+  .navModern.mobileOpen::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: var(--radius-xs); }
+  /* Mobile: place user badge and logout in a single row */
+  .userSectionModern {
+    order: 2;
+    margin-left: auto;
+    gap: var(--spacing-2);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    /* allow the user section to size to content so it sits on same row as menu */
+    flex: 0 0 auto;
+    width: auto;
+  }
+  .userBadgeModern {
+    padding: var(--spacing-2) var(--spacing-3);
+    min-width: auto;
+    background: rgba(255,255,255,0.12);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+  /* Show user name and tour on mobile inside the badge */
+  .userInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: var(--spacing-1);
+  }
+  /* Keep logout button inline next to badge */
+  .logoutBtnModern {
+    margin-top: 0;
+    margin-left: var(--spacing-2);
+  }
+  .logoutBtnModern span {
+    display: inline;
+  }
+  .navItem {
+    min-width: auto;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 480px) {
+  .headerModern {
+    min-height: 70px;
+  }
+  .userBadgeModern {
+    min-width: auto;
+    padding: var(--spacing-2);
+  }
+  .logoutBtnModern {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+}

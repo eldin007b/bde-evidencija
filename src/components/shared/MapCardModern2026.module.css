@@ -1,0 +1,650 @@
+/* MapCardModern.module.css - USKLAĐENO SA SIDEBAR BOJAMA */
+.mapCardModern {
+  display: flex;
+  flex-direction: column;
+  /* Ultra-moderni glassmorphism kao sidebar */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-xl);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%; /* Ista visina kao sidebar */
+  max-height: 100vh;
+  box-sizing: border-box;
+  margin-right: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%; /* Ista visina kao sidebar */
+  max-height: 100vh;
+  box-sizing: border-box;
+  margin-right: 0;
+}
+
+.mapCardModern:hover {
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Address Bar - usklađeno sa sidebar glassmorphism */
+.addressBarIntegrated {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.1); /* Usklade sa sidebar */
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  width: 100%; /* ✅ Da ne prelazi ekran */
+  box-sizing: border-box;
+  z-index: 10000; /* 🔧 Dodajem z-index za parent container */
+}
+
+.mapControlsCompact {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8); /* 🔧 Prozirno umjesto solid */
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.controlBtn {
+  background: rgba(255, 255, 255, 0.7); /* 🔧 Prozirno umjesto solid */
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #475569;
+}
+
+.controlBtn:hover {
+  background: rgba(241, 245, 249, 0.8); /* 🔧 Prozirno umjesto solid */
+  backdrop-filter: blur(10px);
+  transform: scale(1.05);
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.controlBtn:active {
+  transform: scale(0.95);
+}
+
+/* Search container */
+.searchContainer {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%; /* ✅ Da ne prelazi ekran */
+  box-sizing: border-box;
+}
+
+.searchInputWrapper {
+  position: relative;
+  flex: 1;
+  z-index: 10001; /* 🔧 Dodajem z-index i za search wrapper */
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  width: 16px;
+  height: 16px;
+  z-index: 2;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 12px 12px 38px;
+  background: rgba(255, 255, 255, 0.8); /* 🔧 Prozirno umjesto solid */
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 12px;
+  font-size: 14px;
+  color: #1e293b;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(255, 255, 255, 0.9); /* 🔧 Prozirno umjesto solid */
+  backdrop-filter: blur(15px);
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+/* Navigate button */
+.navigateBtn {
+  padding: 12px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  position: relative;
+  z-index: 3;
+}
+
+.navigateBtn:hover:not([disabled]) {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.navigateBtn:active:not([disabled]) {
+  transform: translateY(0);
+}
+
+.navigateBtn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  background: #94a3b8;
+}
+
+/* Suggestions dropdown */
+.suggestionsDropdown {
+  position: absolute;
+  z-index: 9999 !important; /* 🔧 Maksimalni z-index sa !important */
+  left: 0;
+  right: 80px;
+  top: 100%;
+  margin-top: 4px;
+  background: rgba(255, 255, 255, 0.98) !important; /* 🔧 Skoro potpuno opaque */
+  backdrop-filter: blur(30px);
+  border: 2px solid rgba(59, 130, 246, 0.5);
+  border-radius: 12px;
+  max-height: 280px;
+  overflow: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); /* 🔧 Mnogo jača senka */
+  width: 100%; /* ✅ Da ne prelazi ekran */
+  box-sizing: border-box;
+}
+
+.suggestionItem {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #1e293b;
+}
+
+.suggestionItem:hover {
+  background: rgba(255, 255, 255, 0.15); /* Usklade sa glassmorphism */
+  backdrop-filter: blur(10px);
+}
+
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.suggestionAddress {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/* Map Content */
+.mapContent {
+  flex: 1 1 auto; /* Zauzmi prostor između address bar-a i footer-a */
+  min-height: 280px; /* Minimalna visina */
+  max-height: none; /* Ukloni ograničenje */
+  height: auto; /* Automatska visina unutar flex container-a */
+  background: linear-gradient(45deg, #1e293b 0%, #334155 100%);
+  position: relative;
+  width: 100%; /* ✅ Da ne prelazi ekran */
+  box-sizing: border-box;
+  overflow: hidden; /* Spreci overflow */
+}
+
+.mapLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 280px; /* 🔧 Smanjen za 20px: 300px → 280px */
+  background: rgba(0, 0, 0, 0.3);
+  color: #64748b;
+}
+
+/* Footer - potpuno usklađeno sa glassmorphism dizajnom */
+.mapFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  width: 100%; /* ✅ Da ne prelazi ekran */
+  box-sizing: border-box;
+}
+
+/* Allow small safe-area bottom inset for devices with notch */
+
+/* Footer address: tappable/expandable on mobile */
+.addressExpandable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.06);
+}
+.addressExpandable:active {
+  opacity: 0.9;
+}
+.expanded {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.addressInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Moderne SVG ikone */
+.modernLocationIcon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modernTargetIcon {
+  width: 18px; 
+  height: 18px;
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.currentAddress, .selectedAddress {
+  font-size: 14px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  color: var(--text-on-dark, #f1f5f9); /* Bijeli tekst za glassmorphism */
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.currentAddress {
+  color: var(--text-on-dark, #f1f5f9);
+  font-weight: 600;
+}
+
+.selectedAddress {
+  color: #44cadf; /* Savršena cyan boja za sivu pozadinu */
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Jača sjenka za kontrast */
+}
+
+.selectedAddress:hover {
+  color: #22d3ee; /* Svjetlija cyan na hover */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px); /* Blagi lift efekat */
+}
+
+.distanceInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.distanceInfoInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.distanceText {
+  font-size: 12px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.routeSummary {
+  color: #059669;
+  font-weight: 700;
+  background: #d1fae5;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.distanceSmall {
+  font-size: 10px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.spinnerWrapper {
+  display: inline-flex;
+  align-items: center;
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid transparent;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loadingSpinnerSmall {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .mapCardModern {
+    max-height: calc(100vh - var(--space-4) * 2 - 20px); /* 🔧 Skraćeno za 20px */
+    height: fit-content; /* 🔧 Prilagodi visinu sadržaju */
+    overflow: hidden; /* 🔧 Sprečava overflow */
+    width: calc(100% + 15px); /* 🔧 Manje proširenje na tablet/mobilnom */
+    margin-right: -15px;
+  }
+  
+  .addressBarIntegrated {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .mapControlsCompact {
+    align-self: stretch;
+    justify-content: center;
+    padding: 8px;
+  }
+  .searchContainer {
+    width: 100%;
+    flex-direction: row;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+  .suggestionsDropdown {
+    right: 70px;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 9999 !important; /* 🔧 Maksimalni z-index za mobile */
+  }
+  .navigateBtn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  .mapFooter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    /* Zadržaj glassmorphism i na mobile */
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.12) 0%, 
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .distanceInfo {
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+  .mapContent {
+    min-height: 180px; /* 🔧 Smanjen sa 200px za 20px */
+    max-height: calc(100vh - var(--space-4) * 2 - 20px); /* 🔧 Skraćeno za 20px */
+    height: fit-content; /* 🔧 Prilagodi sadržaju */
+    overflow: hidden; /* 🔧 Sprečava overflow */
+  }
+}
+
+@media (max-width: 480px) {
+  .mapCardModern {
+    border-radius: 12px;
+    max-height: calc(100vh - var(--space-4) * 2 - 20px); /* 🔧 Skraćeno za 20px */
+    height: fit-content;
+    overflow: hidden;
+    width: calc(100% + 10px); /* 🔧 Manje proširenje na malom ekranu */
+    margin-right: -10px;
+  }
+  .addressBarIntegrated {
+    padding: 8px;
+  }
+  .mapFooter {
+    padding: 8px;
+    /* Zadržaj glassmorphism i na tiny screens */
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.12) 0%, 
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .searchInput {
+    font-size: 16px;
+  }
+  .suggestionsDropdown {
+    right: 60px;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 9999 !important; /* 🔧 Maksimalni z-index za tiny screens */
+  }
+  .currentAddress, .selectedAddress {
+    font-size: 12px;
+  }
+  
+  /* 🔧 Dodatno ograničavanje visine za vrlo male ekrane */
+  .mapContent {
+    min-height: 200px; /* 🔧 Još manje za tiny screens */
+    max-height: calc(100vh - 150px); /* 🔧 Još manje prostora za header/footer */
+    height: auto;
+    overflow: hidden;
+  }
+  
+  /* 🔧 Dodano za floating kontrole na vrlo malim ekranima */
+  .mapControlsFloating {
+    top: 50%; /* 🔧 Centrisano i za tiny screens */
+    right: 10px;
+    transform: translateY(-50%); /* 🔧 Centriranje za tiny screens */
+    gap: 4px;
+    z-index: 1002; /* 🔧 Najviši z-index za najmanje ekrane */
+  }
+  
+  .floatingControlBtn {
+    width: 38px;
+    height: 38px;
+    padding: 6px;
+    background: linear-gradient(145deg, #3b82f6 0%, #1e40af 100%) !important; /* 🔧 Plava pozadina i na tiny ekranima */
+    border: 1px solid rgba(59, 130, 246, 0.4) !important; /* 🔧 Plava granica */
+    box-shadow: 
+      0 4px 12px rgba(59, 130, 246, 0.4),
+      0 2px 6px rgba(0, 0, 0, 0.1); /* 🔧 Plava senka */
+    color: #ffffff !important; /* 🔧 Bijele ikone */
+  }
+  
+  .floatingControlBtn:hover {
+    background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%) !important; /* 🔧 Jača plava na hover */
+    transform: scale(1.05);
+    box-shadow: 
+      0 8px 25px rgba(59, 130, 246, 0.5),
+      0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* 🎯 Floating Map Controls - Desna strana mape */
+.mapControlsFloating {
+  position: absolute;
+  top: 50%; /* 🔧 Centrisano vertikalno */
+  right: 16px;
+  transform: translateY(-50%); /* 🔧 Centriranje */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000; /* 🔧 Povećan z-index za mobilne */
+}
+
+.floatingControlBtn {
+  background: linear-gradient(145deg, #3b82f6 0%, #1e40af 100%); /* Plava pozadina */
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: #ffffff; /* Bijele ikone na plavoj pozadini */
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+  touch-action: manipulation; /* 🔧 Sprečava zoom na double-tap */
+  user-select: none; /* 🔧 Sprečava selekciju teksta */
+  -webkit-tap-highlight-color: transparent; /* 🔧 Uklanja highlight na touch */
+}
+
+.floatingControlBtn:hover {
+  background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%); /* Jača plava na hover */
+  backdrop-filter: blur(20px);
+  transform: scale(1.05);
+  border-color: #60a5fa;
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
+}
+
+.floatingControlBtn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile optimization za floating kontrole */
+@media (max-width: 767px) {
+  .mapControlsFloating {
+    top: 50%; /* 🔧 Centrisano i za mobile */
+    right: 12px;
+    transform: translateY(-50%); /* 🔧 Centriranje za mobile */
+    gap: 6px;
+    z-index: 1001; /* 🔧 Još veći z-index za mobile */
+    position: absolute; /* 🔧 Vraćeno na absolute jer je sada na dnu */
+  }
+  
+  .floatingControlBtn {
+    width: 42px; /* 🔧 Malo veći za lakše dodirivanje */
+    height: 42px;
+    padding: 8px;
+    background: linear-gradient(145deg, #3b82f6 0%, #1e40af 100%) !important; /* 🔧 Plava pozadina i na mobilnom */
+    backdrop-filter: blur(20px);
+    box-shadow: 
+      0 4px 12px rgba(59, 130, 246, 0.4),
+      0 2px 6px rgba(0, 0, 0, 0.1); /* 🔧 Plava senka umjesto crne */
+    border: 1px solid rgba(59, 130, 246, 0.4) !important; /* 🔧 Plava granica */
+    color: #ffffff !important; /* 🔧 Bijele ikone na plavoj pozadini */
+  }
+  
+  .floatingControlBtn:hover {
+    background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%) !important; /* 🔧 Jača plava na hover i na mobilnom */
+    transform: scale(1.05);
+    box-shadow: 
+      0 8px 25px rgba(59, 130, 246, 0.5),
+      0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}

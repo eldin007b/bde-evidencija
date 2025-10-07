@@ -1,0 +1,356 @@
+/* AboutScreenModern.css */
+.aboutScreenModern {
+  min-height: 100vh;
+  padding-top: var(--app-header-height, 80px);
+  /* Usklađena pozadina sa glavnim glassmorphism dizajnom */
+  background: linear-gradient(135deg, 
+    var(--color-dark-bg, #0b1220) 0%, 
+    var(--color-dark-surface, #0f172a) 50%,
+    var(--color-dark-card, #1e293b) 100%
+  );
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-4);
+  position: relative;
+}
+
+.aboutContainerModern {
+  /* Ultra-moderni glassmorphism kao sidebar i MapCard */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-2xl);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: var(--space-5);
+  width: 100%;
+  max-width: 95vw; /* KORISTI 95% ŠIRINE EKRANA */
+  margin: var(--space-4) auto;
+  animation: slideIn 0.6s ease-out;
+}
+
+/* MOBILE - MALO MANJA ŠIRINA */
+@media (max-width: 480px) {
+  .aboutContainerModern {
+    max-width: 92vw;
+    padding: var(--space-4);
+    margin: var(--space-3) auto;
+  }
+}
+
+/* TABLET - OPTIMIZIRANA ŠIRINA */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .aboutContainerModern {
+    max-width: 90vw;
+    padding: var(--space-6);
+    margin: var(--space-5) auto;
+  }
+}
+
+/* DESKTOP - MAKSIMALNA ŠIRINA */
+@media (min-width: 1025px) {
+  .aboutContainerModern {
+    max-width: min(1200px, 95vw); /* MAX 1200px ILI 95% EKRANA */
+    padding: var(--space-7);
+    margin: var(--space-6) auto;
+  }
+}
+
+/* GRID LAYOUT ZA BOLJE ISKORIŠTENJE PROSTORA NA ŠIREM EKRANU */
+.aboutGridModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+@media (max-width: 768px) {
+  .aboutGridModern {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+/* FULL WIDTH ELEMENTI */
+.fullWidthCard {
+  grid-column: 1 / -1;
+}
+
+/* OSTALI STILOVI OSTAJU ISTI */
+.aboutHeaderModern {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.aboutLogoModern {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-xl);
+  margin: 0 auto var(--space-4) auto;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(10px);
+  border: 2px solid var(--glass-border-light);
+  padding: var(--space-3);
+  animation: float 6s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aboutTitleModern {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--text-on-dark, #f1f5f9);
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.aboutSubtitleModern {
+  color: var(--text-on-dark, #f1f5f9);
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.glassCardModern {
+  /* Usklađeno sa glavnim glassmorphism dizajnom */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-xl);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  padding: var(--space-5);
+  transition: var(--transition-normal);
+  height: fit-content;
+}
+
+.glassCardModern:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+}
+
+/* STATS GRID - BOLJE RASPOOREDJIVANJE */
+.statsGridModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+}
+
+.statItemModern {
+  text-align: center;
+  padding: var(--space-4);
+  /* Usklade sa glassmorphism */
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.statItemModern:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.statNumberModern {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-on-dark, #f1f5f9);
+  display: block;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.statLabelModern {
+  font-size: 1rem;
+  color: var(--text-on-dark, #f1f5f9);
+  margin-top: var(--space-2);
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* TECH STACK - BOLJE RASPOOREDJIVANJE */
+.techStackModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.techTagModern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-3);
+  /* Usklade sa glassmorphism */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  color: var(--text-on-dark, #f1f5f9);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.techTagModern:hover {
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.18) 0%, 
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* CONTACT BUTTONS - BOLJE POZICIONIRANJE */
+.contactButtonsModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.contactButtonModern {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  /* Usklade sa glassmorphism */
+  background: linear-gradient(145deg, #44cadf 0%, #22d3ee 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(68, 202, 223, 0.4);
+  border-radius: var(--radius-lg);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: var(--transition-normal);
+  cursor: pointer;
+  min-height: 55px;
+  box-shadow: 
+    0 4px 12px rgba(68, 202, 223, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contactButtonModern:hover {
+  background: linear-gradient(145deg, #22d3ee 0%, #06b6d4 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(68, 202, 223, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* CHANGELOG - BOLJI LAYOUT */
+.changelogListModern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .changelogListModern {
+    grid-template-columns: 1fr;
+  }
+}
+
+.changelogItemModern {
+  /* Usklade sa glassmorphism dizajnom */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border-left: 4px solid #44cadf;
+  transition: var(--transition-normal);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.changelogItemModern:hover {
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.changelogHeaderModern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.changelogVersionModern {
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+}
+
+.changelogDateModern {
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.changelogDetailsModern {
+  color: var(--text-dark);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.aboutFooterModern {
+  text-align: center;
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.footerTextModern {
+  color: var(--text-dark);
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.footerSubtextModern {
+  color: var(--text-dark);
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: var(--space-1);
+}

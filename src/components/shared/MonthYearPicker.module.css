@@ -1,0 +1,425 @@
+/* Month Year Picker Component Styles */
+
+.monthYearPicker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50000; /* High z-index for the main component */
+}
+
+.inputWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: pointer;
+  background: transparent;
+  z-index: 50001; /* Above the main component */
+}
+
+.input {
+  display: none; /* Hide the input since we're using text display */
+}
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(30, 41, 59, 0.9)) !important;
+  backdrop-filter: blur(12px) saturate(150%) !important;
+  z-index: 2147483647 !important; /* Maximum possible z-index value */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  animation: fadeIn 0.3s ease-out;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Popup Modal */
+.pickerDropdown {
+  position: relative !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.98)) !important;
+  backdrop-filter: blur(25px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 30px 100px rgba(0, 0, 0, 0.3),
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  overflow: hidden;
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  width: 450px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  z-index: 2147483647 !important; /* Maximum possible z-index value */
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Modal Header */
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8)) !important;
+  backdrop-filter: blur(10px);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e293b, #475569);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  letter-spacing: -0.025em;
+}
+
+.closeButton {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.1), rgba(239, 68, 68, 0.15)) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #dc2626;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+}
+
+.closeButton:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.2)) !important;
+  border-color: rgba(220, 38, 38, 0.4) !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+/* Sections */
+.monthsSection,
+.yearsSection {
+  padding: 24px;
+}
+
+.yearsSection {
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.5), rgba(241, 245, 249, 0.3));
+}
+
+/* Months Grid */
+.monthsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.monthButton {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.6));
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.monthButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+.monthButton:hover::before {
+  left: 100%;
+}
+
+.monthButton:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+}
+
+.monthButton.selected {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  border: 3px solid #000000 !important;
+  color: white !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5), 0 8px 25px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Performance-based styling */
+.monthButton.positive {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1)) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #065f46 !important;
+}
+
+.monthButton.positive:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15)) !important;
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.25);
+}
+
+.monthButton.negative {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1)) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #7f1d1d !important;
+}
+
+.monthButton.negative:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15)) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.25);
+}
+
+.monthButton.neutral {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.15), rgba(75, 85, 99, 0.1)) !important;
+  border-color: rgba(107, 114, 128, 0.4) !important;
+  color: #374151 !important;
+}
+
+/* Current month styling - half red, half green */
+.monthButton.current {
+  background: linear-gradient(45deg, rgba(239, 68, 68, 0.2) 50%, rgba(16, 185, 129, 0.2) 50%) !important;
+  border-color: rgba(156, 163, 175, 0.6) !important;
+  color: #374151 !important;
+  position: relative;
+}
+
+.monthButton.current::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(239, 68, 68, 0.1) 0%, 
+    rgba(239, 68, 68, 0.1) 50%, 
+    rgba(16, 185, 129, 0.1) 50%, 
+    rgba(16, 185, 129, 0.1) 100%);
+  border-radius: inherit;
+}
+
+.monthButton.current:hover {
+  background: linear-gradient(45deg, rgba(239, 68, 68, 0.3) 50%, rgba(16, 185, 129, 0.3) 50%) !important;
+  border-color: rgba(107, 114, 128, 0.8) !important;
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.2);
+}
+
+/* Years Grid */
+.yearsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.yearButton {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.6));
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.yearButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+.yearButton:hover::before {
+  left: 100%;
+}
+
+.yearButton:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+}
+
+.yearButton.selected {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border: 3px solid #000000 !important;
+  color: white !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5), 0 8px 25px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 16px !important;
+  }
+  
+  .pickerDropdown {
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: auto !important;
+    max-height: 90vh !important;
+    border-radius: 16px !important;
+  }
+  
+  .modalHeader {
+    padding: 20px 20px 12px 20px;
+  }
+  
+  .modalTitle {
+    font-size: 1.375rem;
+  }
+  
+  .closeButton {
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+  }
+  
+  .monthsSection,
+  .yearsSection {
+    padding: 20px;
+  }
+  
+  .monthsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  
+  .yearsGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .monthButton,
+  .yearButton {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalOverlay {
+    padding: 12px !important;
+  }
+  
+  .pickerDropdown {
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 12px !important;
+  }
+  
+  .modalHeader {
+    padding: 16px 16px 8px 16px;
+  }
+  
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+  
+  .monthsSection,
+  .yearsSection {
+    padding: 16px;
+  }
+  
+  .monthsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .yearsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  
+  .monthButton,
+  .yearButton {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+  }
+}
+
+.monthButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loadingDot {
+  margin-left: 4px;
+  animation: pulse 1s infinite;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}

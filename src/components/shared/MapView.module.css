@@ -1,0 +1,229 @@
+/* MapView.module.css - styles for MapView component
+   Dark themed, responsive, accessible, with animations
+*/
+/* This module relies on global variables from src/styles/theme.module.css */
+
+.mapContainer{
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.leafletContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* allow parent flex to shrink elements properly */
+.mapContainer, .leafletContainer {
+  min-height: 0;
+}
+
+/* SEARCH OVERLAY */
+.searchOverlay{
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 720px);
+  background: linear-gradient(180deg, rgba(23,25,40,0.94), rgba(28,30,44,0.88));
+  color: var(--text);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px var(--card-shadow), 0 1px 0 rgba(59,176,255,0.06) inset;
+  border: 1px solid var(--card-border);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1400;
+  will-change: transform, opacity;
+  animation: slideInDown 260ms cubic-bezier(.2,.8,.2,1);
+}
+
+.searchForm{
+  width: 100%;
+}
+
+.searchInput{
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  transition: box-shadow 160ms, transform 160ms;
+}
+
+.searchInput:focus{
+  box-shadow: 0 6px 18px rgba(59,176,255,0.12), 0 0 10px rgba(167,139,250,0.06);
+  border-color: rgba(59,176,255,0.36);
+  transform: translateY(-2px);
+}
+
+.suggestionsBox{
+  max-height: 320px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--glass), rgba(0,0,0,0.02));
+  border: 1px solid rgba(255,255,255,0.02);
+  animation: fadeIn 180ms ease-out;
+}
+
+.noResults{
+  color: var(--muted);
+  padding: 12px;
+  text-align: center;
+}
+
+.suggestionItem{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms;
+}
+
+.suggestionItem:hover,
+.suggestionItem:focus{
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(11,84,132,0.20), 0 2px 0 rgba(255,255,255,0.02) inset;
+  background: rgba(59,176,255,0.04);
+  outline: none;
+}
+
+.suggestionActive{
+  background: linear-gradient(90deg, rgba(59,176,255,0.06), rgba(167,139,250,0.04));
+  box-shadow: 0 12px 36px rgba(11,84,132,0.18);
+  transform: translateY(-3px);
+}
+
+.suggestionMain{
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--text);
+}
+
+.suggestionMeta{
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.suggestionType{
+  opacity: 0.9;
+}
+
+.suggestionDistance{
+  color: var(--accent2);
+  font-weight: 700;
+}
+
+/* Popup content inside Leaflet popup -> styled container */
+.popupContent{
+  min-width: 180px;
+  max-width: 340px;
+  background: linear-gradient(180deg, #11131a, #151720);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 30px var(--card-shadow);
+}
+
+.popupCloseBtn{
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.popupCloseBtn:hover,
+.popupCloseBtn:focus{
+  color: var(--accent);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.popupAddress{
+  font-weight: 700;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.popupNavBtn{
+  align-self: stretch;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #fff;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.popupNavBtn:hover,
+.popupNavBtn:active{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(59,176,255,0.18);
+}
+
+/* Animations */
+@keyframes slideInDown{
+  from { opacity: 0; transform: translateY(-8px) translateX(-50%); }
+  to { opacity: 1; transform: translateY(0) translateX(-50%); }
+}
+
+@keyframes fadeIn{
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* RESPONSIVE RULES */
+@media (max-width: 767px) {
+  .searchOverlay{ left: 8px; transform: none; right: 8px; top: 10px; border-radius: 10px; }
+  .searchInput{ font-size: 0.95rem; padding: 8px 10px; }
+  .leafletContainer{ min-height: 240px; }
+  .popupContent{ border-radius: 10px; }
+  .mapContainer{ padding-bottom: 0; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .searchOverlay{ width: min(88%, 640px); border-radius: 12px; }
+  .leafletContainer{ min-height: 360px; }
+}
+
+@media (min-width: 1024px) {
+  .searchOverlay{ width: min(64%, 720px); top: 18px; border-radius: 12px; }
+  .leafletContainer{ min-height: 420px; }
+  .mapContainer{ will-change: transform; }
+  .popupContent{ border-radius: 8px; }
+}
+
+/* Accessibility focus ring for interactive list items */
+.suggestionItem:focus-visible{ box-shadow: 0 0 0 3px rgba(59,176,255,0.18); }

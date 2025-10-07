@@ -1,0 +1,42 @@
+/* FilterBar.css - Shared filter style za sve screen komponente */
+
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  background: rgba(255,255,255,0.9);
+  border: 2px solid #1976d2;
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  color: #1976d2;
+  font-weight: 600;
+  outline: none;
+  min-width: 120px;
+  text-align: center;
+}
+
+.filter-select:focus {
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.filter-driver-select {
+  min-width: 160px;
+}
+
+/* Responsive design */
+@media screen and (max-width: 600px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+}

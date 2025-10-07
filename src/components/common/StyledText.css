@@ -1,0 +1,9 @@
+.styled-text {
+  font-size: 1rem;
+  color: #333;
+  margin: 0.2rem 0;
+}
+.styled-text.secondary {
+  color: #666;
+  font-size: 0.9rem;
+}

@@ -1,0 +1,11 @@
+.styled-card {
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 1rem;
+  margin: 0.5rem;
+  transition: transform 0.2s ease;
+}
+.styled-card:hover {
+  transform: translateY(-2px);
+}

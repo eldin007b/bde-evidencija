@@ -1,0 +1,267 @@
+/* AdminPanelScreen.module.css - Modernizovan sa glassmorphism dizajnom */
+
+.screenContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* Usklađeno sa AboutScreen pozadinom */
+  background: linear-gradient(135deg, 
+    var(--color-dark-bg, #0b1220) 0%, 
+    var(--color-dark-surface, #0f172a) 50%,
+    var(--color-dark-card, #1e293b) 100%
+  );
+  overflow: hidden;
+  padding-top: var(--app-header-height, 80px);
+}
+
+.header {
+  /* Ultra-moderni glassmorphism header */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 1.5rem;
+  z-index: 100;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.titleIcon {
+  width: 2rem;
+  height: 2rem;
+  color: #44cadf;
+  filter: drop-shadow(0 2px 4px rgba(68, 202, 223, 0.3));
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-on-dark, #f1f5f9);
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  /* Glassmorphism container za tabove */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-xl);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  /* Moderan glassmorphism tab dizajn */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.08) 0%, 
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  color: var(--text-on-dark, #f1f5f9);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab:hover {
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.15),
+    0 2px 8px rgba(68, 202, 223, 0.2);
+}
+
+.activeTab {
+  background: linear-gradient(145deg, #44cadf 0%, #22d3ee 100%) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(68, 202, 223, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.tabIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+.tabContent {
+  min-height: 400px;
+  animation: fadeIn 0.4s ease;
+}
+
+.card {
+  /* Ultra-moderni glassmorphism card dizajn */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+}
+
+.card h2 {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-on-dark, #f1f5f9);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card p {
+  margin: 0;
+  color: var(--text-on-dark, #f1f5f9);
+  opacity: 0.9;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+
+.dashboardContent,
+.usersContent,
+.settingsContent {
+  animation: slideInUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .content {
+    padding: 1rem;
+  }
+  
+  .tabsContainer {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .tab {
+    padding: 1rem;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  .card {
+    padding: 1.5rem;
+  }
+  
+  .card h2 {
+    font-size: 1.2rem;
+  }
+  
+  .header {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .screenContainer {
+    padding-top: 60px;
+  }
+  
+  .card {
+    padding: 1rem;
+  }
+  
+  .headerContent {
+    gap: 1rem;
+  }
+  
+  .titleIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}

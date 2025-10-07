@@ -1,0 +1,622 @@
+/* ==========================================================================
+   🎨 FIXED MODERN SIDEBAR 2026 - BDE Evidencija
+   Perfektno funkcionalni glassmorphism sidebar sa validnim varijablama
+   ========================================================================== */
+
+@keyframes driverCardFade {
+  0% { opacity: 0.2; transform: scale(0.96); }
+  60% { opacity: 0.7; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes warningBlink {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239,68,68,0.35);
+    border-color: var(--color-error);
+  }
+  25% {
+    box-shadow: 0 0 16px 6px rgba(239,68,68,0.85);
+    border-color: #b91c1c;
+  }
+  50% {
+    box-shadow: 0 0 24px 12px rgba(239,68,68,1);
+    border-color: #dc2626;
+  }
+  75% {
+    box-shadow: 0 0 16px 6px rgba(239,68,68,0.85);
+    border-color: #b91c1c;
+  }
+}
+
+@keyframes spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 12px rgba(239, 68, 68, 0.8),
+      0 0 20px rgba(239, 68, 68, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.8);
+    transform: scale(1);
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 4px;
+  }
+  50% {
+    text-shadow: 
+      0 0 24px rgba(239, 68, 68, 1),
+      0 0 36px rgba(239, 68, 68, 0.8),
+      0 0 48px rgba(239, 68, 68, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.8);
+    transform: scale(1.15);
+    background: rgba(239, 68, 68, 0.25);
+    border-radius: 6px;
+  }
+}
+
+/* =======================================================================
+   🎯 MAIN SIDEBAR CONTAINER
+   ======================================================================= */
+.sidebarModern {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  max-height: 100vh;
+  overflow: hidden;
+  flex-shrink: 0;
+  
+  /* Ultra-moderni glassmorphism */
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  /* Tipografija */
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: var(--text-on-dark);
+}
+
+.driverCardFade {
+  animation: driverCardFade 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* =======================================================================
+   👤 DRIVER CARD SECTION
+   ======================================================================= */
+.driverCardModern {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.driverCardModern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.15), 
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.driverCardModern:hover::before {
+  left: 100%;
+}
+
+.driverCardModern:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(14, 165, 233, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.2) 0%, 
+    rgba(255, 255, 255, 0.08) 100%
+  );
+}
+
+.driverCardModern:active {
+  transform: translateY(-1px);
+  transition: transform 0.1s ease;
+}
+
+.driverCardModern.switching {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.driverHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.driverAvatar {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, 
+    rgba(14, 165, 233, 0.2) 0%, 
+    rgba(14, 165, 233, 0.3) 100%
+  );
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 16px rgba(14, 165, 233, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.driverAvatar:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, 
+    rgba(14, 165, 233, 0.25) 0%, 
+    rgba(14, 165, 233, 0.35) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 6px 20px rgba(14, 165, 233, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.driverAvatar svg {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.driverAvatar:hover svg {
+  transform: scale(1.1);
+  color: rgba(255, 255, 255, 1);
+}
+
+.loadingSpinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border: 3px solid transparent;
+  border-top: 3px solid rgba(14, 165, 233, 0.7);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+.driverInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.driverName {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 0.25rem 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.driverTour {
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: var(--font-weight-medium);
+}
+
+.driverTarget {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.driverTarget:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.02);
+}
+
+.targetValue {
+  font-weight: var(--font-weight-bold);
+  color: rgba(14, 165, 233, 0.9);
+}
+
+.targetLabel {
+  opacity: 0.8;
+  font-size: var(--font-size-xs);
+}
+
+/* =======================================================================
+   📊 STATISTICS SECTION
+   ======================================================================= */
+.statsSectionModern {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.statsGridModern {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Smanjeno sa 0.75rem na 0.5rem */
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  /* Bolje upravljanje visinom */
+  flex: 1;
+  min-height: 0;
+}
+
+.statsGridModern::-webkit-scrollbar {
+  width: 4px;
+}
+
+.statsGridModern::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.statsGridModern::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.statsGridModern::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.statCardModern {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem; /* Smanjeno sa 1rem na 0.75rem */
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.statCardModern:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.statHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Smanjeno sa 0.75rem */
+  margin-bottom: 0.75rem; /* Smanjeno sa 1rem */
+  padding-bottom: 0.5rem; /* Smanjeno sa 0.75rem */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.statIcon {
+  color: rgba(14, 165, 233, 0.8);
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+  font-size: 1.25rem;
+}
+
+.statCardModern:hover .statIcon {
+  color: rgba(14, 165, 233, 0.9);
+  transform: scale(1.08);
+}
+
+.statPeriod {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.01em;
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Smanjeno sa 1rem */
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.statLabelContainer {
+  flex: 1;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.01em;
+}
+
+.statValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.98);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.02em;
+}
+
+.statValue.statGood {
+  color: #22c55e !important; /* Pojačana zelena boja */
+  text-shadow: 
+    0 0 8px rgba(34, 197, 94, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: var(--font-weight-extrabold);
+  filter: brightness(1.2);
+}
+
+.statValue.statBad {
+  color: #ef4444 !important; /* Pojačana crvena boja */
+  text-shadow: 
+    0 0 8px rgba(239, 68, 68, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: var(--font-weight-extrabold);
+  filter: brightness(1.2);
+}
+
+.statValue.neutral {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.statValueBox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 3px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  min-width: 75px;
+  min-height: 32px;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+
+.statValueBox:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.03);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.statValueBoxWarning {
+  animation: warningBlink 1.5s ease-in-out infinite;
+  border: 2px solid var(--color-error);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error) !important;
+}
+
+.warningPulse {
+  animation: warningPulse 1.5s ease-in-out infinite;
+  font-weight: var(--font-weight-extrabold) !important;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+/* =======================================================================
+   📱 RESPONSIVE DESIGN
+   ======================================================================= */
+
+/* Desktop optimizacija - kompaktni layout bez scroll-a */
+@media (min-width: 1025px) {
+  .sidebarModern {
+    gap: 0.75rem; /* Smanjeno sa 1rem */
+  }
+  
+  .driverCardModern {
+    padding: 0.75rem; /* Kompaktniji na desktopu */
+  }
+  
+  .driverHeader {
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .statsSectionModern {
+    gap: 0.5rem;
+  }
+  
+  .statsGridModern {
+    gap: 0.5rem; /* Još manje spacing na desktopu */
+  }
+  
+  .statCardModern {
+    padding: 0.5rem; /* Vrlo kompaktno na desktopu */
+  }
+  
+  .statHeader {
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+  }
+  
+  .statContent {
+    gap: 0.5rem;
+  }
+  
+  .statRow {
+    padding: 0.25rem 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebarModern {
+    gap: 1rem;
+    height: auto; /* Ukloni fiksnu visinu na mobile */
+    max-height: none; /* Ukloni ograničenje visine */
+    padding-bottom: 0; /* Ukloni prazan prostor na dnu */
+  }
+  
+  .driverCardModern {
+    padding: 1rem;
+    min-height: 48px;
+  }
+  
+  .driverCardModern:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  .driverHeader {
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .driverAvatar {
+    width: 50px;
+    height: 50px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .driverName {
+    font-size: var(--font-size-lg);
+  }
+  
+  .driverTour {
+    font-size: var(--font-size-xs);
+  }
+  
+  .driverTarget {
+    gap: 0.25rem;
+    min-height: 40px;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .statsSectionModern {
+    padding: 1rem;
+  }
+  
+  .statsGridModern {
+    gap: 0.75rem;
+  }
+  
+  .statCardModern {
+    padding: 0.75rem;
+    min-height: 80px;
+  }
+  
+  .statCardModern:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  .statHeader {
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .statPeriod {
+    font-size: var(--font-size-sm);
+  }
+  
+  .statLabel {
+    font-size: var(--font-size-sm);
+  }
+  
+  .statValue {
+    font-size: var(--font-size-sm);
+  }
+  
+  .statLabelContainer {
+    gap: 0.25rem;
+  }
+  
+  .statRow {
+    padding: 0.5rem 0;
+    min-height: 32px;
+  }
+  
+  .statRow:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  
+  /* Disable complex animations on mobile for performance */
+  .driverCardModern::before,
+  .statCardModern::before {
+    display: none;
+  }
+}
