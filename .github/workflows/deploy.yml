@@ -1,0 +1,69 @@
+name: 🚀 Deploy BD Evidencija v5.0 PWA
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📦 Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: 📱 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📥 Install dependencies
+      run: npm ci
+      
+    - name: 🔧 Build application
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+        VITE_PUSH_API_URL: ${{ secrets.VITE_PUSH_API_URL }}
+        VITE_APP_VERSION: ${{ secrets.VITE_APP_VERSION }}
+        VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
+        VITE_GITHUB_TOKEN: ${{ secrets.VITE_GITHUB_TOKEN }}
+        VITE_GITHUB_REPO: ${{ secrets.VITE_GITHUB_REPO }}
+        VITE_WORKFLOW_FILE: ${{ secrets.VITE_WORKFLOW_FILE }}
+        VITE_GOOGLE_DRIVE_API_KEY: ${{ secrets.VITE_GOOGLE_DRIVE_API_KEY }}
+        VITE_GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.VITE_GOOGLE_DRIVE_FOLDER_ID }}
+        VITE_MAPQUEST_API_KEY: ${{ secrets.VITE_MAPQUEST_API_KEY }}
+        NODE_ENV: production
+      run: npm run build
+      
+    - name: 🧪 Run tests (if available)
+      run: npm test -- --passWithNoTests
+      continue-on-error: true
+      
+    - name: 📄 Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: 📤 Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './dist'
+        
+    - name: 🚀 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  notify-deployment:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+    - name: 🎉 Deployment Success
+      run: |
+        echo "🎊 BD Evidencija v5.0.0 PWA successfully deployed!"
+        echo "📱 PWA is now available with push notifications"
+        echo "🔔 Users can install the app from their browser"
