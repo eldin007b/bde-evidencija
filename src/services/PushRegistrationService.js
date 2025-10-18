@@ -5,7 +5,7 @@ import { supabase } from '../db/supabaseClient';
 
 class PushRegistrationService {
   constructor() {
-    this.vapidPublicKey = 'BLeZWVsLWNC_Y-lzWnsrZQXIjCTxtPXHPSlDB4v6As_QyKzguPKE7AwxCb3h4PCEG9JaHhw0dgS3VhXCKohTyqE';
+    this.vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BLeZWVsLWNC_Y-lzWnsrZQXIjCTxtPXHPSlDB4v6As_QyKzguPKE7AwxCb3h4PCEG9JaHhw0dgS3VhXCKohTyqE';
     this.isRegistered = false;
   }
 

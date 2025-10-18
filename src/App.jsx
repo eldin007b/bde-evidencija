@@ -10,6 +10,7 @@ import useSimpleAuth from './hooks/useSimpleAuth.js';
 import AuthFlowManager from './components/AuthFlowManager.jsx';
 import PasswordChangeModal from './components/common/PasswordChangeModal.jsx';
 import realtimeService from './services/RealtimeService.js';
+import pushRegistrationService from './services/PushRegistrationService.js';
 
 // Lazy loading za bolje performanse - komponente se učitavaju tek kad su potrebne
 const HomeScreenModern = React.lazy(() => import('./screens/HomeScreenModern.jsx'));
@@ -52,6 +53,21 @@ function AppContent({ onLogout }) {
     if (currentUser) {
       console.log('🚀 Starting realtime service for user:', currentUser.name);
       realtimeService.start();
+      
+      // 🔔 Automatski registruj push notifikacije
+      setTimeout(async () => {
+        try {
+          console.log('🔔 Auto-registering push notifications...');
+          const result = await pushRegistrationService.requestPermissionAndRegister(currentUser.id || 'admin', currentUser.role || 'admin');
+          if (result.success) {
+            console.log('✅ Push notifications registered successfully');
+          } else {
+            console.log('⚠️ Push notifications registration failed:', result.reason);
+          }
+        } catch (error) {
+          console.error('❌ Push registration error:', error);
+        }
+      }, 2000); // Čekaj 2 sekunde da se aplikacija učita
       
       return () => {
         console.log('🛑 Stopping realtime service');

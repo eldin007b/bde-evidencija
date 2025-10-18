@@ -52,7 +52,12 @@ jobs:
       run: npm run build
       
     - name: 🧪 Run tests (if available)
-      run: npm test -- --passWithNoTests
+      run: |
+        if npm run | grep -q "test"; then
+          npm test -- --passWithNoTests
+        else
+          echo "No test script found, skipping tests"
+        fi
       continue-on-error: true
       
     - name: 📄 Setup Pages
