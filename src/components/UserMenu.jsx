@@ -13,10 +13,15 @@ import {
   Activity,
   Clock,
   Truck,
+  Bell,
+  BellOff,
 } from "lucide-react";
+import pushRegistrationService from '../services/PushRegistrationService';
 
 export default function UserMenu({ user, onChangePassword, onLogout, scraperData, currentTheme = 'default', themes }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -61,6 +66,42 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
       }
     }
     return "Nepoznato";
+  };
+
+  // 🔔 Check notifications status on component mount
+  useEffect(() => {
+    const checkNotificationStatus = async () => {
+      if (pushRegistrationService.isSupported()) {
+        const isRegistered = await pushRegistrationService.checkRegistrationStatus(user?.id || 'admin');
+        setNotificationsEnabled(isRegistered);
+      }
+    };
+    checkNotificationStatus();
+  }, [user]);
+
+  // 🔔 Toggle push notifications
+  const toggleNotifications = async () => {
+    setNotificationsLoading(true);
+    try {
+      if (notificationsEnabled) {
+        // Disable notifications - can't really "unregister" but can indicate disabled state
+        setNotificationsEnabled(false);
+        console.log('🔕 Notifications disabled');
+      } else {
+        // Enable notifications
+        const result = await pushRegistrationService.requestPermissionAndRegister(user?.id || 'admin', user?.role || 'user');
+        if (result.success) {
+          setNotificationsEnabled(true);
+          console.log('🔔 Notifications enabled');
+        } else {
+          console.error('Failed to enable notifications:', result.reason);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling notifications:', error);
+    } finally {
+      setNotificationsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -322,6 +363,31 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                   Promijeni šifru
                 </Button>
               </motion.div>
+              
+              {/* 🔔 Push Notifications Toggle */}
+              {pushRegistrationService.isSupported() && (
+                <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={notificationsLoading}
+                    className={`w-full justify-start text-left ${currentTheme === 'night' 
+                      ? `hover:bg-gray-700/50 ${notificationsEnabled ? 'text-green-400' : 'text-gray-400'}` 
+                      : `hover:bg-blue-50 ${notificationsEnabled ? 'text-green-600' : 'text-gray-600'}`
+                    } rounded-xl transition-all duration-300 py-2 text-sm`}
+                    onClick={() => handleMenuItemClick(toggleNotifications)}
+                  >
+                    {notificationsLoading ? (
+                      <div className="w-4 h-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full" />
+                    ) : notificationsEnabled ? (
+                      <Bell className="w-4 h-4 mr-2" />
+                    ) : (
+                      <BellOff className="w-4 h-4 mr-2" />
+                    )}
+                    {notificationsLoading ? 'Učitava...' : notificationsEnabled ? 'Obavještenja uključena' : 'Uključi obavještenja'}
+                  </Button>
+                </motion.div>
+              )}
               
               <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
                 <Button
