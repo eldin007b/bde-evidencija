@@ -366,27 +366,57 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
               
               {/* 🔔 Push Notifications Toggle */}
               {pushRegistrationService.isSupported() && (
-                <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={notificationsLoading}
-                    className={`w-full justify-start text-left ${currentTheme === 'night' 
-                      ? `hover:bg-gray-700/50 ${notificationsEnabled ? 'text-green-400' : 'text-gray-400'}` 
-                      : `hover:bg-blue-50 ${notificationsEnabled ? 'text-green-600' : 'text-gray-600'}`
-                    } rounded-xl transition-all duration-300 py-2 text-sm`}
-                    onClick={() => handleMenuItemClick(toggleNotifications)}
-                  >
-                    {notificationsLoading ? (
-                      <div className="w-4 h-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full" />
-                    ) : notificationsEnabled ? (
-                      <Bell className="w-4 h-4 mr-2" />
-                    ) : (
-                      <BellOff className="w-4 h-4 mr-2" />
-                    )}
-                    {notificationsLoading ? 'Učitava...' : notificationsEnabled ? 'Obavještenja uključena' : 'Uključi obavještenja'}
-                  </Button>
-                </motion.div>
+                <>
+                  <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={notificationsLoading}
+                      className={`w-full justify-start text-left ${currentTheme === 'night' 
+                        ? `hover:bg-gray-700/50 ${notificationsEnabled ? 'text-green-400' : 'text-gray-400'}` 
+                        : `hover:bg-blue-50 ${notificationsEnabled ? 'text-green-600' : 'text-gray-600'}`
+                      } rounded-xl transition-all duration-300 py-2 text-sm`}
+                      onClick={() => handleMenuItemClick(toggleNotifications)}
+                    >
+                      {notificationsLoading ? (
+                        <div className="w-4 h-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full" />
+                      ) : notificationsEnabled ? (
+                        <Bell className="w-4 h-4 mr-2" />
+                      ) : (
+                        <BellOff className="w-4 h-4 mr-2" />
+                      )}
+                      {notificationsLoading ? 'Učitava...' : notificationsEnabled ? 'Obavještenja uključena' : 'Uključi obavještenja'}
+                    </Button>
+                  </motion.div>
+                  
+                  {/* 🧪 Test Notification Button */}
+                  {notificationsEnabled && (
+                    <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        variant="ghost" 
+                        size="sm"
+                        className={`w-full justify-start text-left ${currentTheme === 'night' 
+                          ? 'hover:bg-gray-700/50 text-purple-400' 
+                          : 'hover:bg-purple-50 text-purple-600'
+                        } rounded-xl transition-all duration-300 py-2 text-sm`}
+                        onClick={async () => {
+                          handleMenuItemClick(async () => {
+                            console.log('🧪 Testing push notification...');
+                            const result = await pushRegistrationService.sendTestNotification();
+                            if (result) {
+                              console.log('✅ Test notification sent successfully');
+                            } else {
+                              console.error('❌ Test notification failed');
+                            }
+                          });
+                        }}
+                      >
+                        <Activity className="w-4 h-4 mr-2" />
+                        Test obavještenje
+                      </Button>
+                    </motion.div>
+                  )}
+                </>
               )}
               
               <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
