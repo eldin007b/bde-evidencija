@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="bs">
+  <head>
+    <meta charset="UTF-8" />
+    
+    <!-- Cache Busting -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="cache-buster" content="PWA-READY-v5.0.0-20251018-PUSH-NOTIFICATIONS" />
+    <!-- Build Timestamp for version check -->
+    <meta name="build-timestamp" content="${VITE_BUILD_TIMESTAMP}" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https: wss: ws:; frame-src 'self' https: data:; object-src 'none';" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="BD Evidencija - Digitalni sistem za upravljanje dostavama v5.0 sa Push Notifikacijama" />
+    <meta name="keywords" content="evidencija, dostava, vožnje, logistika, transport, B&D, PWA, push notifications" />
+    <meta name="author" content="B&D Kleintransporte KG" />
+    
+    <!-- PWA Enhanced Meta Tags -->
+    <meta name="application-name" content="BD Evidencija" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BD Evidencija" />
+    <meta name="msapplication-TileColor" content="#2563eb" />
+    <meta name="msapplication-config" content="./browserconfig.xml" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="color-scheme" content="light dark" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json" />
+    
+    <!-- PWA Icons - Using Your Custom Icons -->
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="shortcut icon" href="./assets/favicon.png" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="./assets/adaptive-icon.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="./assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="./assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="./assets/logo.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="./assets/logo.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/bde-evidencija/assets/icon.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/bde-evidencija/assets/icon.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/bde-evidencija/assets/logo.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/bde-evidencija/assets/icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/bde-evidencija/assets/adaptive-icon.png" />
+    
+    <!-- Standard Icons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/bde-evidencija/assets/favicon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/bde-evidencija/assets/favicon.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/bde-evidencija/assets/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/bde-evidencija/assets/icon.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/bde-evidencija/assets/adaptive-icon.png" />
+    
+    <!-- PWA Splash Screen -->
+    <link rel="apple-touch-startup-image" href="/bde-evidencija/assets/splash.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- PWA Theme -->
+    <meta name="theme-color" content="#1e3a8a" />
+    <meta name="background-color" content="#ffffff" />
+    
+    <!-- Mobile Optimization -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="BD Evidencija" />
+    
+    <!-- Windows Tiles -->
+    <meta name="msapplication-TileColor" content="#1e3a8a" />
+    <meta name="msapplication-TileImage" content="/assets/icon.png" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- Security -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- Custom animations -->
+    <style>
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    
+    <!-- CSP temporarily disabled for debugging Google Translate issues -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' https:;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.google.com https://translate.googleapis.com;
+      style-src 'self' 'unsafe-inline' https://translate.googleapis.com https://www.gstatic.com;
+      style-src-elem 'self' 'unsafe-inline' https://translate.googleapis.com https://www.gstatic.com;
+      img-src 'self' data: https:;
+      connect-src 'self' https:;
+      font-src 'self' https://fonts.gstatic.com;
+      frame-src 'self' https://translate.google.com;
+    " -->
+    
+    <title>BD Evidencija v5.0 - PWA & Push Notifications - Evidencija dostave</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- 🔔 Push Notifications Service Worker -->
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/bde-evidencija/sw.js')
+        .then(registration => {
+          if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+            console.log('🔔 Push Notifications Service Worker registered successfully');
+          }
+          
+          // Check for push notification support
+          if ('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window) {
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+              console.log('✅ Push notifications are supported');
+            }
+          } else {
+            console.warn('⚠️ Push notifications are not supported in this browser');
+          }
+        })
+        .catch(error => {
+          console.error('❌ Service Worker registration failed:', error);
+        });
+    } else {
+      console.warn('⚠️ Service Workers are not supported in this browser');
+    }
+    </script>
+  </body>
+</html>

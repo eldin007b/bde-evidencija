@@ -1,0 +1,29 @@
+# Supabase Configuration
+project_id = "dsltpiupbfopyvuiqffg"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[functions.auto-push]
+verify_jwt = false

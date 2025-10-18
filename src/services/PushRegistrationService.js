@@ -1,0 +1,208 @@
+// 🔔 Push Notification Registration Service
+// Automatski registruje user-a za push notifikacije kada uđe u Admin Panel
+
+import { supabase } from '../db/supabaseClient';
+
+class PushRegistrationService {
+  constructor() {
+    this.vapidPublicKey = 'BLeZWVsLWNC_Y-lzWnsrZQXIjCTxtPXHPSlDB4v6As_QyKzguPKE7AwxCb3h4PCEG9JaHhw0dgS3VhXCKohTyqE';
+    this.isRegistered = false;
+  }
+
+  /**
+   * 📱 Check if push notifications are supported
+   */
+  isSupported() {
+    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  }
+
+  /**
+   * 🔐 Request permission and register for push notifications
+   */
+  async requestPermissionAndRegister(userId = 'admin', userType = 'admin') {
+    if (!this.isSupported()) {
+      console.warn('⚠️ Push notifications not supported in this browser');
+      return { success: false, reason: 'not_supported' };
+    }
+
+    try {
+      // 1. Request notification permission
+      console.log('🔔 Requesting notification permission...');
+      const permission = await Notification.requestPermission();
+      
+      if (permission !== 'granted') {
+        console.warn('⚠️ Notification permission denied');
+        return { success: false, reason: 'permission_denied' };
+      }
+
+      console.log('✅ Notification permission granted');
+
+      // 2. Register service worker
+      console.log('🔧 Registering service worker...');
+      const registration = await navigator.serviceWorker.register('/bde-evidencija/sw.js');
+      console.log('✅ Service worker registered');
+
+      // 3. Subscribe to push notifications
+      console.log('📱 Subscribing to push notifications...');
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
+      });
+
+      console.log('✅ Push subscription created:', subscription);
+
+      // 4. Save subscription to database
+      console.log('🔍 Subscription keys:', subscription.keys);
+      console.log('🔍 Full subscription object:', subscription);
+      
+      // Get keys properly from subscription
+      const subscriptionJson = subscription.toJSON();
+      console.log('📋 Subscription JSON:', subscriptionJson);
+      
+      // Validate keys exist
+      if (!subscriptionJson.keys?.p256dh || !subscriptionJson.keys?.auth) {
+        throw new Error('Push subscription keys are missing. Browser may not support web push properly.');
+      }
+      
+      const subscriptionData = {
+        user_id: userId,
+        user_type: userType,
+        endpoint: subscription.endpoint,
+        p256dh_key: subscriptionJson.keys.p256dh,
+        auth_key: subscriptionJson.keys.auth,
+        user_agent: navigator.userAgent,
+        platform: navigator.platform,
+        browser: this.getBrowserName(),
+        active: true
+      };
+
+      console.log('💾 Saving subscription to database...');
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .upsert(subscriptionData, { 
+          onConflict: 'user_id,endpoint',
+          ignoreDuplicates: false 
+        })
+        .select();
+
+      if (error) {
+        console.error('❌ Failed to save subscription:', error);
+        return { success: false, reason: 'database_error', error };
+      }
+
+      console.log('✅ Push subscription saved to database:', data);
+      this.isRegistered = true;
+
+      return { 
+        success: true, 
+        subscription: subscriptionData,
+        message: 'Push notifications activated!' 
+      };
+
+    } catch (error) {
+      console.error('❌ Failed to register for push notifications:', error);
+      return { success: false, reason: 'registration_error', error: error.message };
+    }
+  }
+
+  /**
+   * 🔄 Convert VAPID key to Uint8Array
+   */
+  urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  /**
+   * 🌐 Get browser name for tracking
+   */
+  getBrowserName() {
+    const userAgent = navigator.userAgent;
+    if (userAgent.includes('Chrome')) return 'Chrome';
+    if (userAgent.includes('Firefox')) return 'Firefox';
+    if (userAgent.includes('Safari')) return 'Safari';
+    if (userAgent.includes('Edge')) return 'Edge';
+    return 'Unknown';
+  }
+
+  /**
+   * ✅ Check if user is already registered
+   */
+  async checkRegistrationStatus(userId = 'admin') {
+    try {
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('active', true)
+        .limit(1);
+
+      if (error) return false;
+      
+      this.isRegistered = data && data.length > 0;
+      return this.isRegistered;
+    } catch (error) {
+      console.error('❌ Failed to check registration status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 🧪 Test push notification
+   */
+  async sendTestNotification() {
+    if (!this.isRegistered) {
+      console.warn('⚠️ Not registered for push notifications');
+      return false;
+    }
+
+    try {
+      // Try Edge function directly first for test
+      console.log('🧪 Testing Edge function for push notifications...');
+      const { data, error } = await supabase.functions.invoke('auto-push', {
+        body: {
+          type: 'custom_message',
+          title: '🧪 BD Evidencija Test',
+          message: 'Test push notifikacija uspješno poslana! 🎉',
+          target_type: 'all'
+        }
+      });
+      
+      if (!error && data?.success) {
+        console.log('✅ Edge function test successful:', data);
+        return true;
+      }
+      
+      // Fallback to AutoPushService if Edge function fails
+      console.log('⚠️ Edge function test failed, using AutoPushService fallback...');
+      const { default: autoPushService } = await import('./AutoPushService.js');
+      
+      const result = await autoPushService.sendCustomMessage({
+        title: '🧪 BD Evidencija Test',
+        message: 'Test push notifikacija uspješno poslana! 🎉',
+        targetType: 'all'
+      });
+      
+      console.log('✅ Test notification result:', result);
+      return result.success;
+    } catch (error) {
+      console.error('❌ Failed to send test notification:', error);
+      return false;
+    }
+  }
+}
+
+// Singleton instance
+const pushRegistrationService = new PushRegistrationService();
+
+export default pushRegistrationService;
