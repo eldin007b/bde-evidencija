@@ -39,3 +39,6 @@ src/config/secrets.js
 
 # GitHub secrets
 .github/secrets/
+
+# VAPID environment files
+.env.vapid
