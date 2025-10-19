@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/bde-evidencija/sw.js', { scope: '/bde-evidencija/' })})}
