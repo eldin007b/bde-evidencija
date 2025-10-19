@@ -377,7 +377,8 @@ const MapCardModern = ({
       if (!currentCoords || !selectedLocation || !selectedLocation.lat || !selectedLocation.lon) return;
       try {
         setRouteLoading(true);
-        console.debug('🗺️ Computing route from', currentCoords, 'to', selectedLocation);
+        // Use console.log so this is visible even when 'Verbose' log level isn't enabled
+        console.log('🗺️ Computing route from', currentCoords, 'to', selectedLocation);
         const result = await getDrivingRouteInfo(currentCoords.lat, currentCoords.lon, selectedLocation.lat, selectedLocation.lon);
         if (cancelled) return;
         setRouteInfo(result || null);
@@ -390,6 +391,29 @@ const MapCardModern = ({
     };
 
     computeRoute();
+
+    // Expose a manual trigger during debugging so you can invoke routing from Browser Console:
+    // window.__triggerRoute()
+    try {
+      // eslint-disable-next-line no-undef
+      window.__triggerRoute = async () => {
+        if (!currentCoords || !selectedLocation) {
+          console.warn('window.__triggerRoute: missing currentCoords or selectedLocation', { currentCoords, selectedLocation });
+          return;
+        }
+        console.log('window.__triggerRoute: invoking getDrivingRouteInfo', { currentCoords, selectedLocation });
+        try {
+          const res = await getDrivingRouteInfo(currentCoords.lat, currentCoords.lon, selectedLocation.lat, selectedLocation.lon);
+          console.log('window.__triggerRoute result', res);
+          return res;
+        } catch (err) {
+          console.error('window.__triggerRoute error', err);
+          throw err;
+        }
+      };
+    } catch (e) {
+      /* ignore if window is not available */
+    }
 
     return () => { cancelled = true; };
   }, [currentCoords, selectedLocation]);
