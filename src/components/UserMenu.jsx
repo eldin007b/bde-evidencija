@@ -589,6 +589,27 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                           Dodaj Test Dostavu
                         </Button>
                       </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-cyan-400' 
+                            : 'hover:bg-cyan-50 text-cyan-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('🔍 Provjera database schema...');
+                              const { checkDatabaseSchema } = await import('../utils/checkDatabaseSchema.js');
+                              await checkDatabaseSchema();
+                            });
+                          }}
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          Provjeri Schema
+                        </Button>
+                      </motion.div>
                     </>
                   )}
                 </>

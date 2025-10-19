@@ -55,7 +55,9 @@ export const testNotificationDelivery = async () => {
       body: `Test dostave na ${subscriptions?.length || 0} uređaja - ${new Date().toLocaleTimeString()}`,
       icon: '/icon-192x192.png',
       badge: '/icon-72x72.png',
-      tag: 'test-delivery',
+      tag: `test-delivery-${Date.now()}`, // Unique tag to avoid replacement
+      renotify: true,
+      requireInteraction: true,
       data: {
         type: 'test',
         timestamp: new Date().toISOString(),
@@ -78,6 +80,22 @@ export const testNotificationDelivery = async () => {
     
     const result = await response.json();
     console.log('📊 Rezultat slanja:', result);
+    
+    // 4.5. Pošalji i direktnu Service Worker notifikaciju za test
+    console.log('🔧 Testiram direktnu Service Worker notifikaciju...');
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification('🔧 DIREKTNI SW TEST', {
+        body: `Direktno iz Service Worker - ${new Date().toLocaleTimeString()}`,
+        icon: '/icon-192x192.png',
+        tag: `direct-sw-test-${Date.now()}`,
+        requireInteraction: true,
+        vibrate: [300, 200, 300]
+      });
+      console.log('✅ Direktna SW notifikacija poslana');
+    } catch (swError) {
+      console.error('❌ Greška direktne SW notifikacije:', swError);
+    }
     
     // 5. Provjeri logove
     console.log('📜 Provjera logova...');
