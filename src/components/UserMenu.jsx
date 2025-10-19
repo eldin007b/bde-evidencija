@@ -15,8 +15,10 @@ import {
   Truck,
   Bell,
   BellOff,
+  Bug,
 } from "lucide-react";
 import pushRegistrationService from '../services/PushRegistrationService';
+import { runCompleteDiagnostic } from '../utils/debugPushNotifications';
 
 export default function UserMenu({ user, onChangePassword, onLogout, scraperData, currentTheme = 'default', themes }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -413,6 +415,29 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                       >
                         <Activity className="w-4 h-4 mr-2" />
                         Test obavještenje
+                      </Button>
+                    </motion.div>
+                  )}
+                  
+                  {/* 🐛 Debug Push Notifications */}
+                  {user?.role === 'admin' && (
+                    <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        variant="ghost"
+                        size="sm" 
+                        className={`w-full justify-start text-left ${currentTheme === 'night' 
+                          ? 'hover:bg-gray-700/50 text-orange-400' 
+                          : 'hover:bg-orange-50 text-orange-600'
+                        } rounded-xl transition-all duration-300 py-2 text-sm`}
+                        onClick={() => {
+                          handleMenuItemClick(async () => {
+                            console.log('🐛 Running push notifications diagnostic...');
+                            await runCompleteDiagnostic();
+                          });
+                        }}
+                      >
+                        <Bug className="w-4 h-4 mr-2" />
+                        Debug obavještenja
                       </Button>
                     </motion.div>
                   )}
