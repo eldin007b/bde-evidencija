@@ -8,14 +8,8 @@ import { getAllDriversCloud, getTotalDeliveryCountCloud } from '../db/supabaseCl
 const CHANGELOG = [
   {
     version: '5.0.0',
-    date: '18.10.2025',
-    details: '🚀 PWA & Push Notifications - Aplikacija sada podržava instalaciju kao PWA sa push notifikacijama u realnom vremenu, custom ikone, offline funkcionalnost i Service Worker',
-    highlight: true
-  },
-  {
-    version: '4.0.0',
     date: '06.10.2025',
-    details: 'Kompletna modernizacija UI dizajna sa glassmorphism efektima, optimizacija performansi, dinamičke statistike iz baze podataka'
+      details: 'Kompletna modernizacija UI dizajna sa glassmorphism efektima, optimizacija performansi, dinamičke statistike iz baze podataka'
   },
   {
     version: '3.5.0',
@@ -25,7 +19,7 @@ const CHANGELOG = [
   {
     version: '3.4.0',
     date: '04.10.2025',
-    details: 'Poboljšanja u DeliveryScreen - centriran naslov, validacija input polja, ograničavanje numeričkih vrednosti'
+      details: 'Poboljšanja u DeliveryScreen - centriran naslov, validacija input polja, ograničavanje numeričkih vrednosti'
   },
   {
     version: '3.3.0',
@@ -40,12 +34,12 @@ const CHANGELOG = [
   {
     version: '3.1.0',
     date: '01.10.2025',
-    details: 'Pojačano upozorenje za reklamacije, poboljšanja u input validaciji, optimizacija korisničkog interfejsa'
+      details: 'Pojačano upozorenje za reklamacije, poboljšanja u input validaciji, optimizacija korisničkog interfejsa'
   },
   {
     version: '3.0.0',
     date: '30.09.2025',
-    details: 'Nova arhitektura aplikacije, PWA optimizacije, poboljšana sinhronizacija sa cloud bazom podataka'
+      details: 'Nova arhitektura aplikacije, PWA optimizacije, poboljšana sinhronizacija sa cloud bazom podataka'
   }
 ];
 
@@ -78,9 +72,9 @@ const AboutScreenModern = () => {
       try {
         const response = await fetch('/latest.json');
         const data = await response.json();
-        setVersion(data.version || '5.0.0');
+  setVersion(data.version || '5.0.0');
       } catch (error) {
-        setVersion('5.0.0');
+  setVersion('5.0.0');
       }
     };
 

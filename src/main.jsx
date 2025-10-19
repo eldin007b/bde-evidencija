@@ -5,31 +5,12 @@ import App from './App.jsx'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
 
-// PWA READY - Push Notifications & Enhanced Features
-if (import.meta.env.DEV) {
-  console.log('🚀 BD Evidencija v5.0.0 - PWA READY WITH PUSH NOTIFICATIONS - 20251018');
-  console.log('📱 PWA Status: Ready for Installation');
-  console.log('🔔 Push Notifications: Enabled');
-}
+// ULTRA NUCLEAR CACHE BUST - Force browser to recognize new version
+console.log('🚀 BDEVidencija v5.0.0 - ULTRA NUCLEAR FORCE UPDATE - 20251007');
+console.log('📱 PWA Cache Status: FORCED REFRESH');
 
-// Service Worker Registration for PWA
+// Automatski reload kad se pojavi novi service worker
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js', {
-      scope: './'
-    })
-    .then((registration) => {
-      if (import.meta.env.DEV) {
-        console.log('✅ Service Worker registered successfully:', registration);
-        console.log('📱 PWA Install will be available after meeting criteria');
-      }
-    })
-    .catch((error) => {
-      console.error('❌ Service Worker registration failed:', error);
-    });
-  });
-
-  // Automatski reload kad se pojavi novi service worker
   navigator.serviceWorker.addEventListener('controllerchange', function() {
     window.location.reload();
   });

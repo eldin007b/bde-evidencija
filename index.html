@@ -7,12 +7,12 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <meta name="cache-buster" content="PWA-READY-v5.0.0-20251018-PUSH-NOTIFICATIONS" />
+  <meta name="cache-buster" content="ULTRA-NUCLEAR-v5.0.0-20251007-FORCE-UPDATE" />
     <!-- Build Timestamp for version check -->
     <meta name="build-timestamp" content="${VITE_BUILD_TIMESTAMP}" />
     
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https: wss: ws:; frame-src 'self' https: data:; object-src 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; frame-src 'self' https: data:; object-src 'none';" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
@@ -20,46 +20,22 @@
     
     <!-- PWA Meta Tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="description" content="BD Evidencija - Digitalni sistem za upravljanje dostavama v5.0 sa Push Notifikacijama" />
-    <meta name="keywords" content="evidencija, dostava, vožnje, logistika, transport, B&D, PWA, push notifications" />
+  <meta name="description" content="BDEVidencija - Vaša digitalna evidencija vožnji i dostava v5.0 - NOVA VERZIJA" />
+    <meta name="keywords" content="evidencija, dostava, vožnje, logistika, transport, B&D" />
     <meta name="author" content="B&D Kleintransporte KG" />
     
-    <!-- PWA Enhanced Meta Tags -->
-    <meta name="application-name" content="BD Evidencija" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="BD Evidencija" />
-    <meta name="msapplication-TileColor" content="#2563eb" />
-    <meta name="msapplication-config" content="./browserconfig.xml" />
-    <meta name="theme-color" content="#2563eb" />
-    <meta name="color-scheme" content="light dark" />
-    
     <!-- PWA Manifest -->
-    <link rel="manifest" href="./manifest.json" />
+    <link rel="manifest" href="/bde-evidencija/manifest.json" />
     
-    <!-- PWA Icons - Using Your Custom Icons -->
-    <link rel="icon" type="image/png" href="./assets/favicon.png" />
-    <link rel="shortcut icon" href="./assets/favicon.png" />
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" href="/bde-evidencija/assets/favicon.png" />
+    <link rel="apple-touch-icon" href="/bde-evidencija/assets/icon.png" />
+    <link rel="shortcut icon" href="/bde-evidencija/assets/favicon.png" />
     
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" href="./assets/adaptive-icon.png" />
-    <link rel="apple-touch-icon" sizes="57x57" href="./assets/favicon.png" />
-    <link rel="apple-touch-icon" sizes="60x60" href="./assets/favicon.png" />
-    <link rel="apple-touch-icon" sizes="72x72" href="./assets/logo.png" />
-    <link rel="apple-touch-icon" sizes="76x76" href="./assets/logo.png" />
-    <link rel="apple-touch-icon" sizes="114x114" href="/bde-evidencija/assets/icon.png" />
-    <link rel="apple-touch-icon" sizes="120x120" href="/bde-evidencija/assets/icon.png" />
-    <link rel="apple-touch-icon" sizes="144x144" href="/bde-evidencija/assets/logo.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/bde-evidencija/assets/icon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/bde-evidencija/assets/adaptive-icon.png" />
-    
-    <!-- Standard Icons -->
-    <link rel="icon" type="image/png" sizes="16x16" href="/bde-evidencija/assets/favicon.png" />
+    <!-- Additional PWA Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/bde-evidencija/assets/favicon.png" />
-    <link rel="icon" type="image/png" sizes="96x96" href="/bde-evidencija/assets/favicon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/bde-evidencija/assets/icon.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/bde-evidencija/assets/adaptive-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/bde-evidencija/assets/icon.png" />
     
     <!-- PWA Splash Screen -->
     <link rel="apple-touch-startup-image" href="/bde-evidencija/assets/splash.png" />
@@ -74,7 +50,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="BD Evidencija" />
+    <meta name="apple-mobile-web-app-title" content="BDEVidencija" />
     
     <!-- Windows Tiles -->
     <meta name="msapplication-TileColor" content="#1e3a8a" />
@@ -105,55 +81,10 @@
       frame-src 'self' https://translate.google.com;
     " -->
     
-    <title>BD Evidencija v5.0 - PWA & Push Notifications - Evidencija dostave</title>
+  <title>BDEVidencija v5.0 - NOVA VERZIJA - Evidencija dostave</title>
   </head>
   <body>
-    <!-- Main App Container -->
-    <div id="root">
-      <!-- Loading fallback -->
-      <div style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-family: system-ui, sans-serif;
-        flex-direction: column;
-      ">
-        <div style="font-size: 2rem; margin-bottom: 1rem;">📱</div>
-        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">BD Evidencija</div>
-        <div style="opacity: 0.8;">Loading...</div>
-      </div>
-    </div>
-    
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-
-    
-    <!-- 🔔 Push Notifications Service Worker -->
-    <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/bde-evidencija/sw.js')
-        .then(registration => {
-          if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-            console.log('🔔 Push Notifications Service Worker registered successfully');
-          }
-          
-          // Check for push notification support
-          if ('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window) {
-            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-              console.log('✅ Push notifications are supported');
-            }
-          } else {
-            console.warn('⚠️ Push notifications are not supported in this browser');
-          }
-        })
-        .catch(error => {
-          console.error('❌ Service Worker registration failed:', error);
-        });
-    } else {
-      console.warn('⚠️ Service Workers are not supported in this browser');
-    }
-    </script>
   </body>
 </html>

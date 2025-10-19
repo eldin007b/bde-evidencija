@@ -1,7 +1,7 @@
 {
     "name": "bdevidencija-pwa",
     "private": true,
-    "version": "5.0.0-push-notifications",
+    "version": "5.0.0",
     "type": "module",
     "homepage": "https://eldin007b.github.io/bde-evidencija",
     "scripts": {
@@ -59,8 +59,9 @@
         "autoprefixer": "^10.4.21",
         "babel-jest": "^30.1.2",
         "eslint": "^9.33.0",
+        "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^5.2.0",
-        "eslint-plugin-react-refresh": "^0.4.20",
+        "eslint-plugin-react-refresh": "^0.4.24",
         "gh-pages": "^6.3.0",
         "globals": "^16.3.0",
         "identity-obj-proxy": "^3.0.0",

@@ -41,10 +41,8 @@ let SUPABASE_KEY = '';
 
 if (typeof window !== 'undefined' && typeof import.meta !== 'undefined' && import.meta.env) {
   // Browser (Vite)
-  if (import.meta.env.DEV) {
-    console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
-    console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY);
-  }
+  console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+  console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY);
   SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 } else if (typeof process !== 'undefined' && process.env) {

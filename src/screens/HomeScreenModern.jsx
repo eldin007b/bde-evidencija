@@ -28,7 +28,6 @@ import {
 import UserMenu from "@/components/UserMenu";
 import useSimpleAuth from "@/hooks/useSimpleAuth";
 import { supabase } from "@/db/supabaseClient";
-import { devLog, devWarn, devError } from "../utils/devLogger";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 
 export default function HomeScreenModern() {
@@ -249,7 +248,7 @@ export default function HomeScreenModern() {
   // GitHub API fallback funkcija
   const fetchGitHubWorkflows = async () => {
     try {
-      devLog('🐙 Pokušavam da dohvatim podatke sa GitHub API...');
+      console.log('🐙 Pokušavam da dohvatim podatke sa GitHub API...');
 
       // GitHub konfiguracija iz environment variables
       const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || import.meta.env.VITE_GITHUB_REPO_FALLBACK || 'eldin007b/gls-scraper';

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Users, Bell, Activity, CheckCircle, BarChart3, AlertCircle, Bug } from 'lucide-react';
+import { Send, Users, Bell, Activity, CheckCircle, BarChart3 } from 'lucide-react';
 import autoPushService from '../../services/AutoPushService';
-import pushRegistrationService from '../../services/PushRegistrationService';
-import visualDebug from '../../utils/visualDebugger';
 
 /**
  * 📱 Simple Push Notifications Interface
@@ -18,309 +16,15 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
   const [result, setResult] = useState(null);
   const [pushStats, setPushStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [registering, setRegistering] = useState(false);
 
   const isNightTheme = currentTheme === 'night';
 
-  const openDebugger = () => {
-    visualDebug.showDebugPanel();
-    visualDebug.testAllMethods();
-  };
-
-  const testDirectNotifications = async () => {
-    // Show visual debugger for production logging
-    if (!visualDebug.isVisible) {
-      visualDebug.showDebugPanel();
-    }
-    
-    try {
-      visualDebug.log('🧪 Starting direct notification test...', 'info');
-      console.log('🧪 Testing direct notifications...');
-      
-      const result = await autoPushService.sendDirectNotifications({
-        title: 'Test Direct',
-        message: 'Ovo je test direktne notifikacije!',
-        targetType: 'all'
-      });
-      
-      visualDebug.log(`🧪 Test result: ${result.success ? 'SUCCESS' : 'FAILED'}`, result.success ? 'success' : 'error');
-      console.log('🧪 Direct notification test result:', result);
-      
-      setResult({
-        success: result.success,
-        message: result.success ? 'Test direktne notifikacije uspešan!' : 'Test direktne notifikacije neuspešan!',
-        details: result
-      });
-    } catch (error) {
-      visualDebug.log(`🧪 Test ERROR: ${error.message}`, 'error');
-      console.error('🧪 Direct notification test failed:', error);
-      setResult({
-        success: false,
-        message: 'Greška pri testu direktnih notifikacija',
-        details: error.message
-      });
-    }
-  };
-
-  const testServerPush = async () => {
-    // IMMEDIATE FEEDBACK
-    console.log('🚨 TEST SERVER PUSH BUTTON CLICKED!');
-    alert('Test Server Push button clicked - check console!');
-    
-    // Check if function exists
-    console.log('🔍 Checking autoPushService:', autoPushService);
-    console.log('🔍 sendServerPushOnly function:', autoPushService.sendServerPushOnly);
-    
-    if (!autoPushService.sendServerPushOnly) {
-      alert('ERROR: sendServerPushOnly function not found!');
-      console.error('❌ sendServerPushOnly function not available');
-      setResult({
-        success: false,
-        message: 'sendServerPushOnly funkcija nije dostupna',
-        details: 'Function not exported or imported correctly'
-      });
-      return;
-    }
-    
-    // FORCE visual debugger to open
-    try {
-      visualDebug.showDebugPanel();
-      console.log('✅ Visual debugger opened');
-      // Wait a bit for it to open
-      await new Promise(resolve => setTimeout(resolve, 500));
-    } catch (e) {
-      console.log('⚠️ Visual debugger not available:', e);
-      alert('Visual debugger error: ' + e.message);
-    }
-    
-    try {
-      // Also show immediate notification for feedback
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Server Push Test', { 
-          body: 'Starting server push test...', 
-          icon: '/bde-evidencija/icon-192x192.png' 
-        });
-      }
-      
-      console.log('🌐 STARTING SERVER PUSH TEST...');
-      visualDebug.log('🌐 Starting server-side push test...', 'info');
-      
-      const result = await autoPushService.sendServerPushOnly({
-        title: 'Server Push Test',
-        message: 'Ovo je test server-side push notifikacije za sve uređaje!',
-        targetType: 'all'
-      });
-      
-      console.log('🌐 SERVER PUSH RESULT:', result);
-      alert('Server push completed! Result: ' + JSON.stringify(result));
-      visualDebug.log(`🌐 Server push result: ${result.success ? 'SUCCESS' : 'FAILED'}`, result.success ? 'success' : 'error');
-      visualDebug.log(`📊 Sent: ${result.sent}, Failed: ${result.failed}, Method: ${result.method}`, 'info');
-      
-      // Show result notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Server Push Result', { 
-          body: `${result.success ? 'SUCCESS' : 'FAILED'} - Sent: ${result.sent}`, 
-          icon: '/bde-evidencija/icon-192x192.png' 
-        });
-      }
-      
-      setResult({
-        success: result.success,
-        message: result.success ? 'Server push test uspešan!' : 'Server push test neuspešan!',
-        details: result
-      });
-    } catch (error) {
-      console.error('🌐 SERVER PUSH ERROR:', error);
-      alert('Server push error: ' + error.message);
-      visualDebug.log(`🌐 Server push ERROR: ${error.message}`, 'error');
-      setResult({
-        success: false,
-        message: 'Greška pri server push testu',
-        details: error.message
-      });
-    }
-  };
-
-  const checkAndFixSubscriptions = async () => {
-    try {
-      alert("🔍 Proveravam push pretplate...");
-      
-      // Get current subscription
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) {
-        alert("❌ Service Worker nije registrovan!");
-        return;
-      }
-      
-      const currentSubscription = await registration.pushManager.getSubscription();
-      if (!currentSubscription) {
-        alert("❌ Nema aktivne push pretplate na ovom uređaju!");
-        return;
-      }
-      
-      alert("✅ Lokalna pretplata pronađena, proveravam bazu...");
-      
-      // Check database subscriptions using autoPushService
-      try {
-        const stats = await autoPushService.getSimpleStats();
-        alert(`📊 Ukupno pretplata u bazi: ${stats?.totalSubscriptions || 0}`);
-        
-        if (!stats || !stats.totalSubscriptions || stats.totalSubscriptions === 0) {
-          alert("🔧 Nema pretplata u bazi - registruj push notifikacije prvo!");
-          
-          // Try to register current device
-          const registered = await pushRegistrationService.requestPermissionAndRegister('admin', 'debug-fix');
-          
-          if (registered.success) {
-            alert("✅ Push notifikacije registrovane! Pokušaj ponovo server push test.");
-          } else {
-            alert(`❌ Greška pri registraciji: ${registered.reason}`);
-          }
-        } else {
-          alert(`✅ Ima ${stats.totalSubscriptions} pretplata u bazi. Edge Function radi ali možda nema aktivnih korisnika.`);
-        }
-        
-      } catch (dbError) {
-        alert(`❌ Greška pri čitanju baze: ${dbError.message}`);
-      }
-      
-      // Visual debugger output
-      if (window.debugger) {
-        window.debugger.log('Subscriptions Check:', { 
-          local: !!currentSubscription, 
-          serviceWorker: !!registration
-        });
-      }
-      
-    } catch (error) {
-      alert(`❌ Greška pri proveri pretplata: ${error.message}`);
-      console.error('Subscriptions check error:', error);
-    }
-  };
-
-  const forceRegisterCurrentDevice = async () => {
-    try {
-      alert("🔧 FORSIRAM registraciju trenutnog uređaja...");
-      
-      if (!navigator.serviceWorker || !('PushManager' in window)) {
-        alert("❌ Browser ne podržava push notifikacije!");
-        return;
-      }
-      
-      // Get current subscription
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) {
-        alert("❌ Service Worker nije registrovan!");
-        return;
-      }
-      
-      const currentSubscription = await registration.pushManager.getSubscription();
-      if (!currentSubscription) {
-        alert("❌ Nema push pretplate na ovom uređaju!");
-        return;
-      }
-      
-      alert("✅ Našao push pretplatu, forsiram upis u bazu...");
-      
-      // Get subscription data
-      const subscriptionJson = currentSubscription.toJSON();
-      console.log('Subscription data:', subscriptionJson);
-      
-      // Prepare data for database (matching PushRegistrationService format)
-      const subscriptionData = {
-        driver_id: 2, // HARDCODED Eldin's ID for testing
-        driver_tura: 'admin', 
-        endpoint: currentSubscription.endpoint,
-        p256dh_key: subscriptionJson.keys.p256dh,
-        auth_key: subscriptionJson.keys.auth,
-        user_agent: navigator.userAgent,
-        platform: navigator.platform,
-        browser: 'Chrome', // Simple detection
-        active: true,
-        created_at: new Date().toISOString()
-      };
-      
-      console.log('Inserting subscription data:', subscriptionData);
-      
-      // Force insert into database using Supabase
-      const { supabase } = await import('../../db/supabaseClient');
-      
-      const { data, error } = await supabase
-        .from('push_subscriptions')
-        .upsert(subscriptionData, { 
-          onConflict: 'endpoint',
-          ignoreDuplicates: false 
-        })
-        .select();
-      
-      if (error) {
-        alert(`❌ Greška pri upisu u bazu: ${error.message}`);
-        console.error('Database error:', error);
-        return;
-      }
-      
-      alert(`✅ USPEŠNO! Registracija upisana u bazu: ${JSON.stringify(data)}`);
-      console.log('✅ Subscription saved to database:', data);
-      
-      // Now test server push
-      alert("🧪 Testiram server push sa novom registracijom...");
-      
-      const testResult = await autoPushService.sendServerPushOnly({
-        title: '🎉 FORSIRANA REGISTRACIJA',
-        message: 'Test nakon forsiranje registracije - treba da radi!',
-        targetType: 'all'
-      });
-      
-      alert(`📊 Test rezultat: ${JSON.stringify(testResult)}`);
-      
-    } catch (error) {
-      alert(`❌ Greška pri forsirajnju: ${error.message}`);
-      console.error('Force registration error:', error);
-    }
-  };
-
-  // Check registration status and load stats
+  // Load simple stats
   useEffect(() => {
-    checkRegistrationStatus();
     if (activeTab === 'stats') {
       loadStatistics();
     }
   }, [activeTab]);
-
-  const checkRegistrationStatus = async () => {
-    const registered = await pushRegistrationService.checkRegistrationStatus('admin');
-    setIsRegistered(registered);
-  };
-
-  const registerForPushNotifications = async () => {
-    setRegistering(true);
-    try {
-      const result = await pushRegistrationService.requestPermissionAndRegister('admin', 'admin');
-      if (result.success) {
-        setIsRegistered(true);
-        setResult({
-          success: true,
-          message: 'Push notifikacije aktivirane! 🎉',
-          details: 'Sada ćete dobijati notifikacije.'
-        });
-      } else {
-        setResult({
-          success: false,
-          message: 'Greška pri aktivaciji push notifikacija',
-          details: result.reason
-        });
-      }
-    } catch (error) {
-      setResult({
-        success: false,
-        message: 'Greška pri registraciji',
-        details: error.message
-      });
-    } finally {
-      setRegistering(false);
-    }
-  };
 
   const loadStatistics = async () => {
     setLoadingStats(true);
@@ -341,11 +45,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
     setResult(null);
     
     try {
-      const response = await autoPushService.sendCustomMessage({
-        title: title || 'BD Evidencija',
-        message: message.trim(),
-        targetType: targetType
-      });
+      const response = await autoPushService.sendCustomMessage(message, title, targetType);
       setResult({
         success: true,
         message: `Poruka uspješno poslana!`,
@@ -372,8 +72,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
 
   const tabs = [
     { id: 'send', label: 'Pošalji poruku', icon: Send },
-    { id: 'stats', label: 'Statistike', icon: BarChart3 },
-    { id: 'debug', label: 'Debug System', icon: Bug }
+    { id: 'stats', label: 'Statistike', icon: BarChart3 }
   ];
 
   return (
@@ -434,50 +133,6 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
       >
         {activeTab === 'send' && (
           <div className="space-y-6">
-            {/* Registration Status */}
-            {!isRegistered && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`p-4 rounded-lg border-2 border-dashed ${
-                  isNightTheme 
-                    ? 'border-yellow-400/50 bg-yellow-400/10 text-yellow-300' 
-                    : 'border-yellow-400 bg-yellow-50 text-yellow-700'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-semibold mb-1">Push notifikacije nisu aktivne</h4>
-                    <p className="text-sm mb-3">
-                      Da biste primili push notifikacije, morate ih prvo aktivirati u browseru.
-                    </p>
-                    <button
-                      onClick={registerForPushNotifications}
-                      disabled={registering}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        registering
-                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                          : 'bg-yellow-500 text-white hover:bg-yellow-600'
-                      }`}
-                    >
-                      {registering ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                          Aktiviranje...
-                        </>
-                      ) : (
-                        <>
-                          <Bell className="w-4 h-4" />
-                          Aktiviraj push notifikacije
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
             {/* Send Message Card */}
             <div className={`p-6 rounded-xl shadow-lg ${
               isNightTheme ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-200'
@@ -551,43 +206,27 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 </div>
 
                 {/* Send Button */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={sendPushMessage}
-                    disabled={!message.trim() || sending}
-                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
-                      !message.trim() || sending
-                        ? (isNightTheme ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
-                        : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
-                    }`}
-                  >
-                    {sending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                        Slanje...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        Pošalji poruku
-                      </>
-                    )}
-                  </button>
-
-                  {isRegistered && (
-                    <button
-                      onClick={() => pushRegistrationService.sendTestNotification()}
-                      className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        isNightTheme 
-                          ? 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 border border-blue-500/30' 
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-                      }`}
-                    >
-                      <Activity className="w-4 h-4" />
-                      Test
-                    </button>
+                <button
+                  onClick={sendPushMessage}
+                  disabled={!message.trim() || sending}
+                  className={`w-full py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                    !message.trim() || sending
+                      ? (isNightTheme ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
+                  }`}
+                >
+                  {sending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      Slanje...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Pošalji poruku
+                    </>
                   )}
-                </div>
+                </button>
               </div>
             </div>
 
@@ -685,116 +324,6 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 Nema dostupnih statistika
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === 'debug' && (
-          <div className="space-y-6">
-            <div className={`p-6 rounded-lg ${
-              isNightTheme ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-200'
-            }`}>
-              <div className="flex items-center gap-3 mb-4">
-                <Bug className="w-6 h-6 text-orange-500" />
-                <h3 className="text-xl font-semibold">Push System Debug</h3>
-              </div>
-              
-              <p className={`mb-4 ${isNightTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                Testira sve komponente push notifikacija sistema i prikazuje detaljnu dijagnostiku.
-              </p>
-              
-              <motion.button
-                onClick={openDebugger}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
-                  isNightTheme
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                    : 'bg-orange-600 hover:bg-orange-700 text-white'
-                } shadow-lg hover:shadow-xl`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Bug className="w-5 h-5" />
-                  Otvori Visual Debugger
-                </div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => testDirectNotifications()}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
-                  isNightTheme
-                    ? 'bg-green-500 hover:bg-green-600 text-white'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
-                } shadow-lg hover:shadow-xl`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Bell className="w-5 h-5" />
-                  Test Direktne Notifikacije (lokalno)
-                </div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => testServerPush()}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
-                  isNightTheme
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                } shadow-lg hover:shadow-xl`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Test Server Push (svi uređaji)
-                </div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => checkAndFixSubscriptions()}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
-                  isNightTheme
-                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                    : 'bg-purple-600 hover:bg-purple-700 text-white'
-                } shadow-lg hover:shadow-xl`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Activity className="w-5 h-5" />
-                  Proveri i Popravi Pretplate
-                </div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => forceRegisterCurrentDevice()}
-                whileHover={{ scale:1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-                  isNightTheme
-                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-red-600 hover:bg-red-700 text-white'
-                } shadow-lg hover:shadow-xl`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Bell className="w-5 h-5" />
-                  🔧 FORSIRAJ Registraciju
-                </div>
-              </motion.button>
-              
-              <div className={`mt-4 p-4 rounded-lg ${
-                isNightTheme ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-orange-50 border border-orange-200'
-              }`}>
-                <h4 className="font-semibold mb-2 text-orange-600">Šta debugger testira:</h4>
-                <ul className={`text-sm space-y-1 ${isNightTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <li>• Browser Notification API (desktop/mobile kompatibilnost)</li>
-                  <li>• Service Worker registracija i funkcionalnost</li>
-                  <li>• Push subscription status u bazi podataka</li>
-                  <li>• VAPID ključevi i konfiguraciju</li>
-                  <li>• AutoPushService komunikaciju</li>
-                </ul>
-              </div>
-            </div>
           </div>
         )}
       </motion.div>

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Truck, Settings, Github, ArrowLeft, Crown, Activity, Bell, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Truck, Settings, Github, ArrowLeft, Crown, Activity } from 'lucide-react';
 import useDrivers from '../hooks/useDrivers';
 import RidesTab from '../components/admin/RidesTab';
 import DriversTab from '../components/admin/DriversTab';
@@ -13,13 +13,11 @@ import PayrollAnalytics from '../components/admin/PayrollAnalytics';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import UserMenu from '@/components/UserMenu';
 import useSimpleAuth from '@/hooks/useSimpleAuth';
-import CustomPushInterface from '../components/admin/CustomPushInterface';
 
 const TABS_CONFIG = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, component: 'dashboard', description: 'Pregled sistema u realnom vremenu', gradient: 'from-blue-500 to-purple-600' },
   { id: 'users', label: 'Vozači', icon: Users, component: DriversTab, description: 'Upravljanje vozačima i korisnicima', gradient: 'from-green-500 to-teal-600' },
   { id: 'rides', label: 'Vožnje', icon: Truck, component: RidesTab, description: 'Extra vožnje i odobravanja', gradient: 'from-orange-500 to-red-600' },
-  { id: 'push', label: 'Push Notifikacije', icon: Bell, component: CustomPushInterface, description: 'Pošaljite push poruke vozačima', gradient: 'from-purple-500 to-pink-600' },
   { id: 'settings', label: 'Sistem', icon: Settings, component: SystemTab, description: 'Sistemske postavke i konfiguracija', gradient: 'from-purple-500 to-pink-600' },
   { id: 'github', label: 'GitHub', icon: Github, component: GitHubTab, description: 'GitHub integracija i verzije', gradient: 'from-gray-600 to-gray-800' }
 ];
@@ -56,8 +54,8 @@ export default function AdminPanelScreen() {
     }
     if (activeTabConfig?.component && typeof activeTabConfig.component !== 'string') {
       const Component = activeTabConfig.component;
-      // Pass currentTheme to GitHubTab and CustomPushInterface
-      if (activeTabConfig.id === 'github' || activeTabConfig.id === 'custom-push') {
+      // Pass currentTheme to GitHubTab, others unchanged
+      if (activeTabConfig.id === 'github') {
         return (
           <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
             <Component currentTheme={currentTheme} />

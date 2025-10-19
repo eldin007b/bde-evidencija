@@ -6,17 +6,14 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   base: '/bde-evidencija/',
-  esbuild: {
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
-  },
   build: {
     chunkSizeWarningLimit: 600, // Increase warning limit slightly
     rollupOptions: {
       output: {
         // Force completely new filenames with timestamp
-        entryFileNames: `assets/app-v4-${Date.now()}-[hash].js`,
-        chunkFileNames: `assets/chunk-v4-${Date.now()}-[hash].js`,
-        assetFileNames: `assets/asset-v4-${Date.now()}-[hash].[ext]`,
+  entryFileNames: `assets/app-v5-${Date.now()}-[hash].js`,
+  chunkFileNames: `assets/chunk-v5-${Date.now()}-[hash].js`,
+  assetFileNames: `assets/asset-v5-${Date.now()}-[hash].[ext]`,
         // Manual chunking strategy
         manualChunks: {
           // Vendor libraries
@@ -52,21 +49,30 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      strategies: 'injectManifest',
-      srcDir: 'public',
-      filename: 'sw.js',
       workbox: {
+        navigateFallback: '/bde-evidencija/',
         globPatterns: ['**/*.{js,css,html,ico,png}'],
+        skipWaiting: true,
+        clientsClaim: true,
+        // ULTRA AGGRESSIVE cache busting
+        runtimeCaching: [{
+          urlPattern: /^https?.*/,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: `bde-v5-ultra-${Date.now()}`,
+            networkTimeoutSeconds: 3,
+          }
+        }]
       },
       includeAssets: ['favicon.png', 'assets/icon.png', 'assets/logo.png'],
-      manifest: {
-        name: 'BD Evidencija - Evidencija dostave v5.0',
-        short_name: 'BD Evidencija v5.0',
-        start_url: './',
+  manifest: {
+  name: 'BDEVidencija - Evidencija dostave v5.0',
+  short_name: 'BDEVidencija v5',
+        start_url: '/bde-evidencija/',
         display: 'standalone',
         background_color: '#ffffff',
-        theme_color: '#2563eb',
-        description: 'Digitalni sistem za upravljanje dostavama sa Push Notifikacijama',
+        theme_color: '#1e3a8a',
+        description: 'Vaša digitalna evidencija vožnji i dostava',
         icons: [
           {
             src: 'assets/icon.png',
