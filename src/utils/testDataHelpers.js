@@ -7,10 +7,11 @@ export const addTestDriver = async () => {
   try {
     const testDriver = {
       ime: `Test Driver ${Date.now()}`,
-      tura: 'prva',
-      status: 'aktivan',
+      tura: '8640', // Koristim postojeći format ture
+      aktivan: true,
       role: 'driver',
-      password: 'test123',
+      target_per_day: 80,
+      password_hash: 'test123hash', // Koristim password_hash umjesto password
       created_at: new Date().toISOString()
     };
     
@@ -75,10 +76,10 @@ export const addTestDelivery = async () => {
     const randomDriver = drivers[0];
     
     const testDelivery = {
-      driver_id: randomDriver.id,
-      adresa: `Test Adresa ${Date.now()}`,
-      status: 'pending',
-      created_at: new Date().toISOString()
+      driver: randomDriver.tura, // Koristim tura umjesto ID
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+      produktivitaet_stops: Math.floor(Math.random() * 100) + 50, // Random broj
+      zustellung_paketi: Math.floor(Math.random() * 50) + 10
     };
     
     const { data, error } = await supabase
@@ -105,7 +106,8 @@ export const addTestDelivery = async () => {
       body: JSON.stringify({
         type: 'new_delivery',
         driver_name: randomDriver.ime,
-        delivery_address: testDelivery.adresa
+        delivery_date: testDelivery.date,
+        delivery_stops: testDelivery.produktivitaet_stops
       })
     });
     
