@@ -78,6 +78,13 @@ class PushRegistrationService {
       };
 
       console.log('💾 Saving subscription to database...');
+      console.log('📊 Subscription data:', subscriptionData);
+      console.log('👤 Current userId:', userId, 'userType:', userType);
+      
+      // Check current Supabase auth state
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      console.log('🔐 Supabase auth user:', authUser);
+      
       const { data, error } = await supabase
         .from('push_subscriptions')
         .upsert(subscriptionData, { 
