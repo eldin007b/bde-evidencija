@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Send, Users, Bell, Activity, CheckCircle, BarChart3, AlertCircle, Bug } from 'lucide-react';
 import autoPushService from '../../services/AutoPushService';
 import pushRegistrationService from '../../services/PushRegistrationService';
-import { visualDebugger } from '../../utils/visualDebugger';
+import visualDebug from '../../utils/visualDebugger';
 
 /**
  * 📱 Simple Push Notifications Interface
@@ -24,8 +24,8 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
   const isNightTheme = currentTheme === 'night';
 
   const openDebugger = () => {
-    visualDebugger.show();
-    visualDebugger.testAllMethods();
+    visualDebug.show();
+    visualDebug.testAllMethods();
   };
 
   // Check registration status and load stats
