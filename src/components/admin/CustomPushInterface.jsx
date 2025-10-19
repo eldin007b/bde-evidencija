@@ -64,13 +64,34 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
   };
 
   const testServerPush = async () => {
+    // IMMEDIATE FEEDBACK
+    console.log('🚨 TEST SERVER PUSH BUTTON CLICKED!');
+    alert('Test Server Push button clicked - check console!');
+    
+    // Check if function exists
+    console.log('🔍 Checking autoPushService:', autoPushService);
+    console.log('🔍 sendServerPushOnly function:', autoPushService.sendServerPushOnly);
+    
+    if (!autoPushService.sendServerPushOnly) {
+      alert('ERROR: sendServerPushOnly function not found!');
+      console.error('❌ sendServerPushOnly function not available');
+      setResult({
+        success: false,
+        message: 'sendServerPushOnly funkcija nije dostupna',
+        details: 'Function not exported or imported correctly'
+      });
+      return;
+    }
+    
     // FORCE visual debugger to open
     try {
       visualDebug.showDebugPanel();
+      console.log('✅ Visual debugger opened');
       // Wait a bit for it to open
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (e) {
-      console.log('Visual debugger not available');
+      console.log('⚠️ Visual debugger not available:', e);
+      alert('Visual debugger error: ' + e.message);
     }
     
     try {
@@ -92,6 +113,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
       });
       
       console.log('🌐 SERVER PUSH RESULT:', result);
+      alert('Server push completed! Result: ' + JSON.stringify(result));
       visualDebug.log(`🌐 Server push result: ${result.success ? 'SUCCESS' : 'FAILED'}`, result.success ? 'success' : 'error');
       visualDebug.log(`📊 Sent: ${result.sent}, Failed: ${result.failed}, Method: ${result.method}`, 'info');
       
@@ -110,6 +132,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
       });
     } catch (error) {
       console.error('🌐 SERVER PUSH ERROR:', error);
+      alert('Server push error: ' + error.message);
       visualDebug.log(`🌐 Server push ERROR: ${error.message}`, 'error');
       setResult({
         success: false,
