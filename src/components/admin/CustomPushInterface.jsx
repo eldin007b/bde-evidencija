@@ -89,7 +89,11 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
     setResult(null);
     
     try {
-      const response = await autoPushService.sendCustomMessage(message, title, targetType);
+      const response = await autoPushService.sendCustomMessage({
+        title: title || 'BD Evidencija',
+        message: message.trim(),
+        targetType: targetType
+      });
       setResult({
         success: true,
         message: `Poruka uspješno poslana!`,

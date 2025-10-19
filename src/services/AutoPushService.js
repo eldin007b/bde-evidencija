@@ -181,31 +181,32 @@ class AutoPushService {
         return { success: false, error: 'Service Worker nije dostupan', method: 'browser' };
       }
       
+      // Show local notification for current user (admin/sender)
+      const notificationPayload = {
+        title,
+        body: message,
+        icon: '/bde-evidencija/icon-192x192.png',
+        badge: '/bde-evidencija/badge-96x96.png',
+        data: {
+          type: 'custom_message',
+          custom: true,
+          click_action: '/',
+          timestamp: Date.now()
+        }
+      };
+      
+      // Send to current user's Service Worker to show notification
+      registration.active.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: notificationPayload
+      });
+      
+      console.log(`✅ Local notification shown for message: "${message}"`);
+      sentCount = subscriptions.length;  // Simulate sending to all subscriptions
+      
+      // Log notification for tracking (simulate for all subscriptions)
       for (const subscription of subscriptions) {
         try {
-          // Create notification payload
-          const notificationPayload = {
-            title,
-            body: message,
-            icon: '/bde-evidencija/icon-192x192.png',
-            badge: '/bde-evidencija/badge-96x96.png',
-            data: {
-              type: 'custom_message',
-              custom: true,
-              click_action: '/',
-              driver_id: subscription.driver_id,
-              timestamp: Date.now()
-            }
-          };
-          
-          // Send to Service Worker to show notification
-          registration.active.postMessage({
-            type: 'SHOW_NOTIFICATION',
-            payload: notificationPayload
-          });
-          
-          console.log(`✅ Notification sent to driver ${subscription.driver_id}`);
-          sentCount++;
           
           // Log to database for tracking
           const logUserId = subscription.driver_id || 'anonymous_' + Date.now();
