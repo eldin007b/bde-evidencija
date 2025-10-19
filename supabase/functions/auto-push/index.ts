@@ -143,6 +143,7 @@ serve(async (req: Request) => {
           targetUsers = payload.target_users
         } else {
           // Get all active users based on target_type
+          console.log(`🔍 Getting all users for target_type: ${payload.target_type}`)
           let query = supabaseClient.from('push_subscriptions').select('driver_id, user_id, driver_tura')
           
           if (payload.target_type === 'drivers') {
@@ -151,9 +152,13 @@ serve(async (req: Request) => {
             query = query.eq('driver_tura', 'admin')
           }
           
-          const { data: users } = await query
+          const { data: users, error: usersError } = await query
+          console.log(`🔍 All users query result:`, users)
+          console.log(`🔍 All users query error:`, usersError)
+          
           // Use driver_id if available, otherwise user_id  
           targetUsers = users?.map((u: any) => String(u.driver_id || u.user_id)).filter((id: any) => id) || []
+          console.log(`🔍 Target users after mapping:`, targetUsers)
         }
         
         notifications = targetUsers.map(userId => ({
@@ -235,11 +240,18 @@ async function sendPushNotification(
   const { user_id, user_type, title, body, data } = notification
 
   // Get user's push subscriptions
-  const { data: subscriptions } = await supabaseClient
+  console.log(`🔍 Looking for subscriptions for user_id: ${user_id} (type: ${typeof user_id})`)
+  console.log(`🔍 Parsed user_id as int: ${parseInt(user_id) || 0}`)
+  
+  const { data: subscriptions, error: subError } = await supabaseClient
     .from('push_subscriptions')
     .select('*')
     .or(`driver_id.eq.${parseInt(user_id) || 0},user_id.eq.${user_id}`) // Convert to INT for driver_id!
     .eq('active', true)
+
+  console.log(`🔍 Subscriptions query result:`, subscriptions)
+  console.log(`🔍 Subscriptions query error:`, subError)
+  console.log(`🔍 Found ${subscriptions?.length || 0} active subscriptions`)
 
   if (!subscriptions || subscriptions.length === 0) {
     console.log(`📵 No active subscriptions for user: ${user_id}`)
