@@ -24,7 +24,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
   const isNightTheme = currentTheme === 'night';
 
   const openDebugger = () => {
-    visualDebug.show();
+    visualDebug.showDebugPanel();
     visualDebug.testAllMethods();
   };
 
