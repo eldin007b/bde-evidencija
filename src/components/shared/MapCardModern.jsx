@@ -165,42 +165,40 @@ const MapCardModern = ({
     setReverseGeocodingLoading(true);
     try {
       console.log('🔄 Starting reverse geocoding for:', lat, lon);
-      
-      // Try Nominatim first (simpler and more reliable for reverse geocoding)
+
+      // 1) Try Nominatim reverse geocoding
       try {
         const nominatimResponse = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de,en&addressdetails=1`
         );
-        
+
         if (nominatimResponse.ok) {
           const nominatimData = await nominatimResponse.json();
           console.log('🔄 Nominatim response:', nominatimData);
-          
+
           if (nominatimData.display_name) {
             let address = nominatimData.display_name;
-            
-            // Try to format address nicely
+
+            // Try to create a shorter human-friendly address
             if (nominatimData.address) {
               const addr = nominatimData.address;
               let formattedAddr = '';
-              
+
               if (addr.house_number && addr.road) {
                 formattedAddr = `${addr.road} ${addr.house_number}`;
               } else if (addr.road) {
                 formattedAddr = addr.road;
               }
-              
+
               if (addr.postcode && addr.city) {
                 formattedAddr += formattedAddr ? `, ${addr.postcode} ${addr.city}` : `${addr.postcode} ${addr.city}`;
               } else if (addr.city) {
                 formattedAddr += formattedAddr ? `, ${addr.city}` : addr.city;
               }
-              
-              if (formattedAddr) {
-                address = formattedAddr;
-              }
+
+              if (formattedAddr) address = formattedAddr;
             }
-            
+
             setCurrentAddress(address);
             console.log('📍 Address found via Nominatim:', address);
             return;
@@ -209,10 +207,9 @@ const MapCardModern = ({
       } catch (nominatimError) {
         console.warn('🔄 Nominatim failed:', nominatimError);
       }
-      
-      // Fallback to VAO search in area (different approach)
+
+      // 2) Fallback: VAO/VOR locmatch via proxy
       try {
-        // Search for locations near the coordinates
         const VAO_BODY = {
           id: 'ibwmnqg8g2kj8iwg',
           ver: '1.59',
@@ -234,11 +231,7 @@ const MapCardModern = ({
               req: {
                 input: {
                   field: 'S',
-                  loc: {
-                    type: 'ALL',
-                    crd: { x: Math.round(lon * 1e6), y: Math.round(lat * 1e6) },
-                    dist: 500
-                  },
+                  loc: { type: 'ALL', crd: { x: Math.round(lon * 1e6), y: Math.round(lat * 1e6) }, dist: 500 },
                   maxLoc: 3
                 }
               },
@@ -253,23 +246,33 @@ const MapCardModern = ({
           body: JSON.stringify(VAO_BODY)
         });
 
-        if (vaoResponse.ok) {
-          const vaoData = await vaoResponse.json();
+        console.debug('[MapCardModern] vor-proxy status:', vaoResponse.status);
+
+        try {
+          const text = await vaoResponse.text();
+          console.debug('[MapCardModern] vor-proxy response (preview):', text ? text.slice(0, 1000) : '');
+          const vaoData = text ? JSON.parse(text) : null;
           console.log('🔄 VAO response:', vaoData);
-          
-          if (vaoData.svcResL && vaoData.svcResL[0] && vaoData.svcResL[0].res && 
-              vaoData.svcResL[0].res.match && vaoData.svcResL[0].res.match.locL) {
+
+          if (
+            vaoData &&
+            Array.isArray(vaoData.svcResL) &&
+            vaoData.svcResL[0] &&
+            vaoData.svcResL[0].res &&
+            vaoData.svcResL[0].res.match &&
+            Array.isArray(vaoData.svcResL[0].res.match.locL)
+          ) {
             const locations = vaoData.svcResL[0].res.match.locL;
             if (locations.length > 0) {
               const firstResult = locations[0];
               let address = '';
-              
+
               if (firstResult.nameFormatted && firstResult.nameFormatted.text) {
                 address = firstResult.nameFormatted.text.replace(/<[^>]*>/g, '');
               } else if (firstResult.name) {
                 address = firstResult.name;
               }
-              
+
               if (address) {
                 setCurrentAddress(address);
                 console.log('📍 Address found via VAO:', address);
@@ -277,15 +280,16 @@ const MapCardModern = ({
               }
             }
           }
+        } catch (vaoError) {
+          console.warn('🔄 VAO fallback failed (parse/response):', vaoError);
         }
-      } catch (vaoError) {
-        console.warn('🔄 VAO fallback failed:', vaoError);
+      } catch (vaoFetchError) {
+        console.warn('🔄 VAO proxy request failed:', vaoFetchError);
       }
-      
-      // Final fallback: coordinates
+
+      // 3) Final fallback: coordinates
       console.log('📍 Using coordinates as final fallback');
       setCurrentAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
-      
     } catch (error) {
       console.error('🔄 Reverse geocoding error:', error);
       // Fallback to coordinates

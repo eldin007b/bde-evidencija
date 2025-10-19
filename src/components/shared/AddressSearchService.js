@@ -41,9 +41,15 @@ export async function searchAddresses(query) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(VAO_BODY)
     });
-    if (res.ok) {
-      const data = await res.json();
+    console.debug('[AddressSearchService] vor-proxy status:', res.status);
+    try {
+      const text = await res.text();
+      console.debug('[AddressSearchService] vor-proxy response (preview):', text.slice(0, 1000));
+      // try parse JSON
+      const data = text ? JSON.parse(text) : null;
       return data?.svcResL?.[0]?.res?.match?.locL || [];
+    } catch (e) {
+      console.warn('[AddressSearchService] Failed to parse vor-proxy response as JSON', e);
     }
   } catch (err) {
     console.warn('VAO proxy failed, falling back to Nominatim', err);
