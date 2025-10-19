@@ -80,66 +80,21 @@ class AutoPushService {
       return { success: false, error: 'Poruka je obavezna' };
     }
 
+    // 📱 DIRECT APPROACH - Skip server methods and go straight to direct notifications
+    // This ensures mobile/tablet users get notifications immediately
+    console.log('🚀 Using direct notifications for immediate mobile delivery...');
+    
     try {
-      // First try the Edge function directly
-      console.log('🚀 Trying Edge function directly...');
-      const { data, error } = await supabase.functions.invoke('auto-push', {
-        body: {
-          type: 'custom_message',
-          title: title,
-          message: message.trim(),
-          target_type: targetType,
-          target_users: targetUsers
-        }
-      });
-      
-      if (error) {
-        console.warn('⚠️ Edge function failed:', error);
-        throw error;
-      }
-      
-      if (data?.success) {
-        console.log('✅ Edge function succeeded:', data);
-        return { 
-          success: true, 
-          sent: data.results?.length || 1,
-          failed: 0,
-          method: 'edge_function'
-        };
-      }
-      
-      // If Edge function didn't succeed, try database function
-      console.log('⚠️ Edge function returned unsuccessful, trying database function...');
-      const { data: dbData, error: dbError } = await supabase.rpc('send_custom_push', {
-        p_title: title,
-        p_message: message.trim(),
-        p_target_users: targetUsers,
-        p_target_type: targetType
-      });
-      
-      if (dbError) throw dbError;
-      
-      const result = dbData?.[0] || { sent_count: 0, failed_count: 1 };
-      
-      // If database function succeeded
-      if (result.sent_count > 0) {
-        console.log('✅ Custom message sent via database:', result);
-        return { 
-          success: true, 
-          sent: result.sent_count,
-          failed: result.failed_count,
-          method: 'database'
-        };
-      }
-      
-      // If database function didn't send anything, try direct notifications
-      console.log('⚠️ Database function returned 0 sent, trying direct notifications...');
       return await this.sendDirectNotifications({ title, message, targetType });
-      
     } catch (error) {
-      console.error('❌ All server methods failed, using direct notification approach:', error);
-      // Direct approach - send notifications to all active users
-      return await this.sendDirectNotifications({ title, message, targetType });
+      console.error('❌ Direct notifications failed:', error);
+      return {
+        success: false,
+        error: `Direct notification failed: ${error.message}`,
+        sent: 0,
+        failed: 1,
+        method: 'direct_notification'
+      };
     }
   }
 
