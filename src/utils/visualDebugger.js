@@ -163,12 +163,34 @@ class VisualDebugger {
       this.log('Test 1: Browser Notification API...', 'info');
       if ('Notification' in window) {
         if (Notification.permission === 'granted') {
-          const notification = new Notification('🧪 Visual Debug Test', {
-            body: 'Browser API test radi!',
-            icon: '/bde-evidencija/icon-192x192.png'
-          });
-          setTimeout(() => notification.close(), 3000);
-          this.log('✅ Browser API test uspešan', 'success');
+          try {
+            // Check if we're on mobile and need Service Worker
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+              // Use Service Worker for mobile
+              const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
+              if (registration) {
+                await registration.showNotification('🧪 Mobile API Test', {
+                  body: 'Mobile browser API test radi!',
+                  icon: '/bde-evidencija/icon-192x192.png'
+                });
+                this.log('✅ Mobile Browser API test uspešan', 'success');
+              } else {
+                this.log('❌ Mobile Browser API: Service Worker nije dostupan', 'error');
+              }
+            } else {
+              // Use direct API for desktop
+              const notification = new Notification('🧪 Desktop API Test', {
+                body: 'Desktop browser API test radi!',
+                icon: '/bde-evidencija/icon-192x192.png'
+              });
+              setTimeout(() => notification.close(), 3000);
+              this.log('✅ Desktop Browser API test uspešan', 'success');
+            }
+          } catch (error) {
+            this.log(`❌ Browser API greška: ${error.message}`, 'error');
+          }
         } else {
           this.log('❌ Browser API: Nema dozvolu za notifikacije', 'error');
         }
