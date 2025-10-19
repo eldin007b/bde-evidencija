@@ -325,6 +325,22 @@ class VisualDebugger {
         this.log(`❌ Forsirana notifikacija greška: ${forceError.message}`, 'error');
       }
       
+      // Test 6: Simple Direct Notification
+      this.log('Test 6: Jednostavna direktna notifikacija...', 'info');
+      try {
+        if (Notification.permission === 'granted') {
+          new Notification('🔔 Direktna notifikacija', {
+            body: 'Ovo je direktna browser notifikacija!',
+            icon: '/bde-evidencija/icon-192x192.png'
+          });
+          this.log('✅ Direktna browser notifikacija poslana!', 'success');
+        } else {
+          this.log('❌ Nema dozvolu za direktne notifikacije', 'error');
+        }
+      } catch (directError) {
+        this.log(`❌ Direktna notifikacija greška: ${directError.message}`, 'error');
+      }
+
       this.log('🏁 Test završen - proveri notifikacije!', 'success');
       this.log('💡 Ako ne vidite notifikacije, proverite browser settings!', 'info');
       

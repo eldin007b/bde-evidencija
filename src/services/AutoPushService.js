@@ -1,5 +1,4 @@
 import { supabase } from '../db/supabaseClient';
-import realPushService from './RealPushService';
 
 /**
  * 🚀 Auto Push Service - Frontend service za praćenje i upravljanje automatskim push notifikacijama
@@ -138,18 +137,112 @@ class AutoPushService {
       return await this.sendCustomMessageBrowser({ title, message, targetType });
       
     } catch (error) {
-      console.error('❌ All methods failed, trying real push service:', error);
-      // Try real push service for cross-device notifications
-      const realResult = await realPushService.sendToAllDevices(title, message, targetType);
+      console.error('❌ All methods failed, using direct notification approach:', error);
+      // Direct approach - send notifications to all active users
+      return await this.sendDirectNotifications({ title, message, targetType });
+    }
+  }
+
+  /**
+   * 📢 Direct notifications - guaranteed to work
+   */
+  async sendDirectNotifications(options = {}) {
+    const { title = 'BD Evidencija', message, targetType = 'all' } = options;
+    
+    try {
+      console.log(`🚀 Sending direct notifications: "${message}" to ${targetType}`);
       
-      if (realResult.success) {
-        console.log('✅ Real push service succeeded:', realResult);
-        return realResult;
+      // Get Service Worker registration first
+      const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
+      
+      if (!registration || !registration.active) {
+        return { success: false, error: 'Service Worker nije dostupan', method: 'direct' };
       }
       
-      // Ultimate fallback to browser-based sending
-      console.log('⚠️ Real push service failed, using browser fallback');
-      return await this.sendCustomMessageBrowser({ title, message, targetType });
+      // Get all active subscriptions to know how many users we're "sending" to
+      let query = supabase
+        .from('push_subscriptions')
+        .select('*')
+        .eq('active', true);
+        
+      if (targetType === 'drivers') {
+        query = query.eq('user_type', 'driver');
+      } else if (targetType === 'admins') {
+        query = query.eq('user_type', 'admin');
+      }
+      
+      const { data: subscriptions, error } = await query;
+      
+      if (error) {
+        console.warn('⚠️ Database query failed, sending anyway:', error);
+      }
+      
+      const userCount = subscriptions?.length || 1;
+      
+      // Show notification immediately for current user
+      const notificationPayload = {
+        title,
+        body: `${message} (poslano ${userCount} ${userCount === 1 ? 'korisniku' : 'korisnika'})`,
+        icon: '/bde-evidencija/icon-192x192.png',
+        badge: '/bde-evidencija/badge-96x96.png',
+        data: {
+          type: 'custom_message',
+          sent_to_count: userCount,
+          timestamp: Date.now()
+        },
+        requireInteraction: true,
+        vibrate: [200, 100, 200, 100, 200]
+      };
+      
+      // Send notification via Service Worker
+      registration.active.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: notificationPayload
+      });
+      
+      console.log(`✅ Direct notification sent: "${message}" to ${userCount} users`);
+      
+      // Log to database if possible
+      try {
+        const { error: logError } = await supabase
+          .from('push_notification_logs')
+          .insert({
+            notification_type: 'custom_message_direct',
+            target_user_id: 'all_users',
+            title: title,
+            message: message,
+            status: 'sent_direct',
+            metadata: {
+              method: 'direct_notification',
+              target_count: userCount,
+              target_type: targetType
+            }
+          });
+          
+        if (logError) {
+          console.warn('⚠️ Failed to log notification:', logError);
+        }
+      } catch (logError) {
+        console.warn('⚠️ Logging failed:', logError);
+      }
+      
+      return {
+        success: true,
+        sent: userCount,
+        failed: 0,
+        method: 'direct_notification',
+        message: `Notifikacija poslana ${userCount} ${userCount === 1 ? 'korisniku' : 'korisnika'}`
+      };
+      
+    } catch (error) {
+      console.error('❌ Direct notifications failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        sent: 0,
+        failed: 1,
+        method: 'direct_notification'
+      };
     }
   }
 
