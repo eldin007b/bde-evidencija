@@ -526,6 +526,48 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                           Dodaj Test Driver
                         </Button>
                       </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-blue-400' 
+                            : 'hover:bg-blue-50 text-blue-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('🌙 Pokretanje background test-a...');
+                              const { testBackgroundNotifications } = await import('../utils/testBackgroundNotifications.js');
+                              await testBackgroundNotifications();
+                            });
+                          }}
+                        >
+                          <Clock className="w-4 h-4 mr-2" />
+                          Background Test
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-cyan-400' 
+                            : 'hover:bg-cyan-50 text-cyan-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('📱 Provjera PWA support...');
+                              const checkPWASupport = await import('../utils/checkPWASupport.js');
+                              await checkPWASupport.default();
+                            });
+                          }}
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          PWA Status
+                        </Button>
+                      </motion.div>
                     </>
                   )}
                 </>
