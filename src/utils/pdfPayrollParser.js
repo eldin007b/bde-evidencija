@@ -1,4 +1,5 @@
 import { getPayrollFiles, downloadPayrollFile } from '../services/SupabasePayrollService';
+import { supabase } from '../db/supabaseClient';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 import pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;

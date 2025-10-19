@@ -1,5 +1,21 @@
 import React from 'react';
 
+// When archived, some components referenced a CSS module named `styles`.
+// Provide a safe fallback to avoid linter/runtime `no-undef` errors.
+const styles = {
+	card: 'driver-card',
+	headerRow: 'driver-header-row',
+	icon: 'driver-icon',
+	name: 'driver-name',
+	tura: 'driver-tura',
+	statsSection: 'driver-stats',
+	statsGroup: 'driver-stats-group',
+	statBox: 'driver-stat-box',
+	statLabel: 'driver-stat-label',
+	statValue: 'driver-stat-value',
+	statSublabel: 'driver-stat-sublabel',
+};
+
 // Lightweight placeholder DriverCard kept to avoid breaking imports.
 // This renders a minimal card when the full implementation was archived.
 export default function DriverCardPlaceholder({ name = 'Driver', onClick }) {
