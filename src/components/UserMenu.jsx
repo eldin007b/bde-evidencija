@@ -20,6 +20,7 @@ import {
 import pushRegistrationService from '../services/PushRegistrationService';
 import { runCompleteDiagnostic } from '../utils/debugPushNotifications';
 import { testDirectPushNotification, testBrowserNotificationAPI } from '../utils/testPushNotifications';
+import visualDebug from '../utils/visualDebugger';
 
 export default function UserMenu({ user, onChangePassword, onLogout, scraperData, currentTheme = 'default', themes }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -474,25 +475,49 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                   
                   {/* 🐛 Debug Push Notifications */}
                   {user?.role === 'admin' && (
-                    <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        variant="ghost"
-                        size="sm" 
-                        className={`w-full justify-start text-left ${currentTheme === 'night' 
-                          ? 'hover:bg-gray-700/50 text-orange-400' 
-                          : 'hover:bg-orange-50 text-orange-600'
-                        } rounded-xl transition-all duration-300 py-2 text-sm`}
-                        onClick={() => {
-                          handleMenuItemClick(async () => {
-                            console.log('🐛 Running push notifications diagnostic...');
-                            await runCompleteDiagnostic();
-                          });
-                        }}
-                      >
-                        <Bug className="w-4 h-4 mr-2" />
-                        Debug obavještenja
-                      </Button>
-                    </motion.div>
+                    <>
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm" 
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-orange-400' 
+                            : 'hover:bg-orange-50 text-orange-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              visualDebug.log('🐛 Running push notifications diagnostic...');
+                              await runCompleteDiagnostic();
+                            });
+                          }}
+                        >
+                          <Bug className="w-4 h-4 mr-2" />
+                          Debug obavještenja
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-yellow-400' 
+                            : 'hover:bg-yellow-50 text-yellow-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              await visualDebug.testAllMethods();
+                              setTimeout(() => {
+                                visualDebug.showDebugPanel();
+                              }, 1000);
+                            });
+                          }}
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          Visual Test
+                        </Button>
+                      </motion.div>
+                    </>
                   )}
                 </>
               )}
