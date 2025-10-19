@@ -16,6 +16,7 @@ import {
   Bell,
   BellOff,
   Bug,
+  Send,
 } from "lucide-react";
 import pushRegistrationService from '../services/PushRegistrationService';
 import { runCompleteDiagnostic } from '../utils/debugPushNotifications';
@@ -523,6 +524,69 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                         >
                           <Activity className="w-4 h-4 mr-2" />
                           Visual Test
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-purple-400' 
+                            : 'hover:bg-purple-50 text-purple-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('🧪 Pokretanje testa dostave notifikacija...');
+                              const { testNotificationDelivery } = await import('../utils/testNotificationDelivery.js');
+                              await testNotificationDelivery();
+                            });
+                          }}
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          Test Dostave
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-green-400' 
+                            : 'hover:bg-green-50 text-green-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('👤 Dodajem test drivera...');
+                              const { addTestDriver } = await import('../utils/testDataHelpers.js');
+                              await addTestDriver();
+                            });
+                          }}
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          Dodaj Test Driver
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-blue-400' 
+                            : 'hover:bg-blue-50 text-blue-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('📦 Dodajem test dostavu...');
+                              const { addTestDelivery } = await import('../utils/testDataHelpers.js');
+                              await addTestDelivery();
+                            });
+                          }}
+                        >
+                          <Truck className="w-4 h-4 mr-2" />
+                          Dodaj Test Dostavu
                         </Button>
                       </motion.div>
                     </>
