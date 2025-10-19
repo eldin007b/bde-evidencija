@@ -85,6 +85,7 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
 
   // 🔔 Toggle push notifications
   const toggleNotifications = async () => {
+    console.log('🔔 toggleNotifications called, current state:', { notificationsEnabled, notificationsLoading });
     setNotificationsLoading(true);
     try {
       if (notificationsEnabled) {
@@ -93,18 +94,25 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
         console.log('🔕 Notifications disabled');
       } else {
         // Enable notifications
+        console.log('🔄 Calling pushRegistrationService with user:', { id: user?.id, role: user?.role });
         const result = await pushRegistrationService.requestPermissionAndRegister(user?.id || 'admin', user?.role || 'user');
+        console.log('📊 Registration result:', result);
         if (result.success) {
           setNotificationsEnabled(true);
-          console.log('🔔 Notifications enabled');
+          console.log('🔔 Notifications enabled successfully');
         } else {
-          console.error('Failed to enable notifications:', result.reason);
+          console.error('❌ Failed to enable notifications:', result.reason, result.error);
+          // Show alert to user for debugging
+          alert(`Greška: ${result.reason || 'Nepoznata greška'}`);
         }
       }
     } catch (error) {
-      console.error('Error toggling notifications:', error);
+      console.error('❌ Error toggling notifications:', error);
+      // Show alert to user for debugging
+      alert(`Greška u toggleNotifications: ${error.message}`);
     } finally {
       setNotificationsLoading(false);
+      console.log('🏁 toggleNotifications finished');
     }
   };
 

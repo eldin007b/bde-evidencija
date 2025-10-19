@@ -257,7 +257,7 @@ async function sendPushNotification(
   const { data: subscriptions, error: subError } = await supabaseClient
     .from('push_subscriptions')
     .select('*')
-    .or(`driver_id.eq.${parseInt(user_id) || 0},user_id.eq.${user_id}`) // Convert to INT for driver_id!
+    .eq('driver_id', parseInt(user_id) || 0) // Use only driver_id since user_id column doesn't exist
     .eq('active', true)
 
   console.log(`🔍 Subscriptions query result:`, subscriptions)
