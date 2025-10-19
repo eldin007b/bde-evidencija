@@ -1,4 +1,5 @@
 import { supabase } from '../db/supabaseClient';
+import realPushService from './RealPushService';
 
 /**
  * 🚀 Auto Push Service - Frontend service za praćenje i upravljanje automatskim push notifikacijama
@@ -137,8 +138,17 @@ class AutoPushService {
       return await this.sendCustomMessageBrowser({ title, message, targetType });
       
     } catch (error) {
-      console.error('❌ All methods failed, using browser fallback:', error);
-      // Fallback to browser-based sending
+      console.error('❌ All methods failed, trying real push service:', error);
+      // Try real push service for cross-device notifications
+      const realResult = await realPushService.sendToAllDevices(title, message, targetType);
+      
+      if (realResult.success) {
+        console.log('✅ Real push service succeeded:', realResult);
+        return realResult;
+      }
+      
+      // Ultimate fallback to browser-based sending
+      console.log('⚠️ Real push service failed, using browser fallback');
       return await this.sendCustomMessageBrowser({ title, message, targetType });
     }
   }

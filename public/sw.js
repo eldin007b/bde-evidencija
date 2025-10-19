@@ -69,6 +69,25 @@ self.addEventListener('message', (event) => {
     
     console.log('✅ Push simulation notification shown');
   }
+
+  if (event.data && event.data.type === 'SIMULATE_CROSS_DEVICE_PUSH') {
+    const { payload, targetEndpoint } = event.data;
+    
+    console.log(`📱 Simulating cross-device push to: ${targetEndpoint.substring(0, 50)}...`);
+    
+    // Show notification with cross-device indicator
+    self.registration.showNotification(payload.title || 'BD Evidencija', {
+      body: `${payload.body} (simulacija za sve vozače)`,
+      icon: payload.icon || '/bde-evidencija/icon-192x192.png',
+      badge: '/bde-evidencija/badge-96x96.png',
+      data: payload.data || { url: '/' },
+      tag: 'cross-device-simulation',
+      vibrate: [300, 200, 300],
+      requireInteraction: false
+    });
+    
+    console.log('✅ Cross-device push simulation shown');
+  }
 });
 
 // Push event - incoming push notification
