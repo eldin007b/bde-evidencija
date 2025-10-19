@@ -137,9 +137,11 @@ serve(async (req: Request) => {
 
       case 'custom_message':
         // Custom message from admin
+        console.log(`🔍 STARTING custom_message case for target_type: ${payload.target_type}`)
         let targetUsers: string[] = []
         
         if (payload.target_users && payload.target_users.length > 0) {
+          console.log(`🔍 Using specified target_users:`, payload.target_users)
           targetUsers = payload.target_users
         } else {
           // Get all active users based on target_type
@@ -147,11 +149,16 @@ serve(async (req: Request) => {
           let query = supabaseClient.from('push_subscriptions').select('driver_id, user_id, driver_tura')
           
           if (payload.target_type === 'drivers') {
+            console.log(`🔍 Filtering for drivers (not admin)`)
             query = query.not('driver_tura', 'eq', 'admin')
           } else if (payload.target_type === 'admins') {
+            console.log(`🔍 Filtering for admins`)
             query = query.eq('driver_tura', 'admin')
+          } else {
+            console.log(`🔍 No filter applied - getting all users`)
           }
           
+          console.log(`🔍 About to execute query...`)
           const { data: users, error: usersError } = await query
           console.log(`🔍 All users query result:`, users)
           console.log(`🔍 All users query error:`, usersError)
@@ -161,6 +168,7 @@ serve(async (req: Request) => {
           console.log(`🔍 Target users after mapping:`, targetUsers)
         }
         
+        console.log(`🔍 Creating ${targetUsers.length} notifications...`)
         notifications = targetUsers.map(userId => ({
           user_id: userId,
           user_type: payload.target_type === 'drivers' ? 'driver' : 
@@ -173,6 +181,7 @@ serve(async (req: Request) => {
             click_action: '/'
           }
         }))
+        console.log(`🔍 FINISHED custom_message case - created ${notifications.length} notifications`)
         break
 
       default:
@@ -182,6 +191,9 @@ serve(async (req: Request) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
     }
+
+    console.log(`🔍 AFTER switch statement - notifications array length: ${notifications.length}`)
+    console.log(`🔍 Notifications array:`, notifications)
 
     if (notifications.length === 0) {
       console.log('ℹ️ No notifications to send (disabled or no targets)')
