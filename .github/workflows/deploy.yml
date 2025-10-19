@@ -44,5 +44,21 @@ jobs:
           publish_branch: gh-pages
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Smoke test deployed site
+        run: |
+          url="https://eldin007b.github.io/bde-evidencija/"
+          echo "Checking ${url}"
+          for i in {1..12}; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+            echo "Attempt $i: HTTP $status"
+            if [ "$status" = "200" ]; then
+              echo "Site is up"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Site did not become available after retries"
+          exit 1
  
 
