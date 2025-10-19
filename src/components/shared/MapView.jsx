@@ -5,6 +5,7 @@ import ClickToVORAddress from './ClickToVORAddress';
 import L from 'leaflet';
 import React, { useCallback, useRef, useEffect } from 'react';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { formatDistance, formatDuration } from '../../utils/googleMaps';
 
 // Fix za Leaflet ikone
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -35,14 +36,21 @@ function PopupContentSearch({ address, lat, lon, onClose, routeInfo, userLocatio
     ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`
     : '#';
 
-  // Calculate estimated time and distance if we have route info or user location
+  // Calculate estimated time and distance using the same logic and formatting as info bar
   let timeDistance = null;
-  if (routeInfo && routeInfo.distance && routeInfo.duration) {
-    const distanceKm = (routeInfo.distance / 1000).toFixed(1);
-    const timeMin = Math.round(routeInfo.duration / 60);
-    timeDistance = `${timeMin} min • ${distanceKm} km`;
+  
+  if (routeInfo && routeInfo.distanceMeters && routeInfo.durationSeconds) {
+    // Use route info if available (MapQuest data)
+    const durationText = routeInfo.durationText || formatDuration(routeInfo.durationSeconds) || '--';
+    const distanceText = routeInfo.distanceText || formatDistance(routeInfo.distanceMeters) || '--';
+    timeDistance = `${durationText} • ${distanceText}`;
+  } else if (routeInfo && routeInfo.distance && routeInfo.duration) {
+    // Legacy format support
+    const durationText = formatDuration(routeInfo.duration) || '--';
+    const distanceText = formatDistance(routeInfo.distance) || '--';
+    timeDistance = `${durationText} • ${distanceText}`;
   } else if (userLocation && lat && lon) {
-    // Simple haversine distance calculation as fallback
+    // Haversine distance calculation as fallback (same as info bar)
     const R = 6371; // Earth's radius in km
     const dLat = (lat - userLocation[0]) * Math.PI / 180;
     const dLon = (lon - userLocation[1]) * Math.PI / 180;
@@ -50,9 +58,16 @@ function PopupContentSearch({ address, lat, lon, onClose, routeInfo, userLocatio
       Math.cos(userLocation[0] * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
       Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-    const estimatedTime = Math.round((distance / 50) * 60); // Assume 50 km/h average speed
-    timeDistance = `${estimatedTime} min • ${distance.toFixed(1)} km`;
+    const aerialKm = R * c;
+    const aerialMeters = Math.round(aerialKm * 1000);
+    
+    // Estimate duration using average speed (same as info bar logic)
+    const avgSpeedKmh = 40; // Average speed for estimation
+    const estSeconds = aerialMeters > 0 ? Math.round((aerialKm / avgSpeedKmh) * 3600) : null;
+    
+    const durationText = estSeconds ? formatDuration(estSeconds) : '--';
+    const distanceText = formatDistance(aerialMeters);
+    timeDistance = `${durationText} • ${distanceText}`;
   }
 
   return (

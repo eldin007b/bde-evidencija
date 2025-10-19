@@ -54,12 +54,12 @@ export async function getRouteFromMapQuest(originLat, originLon, destLat, destLo
  * Smart routing with Supabase proxy preference
  */
 async function getRouteWithFallback(originLat, originLon, destLat, destLon) {
-  // First try: Supabase proxy (preferred for production)
-  if (ENV.API_BASE_URL && !ENV.API_BASE_URL.includes('localhost')) {
+  // First try: MAPQUEST_PROXY_URL if configured (preferred for production)
+  if (ENV.MAPQUEST_PROXY_URL) {
     try {
       return await getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon);
     } catch (proxyError) {
-      // Supabase proxy failed, trying direct API fallback
+      // Proxy failed, trying direct API fallback
     }
   }
   
@@ -90,7 +90,8 @@ async function getRouteViaSupabaseProxy(originLat, originLon, destLat, destLon) 
       }
     };
 
-    const response = await fetch(`${ENV.API_BASE_URL}/mapquest-proxy`, {
+    const proxyEndpoint = ENV.MAPQUEST_PROXY_URL || `${ENV.API_BASE_URL}/mapquest-proxy`;
+    const response = await fetch(proxyEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

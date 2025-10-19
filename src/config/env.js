@@ -21,6 +21,9 @@ const ENV = {
 // MapQuest API key (default set to provided key for local/dev; override via env vars in production)
 ENV.MAPQUEST_API_KEY = _env.VITE_MAPQUEST_API_KEY || _env.REACT_APP_MAPQUEST_API_KEY || _procEnv.REACT_APP_MAPQUEST_API_KEY || '';
 
+// Optional direct proxy URL for MapQuest (overrides API_BASE_URL/mapquest-proxy)
+ENV.MAPQUEST_PROXY_URL = _env.VITE_MAPQUEST_PROXY_URL || _env.REACT_APP_MAPQUEST_PROXY_URL || _procEnv.REACT_APP_MAPQUEST_PROXY_URL || `${ENV.API_BASE_URL}/mapquest-proxy`;
+
 // GitHub configuration for admin dashboard
 ENV.GITHUB_TOKEN = _env.VITE_GITHUB_TOKEN || _env.REACT_APP_GITHUB_TOKEN || _procEnv.REACT_APP_GITHUB_TOKEN || ''; // Read from environment
 ENV.GITHUB_REPO = _env.VITE_GITHUB_REPO || _env.REACT_APP_GITHUB_REPO || _procEnv.REACT_APP_GITHUB_REPO || 'eldin007b/gls-scraper';
