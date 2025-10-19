@@ -146,7 +146,7 @@ serve(async (req: Request) => {
         } else {
           // Get all active users based on target_type
           console.log(`🔍 Getting all users for target_type: ${payload.target_type}`)
-          let query = supabaseClient.from('push_subscriptions').select('driver_id, user_id, driver_tura')
+          let query = supabaseClient.from('push_subscriptions').select('driver_id, user_id, driver_tura').eq('active', true)
           
           if (payload.target_type === 'drivers') {
             console.log(`🔍 Filtering for drivers (not admin)`)
@@ -155,7 +155,7 @@ serve(async (req: Request) => {
             console.log(`🔍 Filtering for admins`)
             query = query.eq('driver_tura', 'admin')
           } else {
-            console.log(`🔍 No filter applied - getting all users`)
+            console.log(`🔍 No filter applied - getting all users with active=true`)
           }
           
           console.log(`🔍 About to execute query...`)
