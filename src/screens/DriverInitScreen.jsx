@@ -441,7 +441,6 @@ function DriverInitScreen({ onDriverSelected, loading }) {
               initial={{ scale: 0, opacity: 1 }}
               animate={{ scale: 4, opacity: 0 }}
               transition={{ duration: 0.6 }}
-              key={Math.random()}
             />
             
             {loading ? (

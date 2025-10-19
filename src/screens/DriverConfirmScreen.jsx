@@ -660,7 +660,6 @@ function DriverConfirmScreen({ driver, onContinue, onLogin, onBack, loading }) {
                 initial={{ scale: 0, opacity: 1 }}
                 animate={{ scale: 4, opacity: 0 }}
                 transition={{ duration: 0.6 }}
-                key={Math.random()}
               />
               
               {loading ? (
@@ -696,7 +695,6 @@ function DriverConfirmScreen({ driver, onContinue, onLogin, onBack, loading }) {
 
         {/* Enhanced Modern Footer */}
         <motion.div 
-          className="flex flex-col items-center gap-2 mt-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2.0 }}
