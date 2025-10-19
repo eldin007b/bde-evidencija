@@ -28,6 +28,30 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
     visualDebug.testAllMethods();
   };
 
+  const testDirectNotifications = async () => {
+    try {
+      console.log('🧪 Testing direct notifications...');
+      const result = await autoPushService.sendDirectNotifications({
+        title: 'Test Direct',
+        message: 'Ovo je test direktne notifikacije!',
+        targetType: 'all'
+      });
+      console.log('🧪 Direct notification test result:', result);
+      setResult({
+        success: result.success,
+        message: result.success ? 'Test direktne notifikacije uspešan!' : 'Test direktne notifikacije neuspešan!',
+        details: result
+      });
+    } catch (error) {
+      console.error('🧪 Direct notification test failed:', error);
+      setResult({
+        success: false,
+        message: 'Greška pri testu direktnih notifikacija',
+        details: error.message
+      });
+    }
+  };
+
   // Check registration status and load stats
   useEffect(() => {
     checkRegistrationStatus();
@@ -454,7 +478,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 onClick={openDebugger}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
                   isNightTheme
                     ? 'bg-orange-500 hover:bg-orange-600 text-white'
                     : 'bg-orange-600 hover:bg-orange-700 text-white'
@@ -463,6 +487,22 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 <div className="flex items-center justify-center gap-2">
                   <Bug className="w-5 h-5" />
                   Otvori Visual Debugger
+                </div>
+              </motion.button>
+
+              <motion.button
+                onClick={() => testDirectNotifications()}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                  isNightTheme
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                } shadow-lg hover:shadow-xl`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  Test Direktne Notifikacije
                 </div>
               </motion.button>
               

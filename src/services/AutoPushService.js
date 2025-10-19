@@ -132,12 +132,12 @@ class AutoPushService {
         };
       }
       
-      // If database function didn't send anything, try browser fallback
-      console.log('⚠️ Database function returned 0 sent, trying browser fallback...');
-      return await this.sendCustomMessageBrowser({ title, message, targetType });
+      // If database function didn't send anything, try direct notifications
+      console.log('⚠️ Database function returned 0 sent, trying direct notifications...');
+      return await this.sendDirectNotifications({ title, message, targetType });
       
     } catch (error) {
-      console.error('❌ All methods failed, using direct notification approach:', error);
+      console.error('❌ All server methods failed, using direct notification approach:', error);
       // Direct approach - send notifications to all active users
       return await this.sendDirectNotifications({ title, message, targetType });
     }
@@ -150,7 +150,8 @@ class AutoPushService {
     const { title = 'BD Evidencija', message, targetType = 'all' } = options;
     
     try {
-      console.log(`🚀 Sending direct notifications: "${message}" to ${targetType}`);
+      console.log(`🚀 [DIRECT NOTIFICATIONS] Starting for: "${message}" to ${targetType}`);
+      console.log(`🚀 [DIRECT NOTIFICATIONS] Function called with:`, { title, message, targetType });
       
       // Get Service Worker registration first
       const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
@@ -681,6 +682,7 @@ export const {
   testPayrollNotification, 
   testExtraRideNotification,
   sendCustomMessage,
+  sendDirectNotifications,
   addExtraRide,
   reviewExtraRide,
   getPushStats,
