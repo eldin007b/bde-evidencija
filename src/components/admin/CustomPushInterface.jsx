@@ -29,20 +29,31 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
   };
 
   const testDirectNotifications = async () => {
+    // Show visual debugger for production logging
+    if (!visualDebug.isVisible) {
+      visualDebug.showDebugPanel();
+    }
+    
     try {
+      visualDebug.log('🧪 Starting direct notification test...', 'info');
       console.log('🧪 Testing direct notifications...');
+      
       const result = await autoPushService.sendDirectNotifications({
         title: 'Test Direct',
         message: 'Ovo je test direktne notifikacije!',
         targetType: 'all'
       });
+      
+      visualDebug.log(`🧪 Test result: ${result.success ? 'SUCCESS' : 'FAILED'}`, result.success ? 'success' : 'error');
       console.log('🧪 Direct notification test result:', result);
+      
       setResult({
         success: result.success,
         message: result.success ? 'Test direktne notifikacije uspešan!' : 'Test direktne notifikacije neuspešan!',
         details: result
       });
     } catch (error) {
+      visualDebug.log(`🧪 Test ERROR: ${error.message}`, 'error');
       console.error('🧪 Direct notification test failed:', error);
       setResult({
         success: false,

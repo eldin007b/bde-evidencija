@@ -149,16 +149,34 @@ class AutoPushService {
   async sendDirectNotifications(options = {}) {
     const { title = 'BD Evidencija', message, targetType = 'all' } = options;
     
+    // Import visual debugger for production logging
+    let visualDebug;
     try {
+      const debuggerModule = await import('../utils/visualDebugger');
+      visualDebug = debuggerModule.default;
+    } catch (e) {
+      // Fallback if debugger not available
+      visualDebug = {
+        log: (msg, type) => console.log(`[${type}] ${msg}`)
+      };
+    }
+    
+    try {
+      visualDebug.log(`🚀 DIRECT NOTIFICATIONS: Starting for "${message}" to ${targetType}`, 'info');
+      
       console.log(`🚀 [DIRECT NOTIFICATIONS] Starting for: "${message}" to ${targetType}`);
       console.log(`🚀 [DIRECT NOTIFICATIONS] Function called with:`, { title, message, targetType });
       
       // Get Service Worker registration first
+      visualDebug.log('🔧 Checking Service Worker registration...', 'info');
       const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
       
       if (!registration || !registration.active) {
+        visualDebug.log('❌ Service Worker nije dostupan', 'error');
         return { success: false, error: 'Service Worker nije dostupan', method: 'direct' };
       }
+      
+      visualDebug.log('✅ Service Worker je aktivan', 'success');
       
       // Get all active subscriptions to know how many users we're "sending" to
       let query = supabase
@@ -175,10 +193,14 @@ class AutoPushService {
       const { data: subscriptions, error } = await query;
       
       if (error) {
+        visualDebug.log(`⚠️ Database query failed: ${error.message}`, 'warn');
         console.warn('⚠️ Database query failed, sending anyway:', error);
+      } else {
+        visualDebug.log(`📋 Found ${subscriptions?.length || 0} active subscriptions`, 'info');
       }
       
       const userCount = subscriptions?.length || 1;
+      visualDebug.log(`👥 Target user count: ${userCount}`, 'info');
       
       // Show notification immediately for current user
       const notificationPayload = {
@@ -196,11 +218,13 @@ class AutoPushService {
       };
       
       // Send notification via Service Worker
+      visualDebug.log(`📤 Sending notification to Service Worker...`, 'info');
       registration.active.postMessage({
         type: 'SHOW_NOTIFICATION',
         payload: notificationPayload
       });
       
+      visualDebug.log(`✅ Notification sent to ${userCount} users!`, 'success');
       console.log(`✅ Direct notification sent: "${message}" to ${userCount} users`);
       
       // Log to database if possible
@@ -236,6 +260,9 @@ class AutoPushService {
       };
       
     } catch (error) {
+      if (visualDebug) {
+        visualDebug.log(`❌ Direct notifications failed: ${error.message}`, 'error');
+      }
       console.error('❌ Direct notifications failed:', error);
       return {
         success: false,
