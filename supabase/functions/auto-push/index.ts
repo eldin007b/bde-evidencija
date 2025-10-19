@@ -143,16 +143,17 @@ serve(async (req: Request) => {
           targetUsers = payload.target_users
         } else {
           // Get all active users based on target_type
-          let query = supabaseClient.from('push_subscriptions').select('user_id, user_type')
+          let query = supabaseClient.from('push_subscriptions').select('driver_id, user_id, driver_tura')
           
           if (payload.target_type === 'drivers') {
-            query = query.eq('user_type', 'driver')
+            query = query.not('driver_tura', 'eq', 'admin')
           } else if (payload.target_type === 'admins') {
-            query = query.eq('user_type', 'admin')
+            query = query.eq('driver_tura', 'admin')
           }
           
           const { data: users } = await query
-          targetUsers = users?.map((u: any) => u.user_id) || []
+          // Use driver_id if available, otherwise user_id
+          targetUsers = users?.map((u: any) => u.driver_id || u.user_id).filter((id: any) => id) || []
         }
         
         notifications = targetUsers.map(userId => ({
@@ -237,8 +238,7 @@ async function sendPushNotification(
   const { data: subscriptions } = await supabaseClient
     .from('push_subscriptions')
     .select('*')
-    .eq('user_id', user_id)
-    .eq('user_type', user_type)
+    .or(`driver_id.eq.${user_id},user_id.eq.${user_id}`) // Check both columns!
     .eq('active', true)
 
   if (!subscriptions || subscriptions.length === 0) {
