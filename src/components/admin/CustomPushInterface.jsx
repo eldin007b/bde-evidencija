@@ -199,6 +199,87 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
     }
   };
 
+  const forceRegisterCurrentDevice = async () => {
+    try {
+      alert("🔧 FORSIRAM registraciju trenutnog uređaja...");
+      
+      if (!navigator.serviceWorker || !('PushManager' in window)) {
+        alert("❌ Browser ne podržava push notifikacije!");
+        return;
+      }
+      
+      // Get current subscription
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        alert("❌ Service Worker nije registrovan!");
+        return;
+      }
+      
+      const currentSubscription = await registration.pushManager.getSubscription();
+      if (!currentSubscription) {
+        alert("❌ Nema push pretplate na ovom uređaju!");
+        return;
+      }
+      
+      alert("✅ Našao push pretplatu, forsiram upis u bazu...");
+      
+      // Get subscription data
+      const subscriptionJson = currentSubscription.toJSON();
+      console.log('Subscription data:', subscriptionJson);
+      
+      // Prepare data for database (matching PushRegistrationService format)
+      const subscriptionData = {
+        driver_id: 2, // HARDCODED Eldin's ID for testing
+        driver_tura: 'admin', 
+        endpoint: currentSubscription.endpoint,
+        p256dh_key: subscriptionJson.keys.p256dh,
+        auth_key: subscriptionJson.keys.auth,
+        user_agent: navigator.userAgent,
+        platform: navigator.platform,
+        browser: 'Chrome', // Simple detection
+        active: true,
+        created_at: new Date().toISOString()
+      };
+      
+      console.log('Inserting subscription data:', subscriptionData);
+      
+      // Force insert into database using Supabase
+      const { supabase } = await import('../../db/supabaseClient');
+      
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .upsert(subscriptionData, { 
+          onConflict: 'endpoint',
+          ignoreDuplicates: false 
+        })
+        .select();
+      
+      if (error) {
+        alert(`❌ Greška pri upisu u bazu: ${error.message}`);
+        console.error('Database error:', error);
+        return;
+      }
+      
+      alert(`✅ USPEŠNO! Registracija upisana u bazu: ${JSON.stringify(data)}`);
+      console.log('✅ Subscription saved to database:', data);
+      
+      // Now test server push
+      alert("🧪 Testiram server push sa novom registracijom...");
+      
+      const testResult = await autoPushService.sendServerPushOnly({
+        title: '🎉 FORSIRANA REGISTRACIJA',
+        message: 'Test nakon forsiranje registracije - treba da radi!',
+        targetType: 'all'
+      });
+      
+      alert(`📊 Test rezultat: ${JSON.stringify(testResult)}`);
+      
+    } catch (error) {
+      alert(`❌ Greška pri forsirajnju: ${error.message}`);
+      console.error('Force registration error:', error);
+    }
+  };
+
   // Check registration status and load stats
   useEffect(() => {
     checkRegistrationStatus();
@@ -673,7 +754,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 onClick={() => checkAndFixSubscriptions()}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
                   isNightTheme
                     ? 'bg-purple-500 hover:bg-purple-600 text-white'
                     : 'bg-purple-600 hover:bg-purple-700 text-white'
@@ -682,6 +763,22 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 <div className="flex items-center justify-center gap-2">
                   <Activity className="w-5 h-5" />
                   Proveri i Popravi Pretplate
+                </div>
+              </motion.button>
+
+              <motion.button
+                onClick={() => forceRegisterCurrentDevice()}
+                whileHover={{ scale:1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                  isNightTheme
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : 'bg-red-600 hover:bg-red-700 text-white'
+                } shadow-lg hover:shadow-xl`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  🔧 FORSIRAJ Registraciju
                 </div>
               </motion.button>
               
