@@ -159,6 +159,19 @@ export default function App() {
     }
   }, [currentUser, isAuthenticated]);
 
+  // Listen for global logout events (dispatched from components like UserMenu)
+  useEffect(() => {
+    const handler = (e) => {
+      console.log('Global logout event received', e.detail);
+      // Clear auth-related localStorage to be safe
+      try { localStorage.removeItem('bde_current_user'); } catch (err) {}
+      try { localStorage.removeItem('bde_login_time'); } catch (err) {}
+      handleLogout();
+    };
+    window.addEventListener('bde:logout', handler);
+    return () => window.removeEventListener('bde:logout', handler);
+  }, []);
+
   return (
     <Router basename="/bde-evidencija">
       <LocalizationProvider>

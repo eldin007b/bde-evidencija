@@ -437,7 +437,7 @@ function DriverInitScreen({ onDriverSelected, loading }) {
           >
             {/* Ripple Effect */}
             <motion.div
-              className="absolute inset-0 bg-white/20 rounded-full"
+              className="absolute inset-0 bg-white/20 rounded-full pointer-events-none"
               initial={{ scale: 0, opacity: 1 }}
               animate={{ scale: 4, opacity: 0 }}
               transition={{ duration: 0.6 }}

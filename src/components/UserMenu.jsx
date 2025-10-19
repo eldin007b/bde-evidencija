@@ -331,7 +331,25 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                     ? 'hover:bg-gray-700/50 text-rose-400' 
                     : 'hover:bg-rose-50 text-rose-600'
                   } rounded-xl transition-all duration-300 py-2 text-sm`}
-                  onClick={() => handleMenuItemClick(onLogout)}
+                  onClick={() => {
+                    // Close menu first
+                    setIsOpen(false);
+                    setTimeout(() => {
+                      try {
+                        // Perform provided logout callback (clears auth state)
+                        if (typeof onLogout === 'function') onLogout();
+                        // Clear local storage keys related to auth
+                        try { localStorage.removeItem('bde_current_user'); } catch (e) {}
+                        try { localStorage.removeItem('bde_login_time'); } catch (e) {}
+                        // Dispatch a global logout event so App can respond and show the login flow
+                        window.dispatchEvent(new CustomEvent('bde:logout', { detail: { source: 'UserMenu' } }));
+                        // Use router navigate to root to ensure user lands on login flow
+                        navigate('/');
+                      } catch (err) {
+                        console.error('Logout failed', err);
+                      }
+                    }, 120);
+                  }}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Odjava
