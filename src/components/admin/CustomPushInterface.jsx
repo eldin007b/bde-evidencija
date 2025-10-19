@@ -142,6 +142,63 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
     }
   };
 
+  const checkAndFixSubscriptions = async () => {
+    try {
+      alert("🔍 Proveravam push pretplate...");
+      
+      // Get current subscription
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        alert("❌ Service Worker nije registrovan!");
+        return;
+      }
+      
+      const currentSubscription = await registration.pushManager.getSubscription();
+      if (!currentSubscription) {
+        alert("❌ Nema aktivne push pretplate na ovom uređaju!");
+        return;
+      }
+      
+      alert("✅ Lokalna pretplata pronađena, proveravam bazu...");
+      
+      // Check database subscriptions using autoPushService
+      try {
+        const stats = await autoPushService.getSimpleStats();
+        alert(`📊 Ukupno pretplata u bazi: ${stats?.totalSubscriptions || 0}`);
+        
+        if (!stats || !stats.totalSubscriptions || stats.totalSubscriptions === 0) {
+          alert("🔧 Nema pretplata u bazi - registruj push notifikacije prvo!");
+          
+          // Try to register current device
+          const registered = await pushRegistrationService.requestPermissionAndRegister('admin', 'debug-fix');
+          
+          if (registered.success) {
+            alert("✅ Push notifikacije registrovane! Pokušaj ponovo server push test.");
+          } else {
+            alert(`❌ Greška pri registraciji: ${registered.reason}`);
+          }
+        } else {
+          alert(`✅ Ima ${stats.totalSubscriptions} pretplata u bazi. Edge Function radi ali možda nema aktivnih korisnika.`);
+        }
+        
+      } catch (dbError) {
+        alert(`❌ Greška pri čitanju baze: ${dbError.message}`);
+      }
+      
+      // Visual debugger output
+      if (window.debugger) {
+        window.debugger.log('Subscriptions Check:', { 
+          local: !!currentSubscription, 
+          serviceWorker: !!registration
+        });
+      }
+      
+    } catch (error) {
+      alert(`❌ Greška pri proveri pretplata: ${error.message}`);
+      console.error('Subscriptions check error:', error);
+    }
+  };
+
   // Check registration status and load stats
   useEffect(() => {
     checkRegistrationStatus();
@@ -600,7 +657,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 onClick={() => testServerPush()}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
                   isNightTheme
                     ? 'bg-blue-500 hover:bg-blue-600 text-white'
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -609,6 +666,22 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 <div className="flex items-center justify-center gap-2">
                   <Users className="w-5 h-5" />
                   Test Server Push (svi uređaji)
+                </div>
+              </motion.button>
+
+              <motion.button
+                onClick={() => checkAndFixSubscriptions()}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                  isNightTheme
+                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                } shadow-lg hover:shadow-xl`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Proveri i Popravi Pretplate
                 </div>
               </motion.button>
               
