@@ -65,22 +65,23 @@ class PushRegistrationService {
       }
       
       const subscriptionData = {
-        user_id: userId,
-        user_type: userType,
+        driver_id: parseInt(userId) || null, // Match drivers.id (serial)
+        driver_tura: userType === 'admin' ? 'admin' : null, // Match drivers.tura if not admin
         endpoint: subscription.endpoint,
         p256dh_key: subscriptionJson.keys.p256dh,
         auth_key: subscriptionJson.keys.auth,
         user_agent: navigator.userAgent,
         platform: navigator.platform,
         browser: this.getBrowserName(),
-        active: true
+        active: true,
+        created_at: new Date().toISOString()
       };
 
       console.log('💾 Saving subscription to database...');
       const { data, error } = await supabase
         .from('push_subscriptions')
         .upsert(subscriptionData, { 
-          onConflict: 'user_id,endpoint',
+          onConflict: 'endpoint', // Use endpoint as unique constraint
           ignoreDuplicates: false 
         })
         .select();
@@ -143,11 +144,14 @@ class PushRegistrationService {
       const { data, error } = await supabase
         .from('push_subscriptions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('driver_id', parseInt(userId) || null)
         .eq('active', true)
         .limit(1);
 
-      if (error) return false;
+      if (error) {
+        console.warn('Push subscriptions table may not exist:', error);
+        return false;
+      }
       
       this.isRegistered = data && data.length > 0;
       return this.isRegistered;

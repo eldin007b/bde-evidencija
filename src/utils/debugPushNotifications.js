@@ -69,15 +69,32 @@ export async function testSupabaseConnection() {
   try {
     const { supabase } = await import('../db/supabaseClient.js');
     
-    // Test basic connection
-    const { data, error } = await supabase.from('push_subscriptions').select('count', { count: 'exact', head: true });
+    // Test basic connection to drivers table first
+    const { data: driversData, error: driversError } = await supabase
+      .from('drivers')
+      .select('count', { count: 'exact', head: true });
     
-    if (error) {
-      console.error('❌ Supabase connection failed:', error);
+    if (driversError) {
+      console.error('❌ Supabase connection failed (drivers table):', driversError);
       return false;
+    }
+    
+    console.log('✅ Supabase connected - Drivers table OK');
+    console.log('  Drivers count:', driversData);
+    
+    // Test push_subscriptions table
+    const { data: pushData, error: pushError } = await supabase
+      .from('push_subscriptions')
+      .select('count', { count: 'exact', head: true });
+    
+    if (pushError) {
+      console.error('⚠️ Push subscriptions table error:', pushError);
+      console.log('  This is expected if table doesn\'t exist yet');
+      console.log('  Run the SQL script in database/create_push_subscriptions_table.sql');
+      return true; // Still return true since main connection works
     } else {
-      console.log('✅ Supabase connected successfully');
-      console.log('  Push subscriptions count:', data);
+      console.log('✅ Push subscriptions table OK');
+      console.log('  Push subscriptions count:', pushData);
       return true;
     }
   } catch (error) {
