@@ -147,7 +147,7 @@ serve(async (req: Request) => {
           // Get all active users based on target_type
           console.log(`🔍 Getting all users for target_type: ${payload.target_type}`)
           let query = supabaseClient.from('push_subscriptions').select('driver_id, user_id, driver_tura').eq('active', true)
-          
+          console.log(`🔍 [DEBUG] Query object created for target_type: ${payload.target_type}`)
           if (payload.target_type === 'drivers') {
             console.log(`🔍 Filtering for drivers (not admin)`)
             query = query.not('driver_tura', 'eq', 'admin')
@@ -158,15 +158,13 @@ serve(async (req: Request) => {
             console.log(`🔍 target_type is 'all' - NO filter, just active=true`)
             // do NOT apply any driver_tura filter
           }
-          
-          console.log(`🔍 About to execute query...`)
+          console.log(`🔍 [DEBUG] Executing query for all users...`)
           const { data: users, error: usersError } = await query
-          console.log(`🔍 All users query result:`, users)
-          console.log(`🔍 All users query error:`, usersError)
-          
+          console.log(`🔍 [DEBUG] Query result:`, users)
+          console.log(`🔍 [DEBUG] Query error:`, usersError)
           // Use driver_id if available, otherwise user_id  
           targetUsers = users?.map((u: any) => String(u.driver_id || u.user_id)).filter((id: any) => id) || []
-          console.log(`🔍 Target users after mapping:`, targetUsers)
+          console.log(`🔍 [DEBUG] Target users after mapping:`, targetUsers)
         }
         
         console.log(`🔍 Creating ${targetUsers.length} notifications...`)
