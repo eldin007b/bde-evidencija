@@ -106,18 +106,29 @@
     " -->
     
     <title>BD Evidencija v5.0 - PWA & Push Notifications - Evidencija dostave</title>
-    <script type="module" crossorigin src="/bde-evidencija/assets/app-v4-1760899745229-BH1cIbCa.js"></script>
-    <link rel="modulepreload" crossorigin href="/bde-evidencija/assets/chunk-v4-1760899745229-Cp1U2DWw.js">
-    <link rel="modulepreload" crossorigin href="/bde-evidencija/assets/chunk-v4-1760899745229-C91sa_mq.js">
-    <link rel="modulepreload" crossorigin href="/bde-evidencija/assets/chunk-v4-1760899745229-DBZTXvvv.js">
-    <link rel="modulepreload" crossorigin href="/bde-evidencija/assets/chunk-v4-1760899745229-BX32o4Tt.js">
-    <link rel="modulepreload" crossorigin href="/bde-evidencija/assets/chunk-v4-1760899745229-Da1keFKk.js">
-    <link rel="modulepreload" crossorigin href="/bde-evidencija/assets/chunk-v4-1760899745229-CMUnjaUB.js">
-    <link rel="modulepreload" crossorigin href="/bde-evidencija/assets/chunk-v4-1760899745229-COCLPCaB.js">
-    <link rel="stylesheet" crossorigin href="/bde-evidencija/assets/asset-v4-1760899745229-HlSc4AQf.css">
-  <link rel="manifest" href="/bde-evidencija/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/bde-evidencija/registerSW.js"></script></head>
+  </head>
   <body>
-    <div id="root"></div>
+    <!-- Main App Container -->
+    <div id="root">
+      <!-- Loading fallback -->
+      <div style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: system-ui, sans-serif;
+        flex-direction: column;
+      ">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">📱</div>
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">BD Evidencija</div>
+        <div style="opacity: 0.8;">Loading...</div>
+      </div>
+    </div>
+    
+    <script type="module" src="/src/main.jsx"></script>
+
     
     <!-- 🔔 Push Notifications Service Worker -->
     <script>
