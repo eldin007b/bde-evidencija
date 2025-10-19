@@ -169,34 +169,44 @@ class VisualDebugger {
     }
     
     try {
-      // Check if we're on mobile
-      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        this.log('📱 Mobile device detected - using Service Worker API', 'info');
-        const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
-        if (registration) {
-          await registration.showNotification('🧪 Mobile API Test', {
-            body: 'Mobile browser API test radi!',
-            icon: '/bde-evidencija/icon-192x192.png',
-            badge: '/bde-evidencija/badge-96x96.png',
-            tag: 'mobile-test'
-          });
-          this.log('✅ Mobile Browser API test uspešan', 'success');
-        } else {
-          this.log('❌ Mobile Browser API: Service Worker nije dostupan', 'error');
+      // Always try Service Worker first (mobile browsers require this)
+      if ('serviceWorker' in navigator) {
+        this.log('� Using Service Worker API for notification test', 'info');
+        try {
+          const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
+          if (registration) {
+            await registration.showNotification('🧪 Browser API Test', {
+              body: 'Service Worker notification test radi!',
+              icon: '/bde-evidencija/icon-192x192.png',
+              badge: '/bde-evidencija/badge-96x96.png',
+              tag: 'browser-test',
+              requireInteraction: false
+            });
+            this.log('✅ Service Worker Browser API test uspešan', 'success');
+            return;
+          } else {
+            this.log('⚠️ Service Worker nije registrovan, probavam direktno...', 'warn');
+          }
+        } catch (swError) {
+          this.log(`⚠️ Service Worker greška: ${swError.message}, probavam direktno...`, 'warn');
         }
-      } else {
-        this.log('🖥️ Desktop device detected - using direct Notification API', 'info');
+      }
+      
+      // Fallback to direct Notification API (desktop only)
+      this.log('🖥️ Using direct Notification API (desktop fallback)', 'info');
+      try {
         const notification = new Notification('🧪 Desktop API Test', {
           body: 'Desktop browser API test radi!',
           icon: '/bde-evidencija/icon-192x192.png'
         });
         setTimeout(() => notification.close(), 3000);
         this.log('✅ Desktop Browser API test uspešan', 'success');
+      } catch (directError) {
+        throw new Error(`Direktna Notification API greška: ${directError.message}`);
       }
     } catch (error) {
       this.log(`❌ Browser API greška: ${error.message}`, 'error');
+      this.log('💡 Savjet: Koristite Service Worker za mobilne uređaje', 'info');
     }
   }
 

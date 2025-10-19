@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Users, Bell, Activity, CheckCircle, BarChart3, AlertCircle } from 'lucide-react';
+import { Send, Users, Bell, Activity, CheckCircle, BarChart3, AlertCircle, Bug } from 'lucide-react';
 import autoPushService from '../../services/AutoPushService';
 import pushRegistrationService from '../../services/PushRegistrationService';
+import { visualDebugger } from '../../utils/visualDebugger';
 
 /**
  * 📱 Simple Push Notifications Interface
@@ -21,6 +22,11 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
   const [registering, setRegistering] = useState(false);
 
   const isNightTheme = currentTheme === 'night';
+
+  const openDebugger = () => {
+    visualDebugger.show();
+    visualDebugger.testAllMethods();
+  };
 
   // Check registration status and load stats
   useEffect(() => {
@@ -110,7 +116,8 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
 
   const tabs = [
     { id: 'send', label: 'Pošalji poruku', icon: Send },
-    { id: 'stats', label: 'Statistike', icon: BarChart3 }
+    { id: 'stats', label: 'Statistike', icon: BarChart3 },
+    { id: 'debug', label: 'Debug System', icon: Bug }
   ];
 
   return (
@@ -422,6 +429,52 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 Nema dostupnih statistika
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'debug' && (
+          <div className="space-y-6">
+            <div className={`p-6 rounded-lg ${
+              isNightTheme ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-200'
+            }`}>
+              <div className="flex items-center gap-3 mb-4">
+                <Bug className="w-6 h-6 text-orange-500" />
+                <h3 className="text-xl font-semibold">Push System Debug</h3>
+              </div>
+              
+              <p className={`mb-4 ${isNightTheme ? 'text-gray-300' : 'text-gray-600'}`}>
+                Testira sve komponente push notifikacija sistema i prikazuje detaljnu dijagnostiku.
+              </p>
+              
+              <motion.button
+                onClick={openDebugger}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                  isNightTheme
+                    ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                    : 'bg-orange-600 hover:bg-orange-700 text-white'
+                } shadow-lg hover:shadow-xl`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Bug className="w-5 h-5" />
+                  Otvori Visual Debugger
+                </div>
+              </motion.button>
+              
+              <div className={`mt-4 p-4 rounded-lg ${
+                isNightTheme ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-orange-50 border border-orange-200'
+              }`}>
+                <h4 className="font-semibold mb-2 text-orange-600">Šta debugger testira:</h4>
+                <ul className={`text-sm space-y-1 ${isNightTheme ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <li>• Browser Notification API (desktop/mobile kompatibilnost)</li>
+                  <li>• Service Worker registracija i funkcionalnost</li>
+                  <li>• Push subscription status u bazi podataka</li>
+                  <li>• VAPID ključevi i konfiguraciju</li>
+                  <li>• AutoPushService komunikaciju</li>
+                </ul>
+              </div>
+            </div>
           </div>
         )}
       </motion.div>
