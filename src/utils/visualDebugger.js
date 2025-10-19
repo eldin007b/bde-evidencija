@@ -153,6 +153,54 @@ class VisualDebugger {
   }
 
   /**
+   * 🧪 Test browser notification API with mobile/desktop detection
+   */
+  async testBrowserAPI() {
+    this.log('Test 1: Browser Notification API...', 'info');
+    
+    if (!('Notification' in window)) {
+      this.log('❌ Browser API: Nije podržan', 'error');
+      return;
+    }
+    
+    if (Notification.permission !== 'granted') {
+      this.log('❌ Browser API: Nema dozvolu za notifikacije', 'error');
+      return;
+    }
+    
+    try {
+      // Check if we're on mobile
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        this.log('📱 Mobile device detected - using Service Worker API', 'info');
+        const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
+        if (registration) {
+          await registration.showNotification('🧪 Mobile API Test', {
+            body: 'Mobile browser API test radi!',
+            icon: '/bde-evidencija/icon-192x192.png',
+            badge: '/bde-evidencija/badge-96x96.png',
+            tag: 'mobile-test'
+          });
+          this.log('✅ Mobile Browser API test uspešan', 'success');
+        } else {
+          this.log('❌ Mobile Browser API: Service Worker nije dostupan', 'error');
+        }
+      } else {
+        this.log('🖥️ Desktop device detected - using direct Notification API', 'info');
+        const notification = new Notification('🧪 Desktop API Test', {
+          body: 'Desktop browser API test radi!',
+          icon: '/bde-evidencija/icon-192x192.png'
+        });
+        setTimeout(() => notification.close(), 3000);
+        this.log('✅ Desktop Browser API test uspešan', 'success');
+      }
+    } catch (error) {
+      this.log(`❌ Browser API greška: ${error.message}`, 'error');
+    }
+  }
+
+  /**
    * 🧪 Test all notification methods
    */
   async testAllMethods() {
@@ -160,43 +208,10 @@ class VisualDebugger {
     
     try {
       // Test 1: Browser API
-      this.log('Test 1: Browser Notification API...', 'info');
-      if ('Notification' in window) {
-        if (Notification.permission === 'granted') {
-          try {
-            // Check if we're on mobile and need Service Worker
-            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-              // Use Service Worker for mobile
-              const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
-              if (registration) {
-                await registration.showNotification('🧪 Mobile API Test', {
-                  body: 'Mobile browser API test radi!',
-                  icon: '/bde-evidencija/icon-192x192.png'
-                });
-                this.log('✅ Mobile Browser API test uspešan', 'success');
-              } else {
-                this.log('❌ Mobile Browser API: Service Worker nije dostupan', 'error');
-              }
-            } else {
-              // Use direct API for desktop
-              const notification = new Notification('🧪 Desktop API Test', {
-                body: 'Desktop browser API test radi!',
-                icon: '/bde-evidencija/icon-192x192.png'
-              });
-              setTimeout(() => notification.close(), 3000);
-              this.log('✅ Desktop Browser API test uspešan', 'success');
-            }
-          } catch (error) {
-            this.log(`❌ Browser API greška: ${error.message}`, 'error');
-          }
-        } else {
-          this.log('❌ Browser API: Nema dozvolu za notifikacije', 'error');
-        }
-      } else {
-        this.log('❌ Browser API: Nije podržan', 'error');
-      }
+      await this.testBrowserAPI();
+      
+      // Wait a bit between tests
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Test 2: Service Worker
       this.log('Test 2: Service Worker...', 'info');
