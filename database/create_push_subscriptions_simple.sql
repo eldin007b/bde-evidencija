@@ -1,17 +1,16 @@
--- 🔔 Push Subscriptions Table
--- Kreira tabelu za čuvanje push notification subscriptions
--- Povezana sa drivers tabelem umesto users
+-- 🔔 Push Subscriptions Table - Simple Version
+-- Alternativa bez foreign key constraint za slučaj problema
 
--- First, drop the table if it exists with wrong structure
+-- Drop existing table
 DROP TABLE IF EXISTS public.push_subscriptions CASCADE;
 
--- Create fresh table with correct structure
+-- Create table without foreign key constraint (safer)
 CREATE TABLE public.push_subscriptions (
   id SERIAL PRIMARY KEY,
   
-  -- Link to drivers table  
-  driver_id INTEGER REFERENCES public.drivers(id) ON DELETE CASCADE,
-  driver_tura TEXT, -- Optional backup reference to drivers.tura
+  -- Link to drivers (without foreign key constraint)
+  driver_id INTEGER, -- References drivers.id but no constraint
+  driver_tura TEXT,  -- Backup reference to drivers.tura
   
   -- Push subscription data
   endpoint TEXT NOT NULL UNIQUE,
@@ -43,7 +42,7 @@ ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 -- Drop existing policy if it exists, then create new one
 DROP POLICY IF EXISTS "Allow all operations" ON public.push_subscriptions;
 
--- RLS Policy: Allow all operations (since this is internal app table)
+-- RLS Policy: Allow all operations
 CREATE POLICY "Allow all operations" ON public.push_subscriptions
   FOR ALL USING (true);
 
@@ -62,8 +61,5 @@ CREATE TRIGGER update_push_subscriptions_updated_at
   BEFORE UPDATE ON public.push_subscriptions
   FOR EACH ROW EXECUTE FUNCTION update_push_subscriptions_updated_at();
 
--- Sample query to check drivers with push subscriptions
--- SELECT d.id, d.ime, d.tura, d.role, ps.active as has_push
--- FROM drivers d
--- LEFT JOIN push_subscriptions ps ON d.id = ps.driver_id
--- WHERE d.aktivan = true;
+-- Test query
+SELECT 'push_subscriptions table created successfully' as status;
