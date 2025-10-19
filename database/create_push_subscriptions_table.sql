@@ -36,9 +36,12 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint ON public.push_subscr
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
--- RLS Policy: Allow all operations for authenticated users
-CREATE POLICY IF NOT EXISTS "Enable all operations for authenticated users" ON public.push_subscriptions
-  FOR ALL USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
+-- Drop existing policy if it exists, then create new one
+DROP POLICY IF EXISTS "Allow all operations" ON public.push_subscriptions;
+
+-- RLS Policy: Allow all operations (since this is internal app table)
+CREATE POLICY "Allow all operations" ON public.push_subscriptions
+  FOR ALL USING (true);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_push_subscriptions_updated_at()
