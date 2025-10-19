@@ -168,10 +168,30 @@ class AutoPushService {
       const debuggerModule = await import('../utils/visualDebugger');
       visualDebug = debuggerModule.default;
     } catch (e) {
-      // Visual debug not available
+      // Visual debug not available, create fallback
+      visualDebug = {
+        log: (msg, type) => {
+          console.log(`[${type?.toUpperCase() || 'INFO'}] ${msg}`);
+          // Also show as browser notification for immediate feedback
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification('Debug Log', { body: msg, icon: '/bde-evidencija/icon-192x192.png' });
+            } catch (e) {}
+          }
+        }
+      };
     }
 
-    console.log('🌐 Forcing server-side push only - no local fallback...');
+    console.log('🌐 FORCE SERVER PUSH ONLY - STARTING...');
+    visualDebug.log('🌐 FORCE SERVER PUSH ONLY - STARTING...', 'info');
+    
+    // Show immediate feedback to user
+    if (typeof window !== 'undefined' && window.alert) {
+      // Non-blocking alert alternative
+      setTimeout(() => {
+        console.log('🚨 SERVER PUSH TEST STARTED - CHECK CONSOLE/NOTIFICATIONS');
+      }, 100);
+    }
     
     // First, check how many active subscriptions we have
     try {
