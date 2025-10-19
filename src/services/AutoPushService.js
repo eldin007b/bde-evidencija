@@ -170,9 +170,16 @@ class AutoPushService {
         return { success: false, error: 'Nema aktivnih pretplata za push notifikacije', method: 'browser' };
       }
       
-      // Send notifications to each subscription using browser Push API
+      // Send notifications to each subscription using Service Worker
       let sentCount = 0;
       let failedCount = 0;
+      
+      // Get Service Worker registration
+      const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
+      
+      if (!registration || !registration.active) {
+        return { success: false, error: 'Service Worker nije dostupan', method: 'browser' };
+      }
       
       for (const subscription of subscriptions) {
         try {
@@ -180,17 +187,28 @@ class AutoPushService {
           const notificationPayload = {
             title,
             body: message,
-            icon: '/icon-192x192.png',
-            badge: '/badge-96x96.png',
+            icon: '/bde-evidencija/icon-192x192.png',
+            badge: '/bde-evidencija/badge-96x96.png',
             data: {
               type: 'custom_message',
               custom: true,
-              click_action: '/'
+              click_action: '/',
+              driver_id: subscription.driver_id,
+              timestamp: Date.now()
             }
           };
           
-          // Log to database for tracking (ensure we have a valid user_id)
-          const logUserId = subscription.user_id || 'anonymous_' + Date.now();
+          // Send to Service Worker to show notification
+          registration.active.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            payload: notificationPayload
+          });
+          
+          console.log(`✅ Notification sent to driver ${subscription.driver_id}`);
+          sentCount++;
+          
+          // Log to database for tracking
+          const logUserId = subscription.driver_id || 'anonymous_' + Date.now();
           
           const { error: logError } = await supabase
             .from('push_notification_logs')

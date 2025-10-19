@@ -22,6 +22,55 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
+// Message event - handle messages from main thread
+self.addEventListener('message', (event) => {
+  console.log('📩 Service Worker received message:', event.data);
+  
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { payload } = event.data;
+    
+    self.registration.showNotification(payload.title || 'BD Evidencija', {
+      body: payload.body || 'Nova obavest!',
+      icon: payload.icon || '/bde-evidencija/icon-192x192.png',
+      badge: payload.badge || '/bde-evidencija/badge-96x96.png',
+      data: payload.data || { url: '/' },
+      actions: payload.actions || [],
+      requireInteraction: payload.requireInteraction || false,
+      tag: payload.tag || 'manual',
+      vibrate: [200, 100, 200]
+    });
+    
+    console.log('✅ Manual notification shown via message');
+  }
+  
+  if (event.data && event.data.type === 'SIMULATE_PUSH') {
+    const { payload } = event.data;
+    
+    // Simulate a push event
+    const pushEvent = new Event('push');
+    pushEvent.data = {
+      json: () => ({
+        title: payload.title,
+        body: payload.body,
+        icon: payload.icon,
+        data: payload.data
+      })
+    };
+    
+    // Show notification
+    self.registration.showNotification(payload.title || 'BD Evidencija', {
+      body: payload.body || 'Simulacija push-a!',
+      icon: payload.icon || '/bde-evidencija/icon-192x192.png',
+      badge: '/bde-evidencija/badge-96x96.png',
+      data: payload.data || { url: '/' },
+      tag: 'push-simulation',
+      vibrate: [200, 100, 200]
+    });
+    
+    console.log('✅ Push simulation notification shown');
+  }
+});
+
 // Push event - incoming push notification
 self.addEventListener('push', (event) => {
   console.log('📨 Push notification received:', event);

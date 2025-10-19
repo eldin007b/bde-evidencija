@@ -242,6 +242,31 @@ class VisualDebugger {
         this.log(`❌ Push subscription greška: ${error.message}`, 'error');
       }
       
+      // Test 4: Direct Push Simulation
+      this.log('Test 4: Simulacija push poruke...', 'info');
+      try {
+        const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
+        if (registration && registration.active) {
+          // Simulate push message
+          registration.active.postMessage({
+            type: 'SIMULATE_PUSH',
+            payload: {
+              title: '🧪 Simulacija Push-a',
+              body: 'Test simulacije push poruke direktno u SW!',
+              icon: '/bde-evidencija/icon-192x192.png',
+              data: {
+                type: 'test',
+                url: '/',
+                test: true
+              }
+            }
+          });
+          this.log('✅ Push simulacija poslana u Service Worker', 'success');
+        }
+      } catch (error) {
+        this.log(`❌ Push simulacija greška: ${error.message}`, 'error');
+      }
+      
       this.log('🏁 Test završen - proveri notifikacije!', 'success');
       
     } catch (error) {
