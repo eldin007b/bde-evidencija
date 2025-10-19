@@ -154,8 +154,9 @@ serve(async (req: Request) => {
           } else if (payload.target_type === 'admins') {
             console.log(`🔍 Filtering for admins`)
             query = query.eq('driver_tura', 'admin')
-          } else {
-            console.log(`🔍 No filter applied - getting all users with active=true`)
+          } else if (payload.target_type === 'all') {
+            console.log(`🔍 target_type is 'all' - NO filter, just active=true`)
+            // do NOT apply any driver_tura filter
           }
           
           console.log(`🔍 About to execute query...`)
