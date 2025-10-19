@@ -80,20 +80,147 @@ class AutoPushService {
       return { success: false, error: 'Poruka je obavezna' };
     }
 
-    // 📱 DIRECT APPROACH - Skip server methods and go straight to direct notifications
-    // This ensures mobile/tablet users get notifications immediately
-    console.log('🚀 Using direct notifications for immediate mobile delivery...');
+    console.log('� Sending message to all devices via Edge Function...');
     
     try {
-      return await this.sendDirectNotifications({ title, message, targetType });
+      // Try Edge function that can send to all devices
+      const { data, error } = await supabase.functions.invoke('auto-push', {
+        body: {
+          type: 'custom_message',
+          title: title,
+          message: message.trim(),
+          target_type: targetType,
+          target_users: targetUsers
+        }
+      });
+      
+      if (error) {
+        console.warn('⚠️ Edge function failed, trying database RPC:', error);
+        
+        // Try database RPC function
+        const { data: dbData, error: dbError } = await supabase.rpc('send_custom_push', {
+          p_title: title,
+          p_message: message.trim(),
+          p_target_users: targetUsers,
+          p_target_type: targetType
+        });
+        
+        if (dbError) {
+          console.warn('⚠️ Database RPC failed, using direct notifications as fallback:', dbError);
+          // Ultimate fallback - direct notifications (local only)
+          return await this.sendDirectNotifications({ title, message, targetType });
+        }
+        
+        const result = dbData?.[0] || { sent_count: 0, failed_count: 1 };
+        
+        if (result.sent_count > 0) {
+          console.log('✅ Custom message sent via database RPC:', result);
+          return { 
+            success: true, 
+            sent: result.sent_count,
+            failed: result.failed_count,
+            method: 'database_rpc'
+          };
+        } else {
+          // No messages sent via RPC, try direct notifications
+          console.log('⚠️ Database RPC returned 0 sent, using direct notifications...');
+          return await this.sendDirectNotifications({ title, message, targetType });
+        }
+      }
+      
+      // Edge function succeeded
+      if (data?.success) {
+        console.log('✅ Edge function succeeded:', data);
+        return { 
+          success: true, 
+          sent: data.results?.length || 1,
+          failed: 0,
+          method: 'edge_function'
+        };
+      } else {
+        console.log('⚠️ Edge function returned unsuccessful, trying direct notifications...');
+        return await this.sendDirectNotifications({ title, message, targetType });
+      }
+      
     } catch (error) {
-      console.error('❌ Direct notifications failed:', error);
+      console.error('❌ All server methods failed, using direct notification approach:', error);
+      return await this.sendDirectNotifications({ title, message, targetType });
+    }
+  }
+
+  /**
+   * 🌐 Force server-side push (no local fallback) 
+   */
+  async sendServerPushOnly(options = {}) {
+    const {
+      title = 'BD Evidencija',
+      message,
+      targetType = 'all'
+    } = options;
+
+    if (!message || message.trim().length === 0) {
+      return { success: false, error: 'Poruka je obavezna' };
+    }
+
+    console.log('🌐 Forcing server-side push only - no local fallback...');
+    
+    try {
+      // Try Edge function first
+      const { data, error } = await supabase.functions.invoke('auto-push', {
+        body: {
+          type: 'custom_message',
+          title: title,
+          message: message.trim(),
+          target_type: targetType
+        }
+      });
+      
+      if (!error && data?.success) {
+        console.log('✅ Server-side Edge function succeeded:', data);
+        return { 
+          success: true, 
+          sent: data.results?.length || 0,
+          failed: 0,
+          method: 'edge_function_server'
+        };
+      }
+      
+      // Try database RPC function
+      console.log('⚠️ Edge function failed, trying database RPC...');
+      const { data: dbData, error: dbError } = await supabase.rpc('send_custom_push', {
+        p_title: title,
+        p_message: message.trim(),
+        p_target_type: targetType
+      });
+      
+      if (!dbError && dbData?.[0]?.sent_count > 0) {
+        const result = dbData[0];
+        console.log('✅ Server-side database RPC succeeded:', result);
+        return { 
+          success: true, 
+          sent: result.sent_count,
+          failed: result.failed_count,
+          method: 'database_rpc_server'
+        };
+      }
+      
+      // Both server methods failed
       return {
         success: false,
-        error: `Direct notification failed: ${error.message}`,
+        error: 'Server-side push methods not available or failed',
         sent: 0,
         failed: 1,
-        method: 'direct_notification'
+        method: 'server_only_failed'
+      };
+      
+    } catch (error) {
+      console.error('❌ Server-side push failed completely:', error);
+      return {
+        success: false,
+        error: `Server push failed: ${error.message}`,
+        sent: 0,
+        failed: 1,
+        method: 'server_only_error'
       };
     }
   }
@@ -664,6 +791,7 @@ export const {
   testPayrollNotification, 
   testExtraRideNotification,
   sendCustomMessage,
+  sendServerPushOnly,
   sendDirectNotifications,
   addExtraRide,
   reviewExtraRide,

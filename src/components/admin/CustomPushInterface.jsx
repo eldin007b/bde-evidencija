@@ -63,6 +63,39 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
     }
   };
 
+  const testServerPush = async () => {
+    // Show visual debugger for production logging
+    if (!visualDebug.isVisible) {
+      visualDebug.showDebugPanel();
+    }
+    
+    try {
+      visualDebug.log('🌐 Starting server-side push test...', 'info');
+      
+      const result = await autoPushService.sendServerPushOnly({
+        title: 'Server Push Test',
+        message: 'Ovo je test server-side push notifikacije za sve uređaje!',
+        targetType: 'all'
+      });
+      
+      visualDebug.log(`🌐 Server push result: ${result.success ? 'SUCCESS' : 'FAILED'}`, result.success ? 'success' : 'error');
+      visualDebug.log(`📊 Sent: ${result.sent}, Failed: ${result.failed}, Method: ${result.method}`, 'info');
+      
+      setResult({
+        success: result.success,
+        message: result.success ? 'Server push test uspešan!' : 'Server push test neuspešan!',
+        details: result
+      });
+    } catch (error) {
+      visualDebug.log(`🌐 Server push ERROR: ${error.message}`, 'error');
+      setResult({
+        success: false,
+        message: 'Greška pri server push testu',
+        details: error.message
+      });
+    }
+  };
+
   // Check registration status and load stats
   useEffect(() => {
     checkRegistrationStatus();
@@ -505,7 +538,7 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
                 onClick={() => testDirectNotifications()}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all mb-3 ${
                   isNightTheme
                     ? 'bg-green-500 hover:bg-green-600 text-white'
                     : 'bg-green-600 hover:bg-green-700 text-white'
@@ -513,7 +546,23 @@ export default function CustomPushInterface({ currentTheme = 'default' }) {
               >
                 <div className="flex items-center justify-center gap-2">
                   <Bell className="w-5 h-5" />
-                  Test Direktne Notifikacije
+                  Test Direktne Notifikacije (lokalno)
+                </div>
+              </motion.button>
+
+              <motion.button
+                onClick={() => testServerPush()}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                  isNightTheme
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                } shadow-lg hover:shadow-xl`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Test Server Push (svi uređaji)
                 </div>
               </motion.button>
               
