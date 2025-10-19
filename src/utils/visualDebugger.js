@@ -192,14 +192,11 @@ class VisualDebugger {
         }
       }
       
-      // Fallback to direct Notification API (desktop only)
-      this.log('🖥️ Using direct Notification API (desktop fallback)', 'info');
+      // Fallback to safe helper that prefers Service Worker
+      this.log('🖥️ Using safe notification helper (desktop fallback)', 'info');
       try {
-        const notification = new Notification('🧪 Desktop API Test', {
-          body: 'Desktop browser API test radi!',
-          icon: '/bde-evidencija/icon-192x192.png'
-        });
-        setTimeout(() => notification.close(), 3000);
+        const { showNotification } = await import('./notifyHelper');
+        await showNotification({ title: '🧪 Desktop API Test', body: 'Desktop browser API test radi!', icon: '/bde-evidencija/icon-192x192.png' });
         this.log('✅ Desktop Browser API test uspešan', 'success');
       } catch (directError) {
         throw new Error(`Direktna Notification API greška: ${directError.message}`);

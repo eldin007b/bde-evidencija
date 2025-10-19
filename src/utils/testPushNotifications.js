@@ -78,25 +78,18 @@ export async function testBrowserNotificationAPI() {
       return false;
     }
     
-    // Create simple browser notification
-    const notification = new Notification('🧪 Browser API Test', {
+    // Use safe helper which prefers Service Worker when available
+    const { showNotification } = await import('./notifyHelper');
+    await showNotification({
+      title: '🧪 Browser API Test',
       body: 'Test notifikacije preko Browser Notification API',
       icon: '/bde-evidencija/icon-192x192.png',
       badge: '/bde-evidencija/badge-96x96.png',
       tag: 'test-notification',
       requireInteraction: false,
-      data: {
-        type: 'browser_api_test',
-        url: '/'
-      }
+      data: { type: 'browser_api_test', url: '/' }
     });
-    
-    // Auto-close after 5 seconds
-    setTimeout(() => {
-      notification.close();
-    }, 5000);
-    
-    console.log('✅ Browser notification created:', notification);
+    console.log('✅ Browser notification created via helper');
     return true;
     
   } catch (error) {

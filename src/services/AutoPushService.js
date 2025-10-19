@@ -169,15 +169,12 @@ class AutoPushService {
       visualDebug = debuggerModule.default;
     } catch (e) {
       // Visual debug not available, create fallback
+      const { showNotification } = await import('../utils/notifyHelper');
       visualDebug = {
-        log: (msg, type) => {
+        log: async (msg, type) => {
           console.log(`[${type?.toUpperCase() || 'INFO'}] ${msg}`);
-          // Also show as browser notification for immediate feedback
-          if ('Notification' in window && Notification.permission === 'granted') {
-            try {
-              new Notification('Debug Log', { body: msg, icon: '/bde-evidencija/icon-192x192.png' });
-            } catch (e) {}
-          }
+          // Also show as notification (safe helper)
+          try { await showNotification({ title: 'Debug Log', body: msg, icon: '/bde-evidencija/icon-192x192.png' }); } catch (err) {}
         }
       };
     }
