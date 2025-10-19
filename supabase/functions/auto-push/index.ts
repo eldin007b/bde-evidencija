@@ -152,8 +152,8 @@ serve(async (req: Request) => {
           }
           
           const { data: users } = await query
-          // Use driver_id if available, otherwise user_id
-          targetUsers = users?.map((u: any) => u.driver_id || u.user_id).filter((id: any) => id) || []
+          // Use driver_id if available, otherwise user_id  
+          targetUsers = users?.map((u: any) => String(u.driver_id || u.user_id)).filter((id: any) => id) || []
         }
         
         notifications = targetUsers.map(userId => ({
@@ -238,7 +238,7 @@ async function sendPushNotification(
   const { data: subscriptions } = await supabaseClient
     .from('push_subscriptions')
     .select('*')
-    .or(`driver_id.eq.${user_id},user_id.eq.${user_id}`) // Check both columns!
+    .or(`driver_id.eq.${parseInt(user_id) || 0},user_id.eq.${user_id}`) // Convert to INT for driver_id!
     .eq('active', true)
 
   if (!subscriptions || subscriptions.length === 0) {
