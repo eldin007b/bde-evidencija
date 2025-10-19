@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import pushRegistrationService from '../services/PushRegistrationService';
 import { runCompleteDiagnostic } from '../utils/debugPushNotifications';
+import { testDirectPushNotification, testBrowserNotificationAPI } from '../utils/testPushNotifications';
 
 export default function UserMenu({ user, onChangePassword, onLogout, scraperData, currentTheme = 'default', themes }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -391,32 +392,84 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                     </Button>
                   </motion.div>
                   
-                  {/* 🧪 Test Notification Button */}
+                  {/* 🧪 Test Notification Buttons */}
                   {notificationsEnabled && (
-                    <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        variant="ghost" 
-                        size="sm"
-                        className={`w-full justify-start text-left ${currentTheme === 'night' 
-                          ? 'hover:bg-gray-700/50 text-purple-400' 
-                          : 'hover:bg-purple-50 text-purple-600'
-                        } rounded-xl transition-all duration-300 py-2 text-sm`}
-                        onClick={async () => {
-                          handleMenuItemClick(async () => {
-                            console.log('🧪 Testing push notification...');
-                            const result = await pushRegistrationService.sendTestNotification();
-                            if (result) {
-                              console.log('✅ Test notification sent successfully');
-                            } else {
-                              console.error('❌ Test notification failed');
-                            }
-                          });
-                        }}
-                      >
-                        <Activity className="w-4 h-4 mr-2" />
-                        Test obavještenje
-                      </Button>
-                    </motion.div>
+                    <>
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost" 
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-purple-400' 
+                            : 'hover:bg-purple-50 text-purple-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={async () => {
+                            handleMenuItemClick(async () => {
+                              console.log('🧪 Testing Supabase push notification...');
+                              const result = await pushRegistrationService.sendTestNotification();
+                              if (result) {
+                                console.log('✅ Supabase test notification sent successfully');
+                              } else {
+                                console.error('❌ Supabase test notification failed');
+                              }
+                            });
+                          }}
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          Test Supabase
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm" 
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-green-400' 
+                            : 'hover:bg-green-50 text-green-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('🧪 Testing direct push notification...');
+                              const result = await testDirectPushNotification();
+                              if (result) {
+                                console.log('✅ Direct push notification sent successfully');
+                              } else {
+                                console.error('❌ Direct push notification failed');
+                              }
+                            });
+                          }}
+                        >
+                          <Bell className="w-4 h-4 mr-2" />
+                          Test direktno
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`w-full justify-start text-left ${currentTheme === 'night' 
+                            ? 'hover:bg-gray-700/50 text-blue-400' 
+                            : 'hover:bg-blue-50 text-blue-600'
+                          } rounded-xl transition-all duration-300 py-2 text-sm`}
+                          onClick={() => {
+                            handleMenuItemClick(async () => {
+                              console.log('🧪 Testing browser notification API...');
+                              const result = await testBrowserNotificationAPI();
+                              if (result) {
+                                console.log('✅ Browser API notification sent successfully');
+                              } else {
+                                console.error('❌ Browser API notification failed');
+                              }
+                            });
+                          }}
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          Test Browser API
+                        </Button>
+                      </motion.div>
+                    </>
                   )}
                   
                   {/* 🐛 Debug Push Notifications */}
