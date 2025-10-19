@@ -162,10 +162,56 @@ class AutoPushService {
       return { success: false, error: 'Poruka je obavezna' };
     }
 
+    // Import visual debugger for production logging
+    let visualDebug = null;
+    try {
+      const debuggerModule = await import('../utils/visualDebugger');
+      visualDebug = debuggerModule.default;
+    } catch (e) {
+      // Visual debug not available
+    }
+
     console.log('🌐 Forcing server-side push only - no local fallback...');
+    
+    // First, check how many active subscriptions we have
+    try {
+      let query = supabase
+        .from('push_subscriptions')
+        .select('*')
+        .eq('active', true);
+        
+      if (targetType === 'drivers') {
+        query = query.eq('user_type', 'driver');
+      } else if (targetType === 'admins') {
+        query = query.eq('user_type', 'admin');
+      }
+      
+      const { data: subscriptions, error: subError } = await query;
+      
+      if (!subError && subscriptions) {
+        console.log(`📊 Found ${subscriptions.length} active subscriptions in database`);
+        if (visualDebug) {
+          visualDebug.log(`📊 Active subscriptions in DB: ${subscriptions.length}`, 'info');
+          subscriptions.forEach((sub, index) => {
+            visualDebug.log(`${index + 1}. Driver: ${sub.driver_id || 'unknown'}, Browser: ${sub.browser || 'unknown'}`, 'info');
+          });
+        }
+      } else {
+        console.warn('⚠️ Could not query subscriptions:', subError);
+        if (visualDebug) {
+          visualDebug.log(`⚠️ DB query error: ${subError?.message || 'unknown'}`, 'warn');
+        }
+      }
+    } catch (dbCheckError) {
+      console.warn('⚠️ Database check failed:', dbCheckError);
+    }
     
     try {
       // Try Edge function first
+      if (visualDebug) {
+        visualDebug.log('🚀 Calling Edge Function auto-push...', 'info');
+      }
+      
       const { data, error } = await supabase.functions.invoke('auto-push', {
         body: {
           type: 'custom_message',
@@ -175,13 +221,30 @@ class AutoPushService {
         }
       });
       
+      if (visualDebug) {
+        visualDebug.log(`🔍 Edge Function Response:`, 'info');
+        visualDebug.log(`- Error: ${error ? error.message : 'none'}`, error ? 'error' : 'info');
+        visualDebug.log(`- Data: ${JSON.stringify(data)}`, 'info');
+      }
+      
       if (!error && data?.success) {
         console.log('✅ Server-side Edge function succeeded:', data);
+        
+        // Add more detailed logging
+        if (visualDebug) {
+          visualDebug.log(`📊 Edge Function Results:`, 'info');
+          visualDebug.log(`- Success: ${data.success}`, 'info');
+          visualDebug.log(`- Results count: ${data.results?.length || 0}`, 'info');
+          visualDebug.log(`- Data: ${JSON.stringify(data)}`, 'info');
+        }
+        
+        // If Edge Function succeeded but sent 0, that's still valuable info
         return { 
           success: true, 
           sent: data.results?.length || 0,
           failed: 0,
-          method: 'edge_function_server'
+          method: 'edge_function_server',
+          details: data
         };
       }
       
