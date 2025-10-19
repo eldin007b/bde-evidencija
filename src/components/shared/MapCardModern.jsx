@@ -369,6 +369,31 @@ const MapCardModern = ({
     }
   }, [currentCoords]);
 
+  // Compute driving route when we have both current location and a selected location
+  useEffect(() => {
+    let cancelled = false;
+
+    const computeRoute = async () => {
+      if (!currentCoords || !selectedLocation || !selectedLocation.lat || !selectedLocation.lon) return;
+      try {
+        setRouteLoading(true);
+        console.debug('🗺️ Computing route from', currentCoords, 'to', selectedLocation);
+        const result = await getDrivingRouteInfo(currentCoords.lat, currentCoords.lon, selectedLocation.lat, selectedLocation.lon);
+        if (cancelled) return;
+        setRouteInfo(result || null);
+      } catch (err) {
+        console.warn('🗺️ Route computation failed:', err?.message || err);
+        if (!cancelled) setRouteInfo(null);
+      } finally {
+        if (!cancelled) setRouteLoading(false);
+      }
+    };
+
+    computeRoute();
+
+    return () => { cancelled = true; };
+  }, [currentCoords, selectedLocation]);
+
   // Auto-locate on component mount
   useEffect(() => {
     if (autoLocate && !currentCoords && navigator.geolocation) {
