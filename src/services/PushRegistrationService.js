@@ -171,24 +171,32 @@ class PushRegistrationService {
     }
 
     try {
-      // Try Edge function directly first for test
-      console.log('🧪 Testing Edge function for push notifications...');
-      const { data, error } = await supabase.functions.invoke('auto-push', {
-        body: {
-          type: 'custom_message',
-          title: '🧪 BD Evidencija Test',
-          message: 'Test push notifikacija uspješno poslana! 🎉',
-          target_type: 'all'
-        }
-      });
+      // Skip Edge function for now and use browser fallback directly
+      console.log('🧪 Using browser fallback for reliable testing...');
+      let data = null;
+      let error = { message: 'Bypassing Edge Function' };
       
       if (!error && data?.success) {
         console.log('✅ Edge function test successful:', data);
         return true;
       }
       
-      // Fallback to AutoPushService if Edge function fails
-      console.log('⚠️ Edge function test failed, using AutoPushService fallback...');
+      // Use AutoPushService browser fallback (reliable method)
+      console.log('🔄 Using AutoPushService browser fallback...');
+      
+      // Import visual debug if available
+      let visualDebug = null;
+      try {
+        const debugModule = await import('../utils/visualDebugger.js');
+        visualDebug = debugModule.default;
+      } catch (e) {
+        // Visual debug not available
+      }
+      
+      if (visualDebug) {
+        visualDebug.log('🧪 Sending test notification via AutoPushService...', 'info');
+      }
+      
       const { default: autoPushService } = await import('./AutoPushService.js');
       
       const result = await autoPushService.sendCustomMessage({
@@ -198,6 +206,15 @@ class PushRegistrationService {
       });
       
       console.log('✅ Test notification result:', result);
+      
+      if (visualDebug) {
+        if (result.success) {
+          visualDebug.log('✅ Test notifikacija poslana uspješno!', 'success');
+        } else {
+          visualDebug.log('❌ Test notifikacija neuspješna', 'error');
+        }
+      }
+      
       return result.success;
     } catch (error) {
       console.error('❌ Failed to send test notification:', error);
