@@ -216,6 +216,20 @@ class VisualDebugger {
   async testAllMethods() {
     this.log('🧪 Starting comprehensive push notification test...', 'info');
     
+    // Test 0: Check notification permissions thoroughly
+    this.log('Test 0: Detaljno proveri dozvole...', 'info');
+    this.log(`Notification permission: ${Notification.permission}`, 'info');
+    this.log(`Navigator permissions API: ${!!navigator.permissions}`, 'info');
+    
+    if (navigator.permissions) {
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+        this.log(`Permissions API status: ${permissionStatus.state}`, 'info');
+      } catch (permError) {
+        this.log(`Permissions API greška: ${permError.message}`, 'warn');
+      }
+    }
+    
     try {
       // Test 1: Browser API
       await this.testBrowserAPI();
@@ -291,8 +305,28 @@ class VisualDebugger {
       } catch (error) {
         this.log(`❌ Push simulacija greška: ${error.message}`, 'error');
       }
+
+      // Test 5: Force Direct Notification
+      this.log('Test 5: Forsirana direktna notifikacija...', 'info');
+      try {
+        const registration = await navigator.serviceWorker.getRegistration('/bde-evidencija/sw.js');
+        if (registration) {
+          await registration.showNotification('🚨 FORÇA TEST', {
+            body: 'Ako vidite ovu notifikaciju, sve radi!',
+            icon: '/bde-evidencija/icon-192x192.png',
+            badge: '/bde-evidencija/badge-96x96.png',
+            tag: 'force-test',
+            requireInteraction: true,
+            vibrate: [300, 200, 300, 200, 300]
+          });
+          this.log('✅ Forsirana notifikacija uspešno poslana!', 'success');
+        }
+      } catch (forceError) {
+        this.log(`❌ Forsirana notifikacija greška: ${forceError.message}`, 'error');
+      }
       
       this.log('🏁 Test završen - proveri notifikacije!', 'success');
+      this.log('💡 Ako ne vidite notifikacije, proverite browser settings!', 'info');
       
     } catch (error) {
       this.log(`❌ Globalna greška: ${error.message}`, 'error');
