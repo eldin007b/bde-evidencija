@@ -307,12 +307,14 @@ const MapCardModern = ({
       if (elem?.requestFullscreen) {
         elem.requestFullscreen().then(() => {
           setIsFullscreen(true);
-          // Set zoom to 18 (jedan manje od maksimuma) samo prilikom otvaranja
-          setTimeout(() => {
-            if (mapRef?.current?.setView && currentCoords) {
-              mapRef.current.setView([currentCoords.lat, currentCoords.lon], 18);
-            }
-          }, 100);
+          // Samo na touch uređajima postavi zoom na 18
+          if (isTouchDevice) {
+            setTimeout(() => {
+              if (mapRef?.current?.setView && currentCoords) {
+                mapRef.current.setView([currentCoords.lat, currentCoords.lon], 18);
+              }
+            }, 100);
+          }
         });
       }
     } else {
@@ -338,9 +340,10 @@ const MapCardModern = ({
           setSpeed(position.coords.speed || 0);
           setHeading(position.coords.heading || 0);
 
-          // Keep map centered on current location in fullscreen
+          // Keep map centered on current location in fullscreen, ali zadrži trenutni zoom
           if (mapRef?.current?.setView) {
-            mapRef.current.setView([newCoords.lat, newCoords.lon], 19);
+            const currentZoom = mapRef?.current?.getZoom ? mapRef.current.getZoom() : undefined;
+            mapRef.current.setView([newCoords.lat, newCoords.lon], currentZoom);
           }
         },
         (error) => console.error('GPS tracking error:', error),
