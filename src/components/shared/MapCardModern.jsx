@@ -937,28 +937,7 @@ const MapCardModern = ({
                   </div>
 
                   {/* Location Marker */}
-                  {currentCoords && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: 1000,
-                        pointerEvents: 'none'
-                      }}
-                    >
-                      {speed > 0 ? (
-                        <svg width="32" height="32" viewBox="0 0 32 32" style={{ transform: `rotate(${heading || 0}deg)` }}>
-                          <polygon points="16,4 28,28 16,22 4,28" fill="green"/>
-                        </svg>
-                      ) : (
-                        <svg width="32" height="32" viewBox="0 0 32 32">
-                          <circle cx="16" cy="16" r="12" fill="red"/>
-                        </svg>
-                      )}
-                    </div>
-                  )}
+                  {/* Location Marker uklonjen - prikazuje se samo na mapi preko UserLocationMarker */}
 
                   {/* Speed Display */}
                   <div className="absolute right-6 bottom-6 bg-white/95 backdrop-blur-sm border border-slate-300 rounded-2xl px-4 py-3 shadow-xl z-1000">
