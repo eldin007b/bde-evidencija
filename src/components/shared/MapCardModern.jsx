@@ -874,7 +874,17 @@ const MapCardModern = ({
                 </div>
               ) : (
                 <>
-                  {children}
+                  {/* Inject computed routeInfo and userLocation into children (e.g. MapView) so popups use real route data */}
+                  {React.Children.map(children, (child) => {
+                    if (React.isValidElement(child)) {
+                      return React.cloneElement(child, {
+                        routeInfo: routeInfo || child.props.routeInfo || null,
+                        userLocation: currentCoords || child.props.userLocation || null,
+                        selectedMarker: selectedLocation || child.props.selectedMarker || null
+                      });
+                    }
+                    return child;
+                  })}
                   
                   {/* Map Controls */}
                   <div className="absolute right-6 top-6 flex flex-col gap-3 z-30">
