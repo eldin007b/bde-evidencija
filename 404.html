@@ -1,18 +1,70 @@
 <!-- SPA fallback for GitHub Pages -->
 <!DOCTYPE html>
-<html>
+<html lang="bs">
   <head>
     <meta charset="utf-8">
-    <title>Redirecting...</title>
+    <title>BDEVidencija - Redirecting...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="text/javascript">
-      // Redirect all 404s to index.html for SPA routing
+      // GitHub Pages SPA redirect solution
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+      
+      // Fallback redirect for paths that don't match
       var path = window.location.pathname;
       var base = '/bde-evidencija/';
-      if (!path.startsWith(base)) base = '/';
-      window.location.replace(base + '#!' + path.replace(base, ''));
+      
+      // Only redirect if we're not already at the base and path is not an asset
+      if (path !== base && !path.includes('.') && path.startsWith(base)) {
+        var redirect = base + '?/' + path.slice(base.length) + window.location.search + window.location.hash;
+        window.location.replace(redirect);
+      } else if (!path.startsWith(base) && !path.includes('.')) {
+        // Completely wrong path, redirect to base
+        window.location.replace(base);
+      }
     </script>
+    <style>
+      body { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        text-align: center; 
+        padding: 50px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .spinner {
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top: 3px solid white;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
-    <h1>Redirecting...</h1>
+    <div>
+      <h1>BDEVidencija</h1>
+      <div class="spinner"></div>
+      <p>Preusmjeravanje na aplikaciju...</p>
+    </div>
   </body>
 </html>
