@@ -145,8 +145,12 @@ function PopupContentSearch({ address, lat, lon, onClose, routeInfo, userLocatio
 
 // Small helper: shows the user's current location as a CircleMarker
 function UserLocationMarker({ position }) {
-  // Uklonjen prikaz plavog kruga - marker se prikazuje u MapCardModern
-  return null;
+  if (!position) return null;
+  return (
+    <Marker position={position}>
+      <Popup>Moja lokacija</Popup>
+    </Marker>
+  );
 }
 
 // Shows a selected/search location. Includes a popup that can call onAddressSelect when closed.
