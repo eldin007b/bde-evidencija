@@ -8,6 +8,7 @@
  */
 
 import { haversineKm } from '../utils/geoUtils';
+import ENV from '../config/env';
 
 class DebouncedReverseGeocodingService {
   constructor() {
@@ -227,7 +228,7 @@ class DebouncedReverseGeocodingService {
       const x = Math.round(lon * 1e6);
       const y = Math.round(lat * 1e6);
       
-      const VAO_URL = '/vor-proxy';
+      const VAO_URL = `${ENV.API_BASE_URL}/vor-proxy`;
       const VAO_BODY_BASE = {
         id: 'ibwmnqg8g2kj8iwg',
         ver: '1.59',
@@ -329,8 +330,67 @@ class DebouncedReverseGeocodingService {
 
       return { address: '', city: '' };
     } catch (error) {
-      console.error('🌍 [ReverseGeo] API Error:', error);
-      throw error;
+      console.error('🌍 [ReverseGeo] VAO API Error:', error);
+      
+      // Fallback to Nominatim when VAO proxy fails
+      try {
+        console.log('🌍 [ReverseGeo] Trying Nominatim fallback...');
+        const nominatimResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de,en&addressdetails=1`
+        );
+
+        if (nominatimResponse.ok) {
+          const nominatimData = await nominatimResponse.json();
+          console.log('🌍 [ReverseGeo] Nominatim fallback response:', nominatimData);
+
+          if (nominatimData.display_name) {
+            let address = nominatimData.display_name;
+
+            // Try to create a shorter human-friendly address
+            if (nominatimData.address) {
+              const addr = nominatimData.address;
+              let formattedAddr = '';
+              
+              if (addr.house_number && addr.road) {
+                formattedAddr = `${addr.road} ${addr.house_number}`;
+              } else if (addr.road) {
+                formattedAddr = addr.road;
+              } else if (addr.suburb) {
+                formattedAddr = addr.suburb;
+              }
+              
+              let city = '';
+              if (addr.postcode && addr.city) {
+                city = `${addr.postcode} ${addr.city}`;
+              } else if (addr.city) {
+                city = addr.city;
+              } else if (addr.town) {
+                city = addr.town;
+              } else if (addr.village) {
+                city = addr.village;
+              }
+              
+              return { 
+                address: formattedAddr || address.split(',')[0], 
+                city: city || '' 
+              };
+            }
+            
+            return { 
+              address: address.split(',')[0] || '', 
+              city: address.split(',')[1]?.trim() || '' 
+            };
+          }
+        }
+      } catch (nominatimError) {
+        console.error('🌍 [ReverseGeo] Nominatim fallback also failed:', nominatimError);
+      }
+      
+      // Final fallback: coordinates
+      return { 
+        address: `${lat.toFixed(6)}, ${lon.toFixed(6)}`, 
+        city: 'Koordinaten' 
+      };
     }
   }
 

@@ -46,6 +46,7 @@ const MapCardModern = ({
   const [polylineAnalysis, setPolylineAnalysis] = useState(null);
   const [speed, setSpeed] = useState(0);
   const [heading, setHeading] = useState(0);
+  const [reverseGeocodingLoading, setReverseGeocodingLoading] = useState(false);
   
   const [justSelectedSuggestion, setJustSelectedSuggestion] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -441,12 +442,16 @@ const MapCardModern = ({
         const formatted = `${event.data.address}${event.data.city ? ', ' + event.data.city : ''}`;
         setCurrentAddress(formatted);
         console.log('📍 Address updated from debounced service:', formatted);
+      } else if (event.type === 'error' && currentCoords) {
+        // Fallback to local reverse geocoding when debounced service fails
+        console.warn('📍 Debounced reverse geocoding failed, falling back to local service:', event.error);
+        reverseGeocode(currentCoords.lat, currentCoords.lon);
       }
     };
 
     const unsubscribe = geoService.addListener(listener);
     return unsubscribe;
-  }, [geoService]);
+  }, [geoService, currentCoords]);
 
   // Compute driving route when we have both current location and a selected location
   useEffect(() => {

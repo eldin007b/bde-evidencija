@@ -89,14 +89,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    proxy: {
-      '/vor-proxy': {
-        target: 'https://anachb.vor.at/bin/mgate.exe?',
-        changeOrigin: true,
-        secure: false,
-        rewrite: path => path.replace(/^\/vor-proxy/, ''),
-      },
-    },
+    // No proxy needed since we're using full Supabase URLs
   },
   resolve: {
     alias: {
