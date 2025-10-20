@@ -45,6 +45,10 @@ const MapCardModern = ({
   const [reverseGeocodingLoading, setReverseGeocodingLoading] = useState(false);
   const [speed, setSpeed] = useState(0);
   const [heading, setHeading] = useState(0);
+  
+  // Simulation states
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationIndex, setSimulationIndex] = useState(0);
   const [justSelectedSuggestion, setJustSelectedSuggestion] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
@@ -119,6 +123,37 @@ const MapCardModern = ({
     if (!meters || meters <= 0) return null;
     const hours = meters / 1000 / avgSpeedKmh;
     return Math.round(hours * 3600);
+  };
+
+  // Simulation functions
+  const simulationRoute = [
+    // Simulacija vožnje kroz Graz (ili možete promijeniti koordinate)
+    { lat: 47.0707, lon: 15.4395, speed: 0 },   // Start - parking
+    { lat: 47.0710, lon: 15.4400, speed: 20 },  // Polako kretanje
+    { lat: 47.0715, lon: 15.4410, speed: 30 },  // Ubrzavanje
+    { lat: 47.0725, lon: 15.4420, speed: 50 },  // Normalna brzina
+    { lat: 47.0735, lon: 15.4435, speed: 60 },  // Brža vožnja
+    { lat: 47.0745, lon: 15.4450, speed: 40 },  // Usporavanje za semafor
+    { lat: 47.0750, lon: 15.4460, speed: 0 },   // Stop na semaforu
+    { lat: 47.0755, lon: 15.4465, speed: 25 },  // Kretanje sa semafora
+    { lat: 47.0765, lon: 15.4475, speed: 55 },  // Ubrzavanje
+    { lat: 47.0775, lon: 15.4485, speed: 65 },  // Autoput brzina
+    { lat: 47.0785, lon: 15.4495, speed: 45 },  // Skretanje
+    { lat: 47.0795, lon: 15.4505, speed: 30 },  // Ulazak u grad
+    { lat: 47.0805, lon: 15.4515, speed: 20 },  // Parkiranje
+    { lat: 47.0810, lon: 15.4520, speed: 0 }    // Destination - parkirano
+  ];
+
+  const startSimulation = () => {
+    if (!isSimulating) {
+      setIsSimulating(true);
+      setSimulationIndex(0);
+      console.log('🚗 Pokretam simulaciju vožnje...');
+    } else {
+      setIsSimulating(false);
+      setSpeed(0);
+      console.log('🛑 Zaustavlja simulaciju vožnje');
+    }
   };
 
   // Map controls
@@ -199,7 +234,7 @@ const MapCardModern = ({
               if (formattedAddr) address = formattedAddr;
             }
 
-            setCurrentAddress(address);
+            setCurrentAddress(String(address));
             console.log('📍 Address found via Nominatim:', address);
             return;
           }
@@ -274,7 +309,7 @@ const MapCardModern = ({
               }
 
               if (address) {
-                setCurrentAddress(address);
+                setCurrentAddress(String(address));
                 console.log('📍 Address found via VAO:', address);
                 return;
               }
@@ -307,11 +342,11 @@ const MapCardModern = ({
       if (elem?.requestFullscreen) {
         elem.requestFullscreen().then(() => {
           setIsFullscreen(true);
-          // Samo na touch uređajima postavi zoom na 18
+          // Na touch uređajima postavi umereni zoom (17 umesto 18)
           if (isTouchDevice) {
             setTimeout(() => {
               if (mapRef?.current?.setView && currentCoords) {
-                mapRef.current.setView([currentCoords.lat, currentCoords.lon], 18);
+                mapRef.current.setView([currentCoords.lat, currentCoords.lon], 17);
               }
             }, 100);
           }
@@ -329,7 +364,7 @@ const MapCardModern = ({
 
   // Real-time GPS tracking
   useEffect(() => {
-    if (isFullscreen && navigator.geolocation) {
+    if (navigator.geolocation) { // Uklonjen uslov za isFullscreen - sada radi uvek
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           const newCoords = {
@@ -340,8 +375,8 @@ const MapCardModern = ({
           setSpeed(position.coords.speed || 0);
           setHeading(position.coords.heading || 0);
 
-          // Keep map centered on current location in fullscreen, ali zadrži trenutni zoom
-          if (mapRef?.current?.setView) {
+          // Keep map centered on current location only in fullscreen, ali zadrži trenutni zoom
+          if (isFullscreen && mapRef?.current?.setView) {
             const currentZoom = mapRef?.current?.getZoom ? mapRef.current.getZoom() : undefined;
             mapRef.current.setView([newCoords.lat, newCoords.lon], currentZoom);
           }
@@ -352,7 +387,65 @@ const MapCardModern = ({
 
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, [isFullscreen]);
+  }, []); // Uklonjen isFullscreen iz dependencies - sada se pokreće samo jednom
+
+  // Simulation useEffect
+  useEffect(() => {
+    let simulationInterval;
+    
+    if (isSimulating && simulationRoute.length > 0) {
+      simulationInterval = setInterval(() => {
+        const currentPoint = simulationRoute[simulationIndex];
+        
+        if (currentPoint) {
+          // Update coordinates
+          const newCoords = { lat: currentPoint.lat, lon: currentPoint.lon };
+          setCurrentCoords(newCoords);
+          
+          // Update speed (convert from km/h to m/s for realism)
+          const speedMs = currentPoint.speed / 3.6;
+          setSpeed(speedMs);
+          
+          // Calculate heading based on next point
+          const nextIndex = simulationIndex + 1;
+          if (nextIndex < simulationRoute.length) {
+            const nextPoint = simulationRoute[nextIndex];
+            const deltaLat = nextPoint.lat - currentPoint.lat;
+            const deltaLon = nextPoint.lon - currentPoint.lon;
+            const calculatedHeading = Math.atan2(deltaLon, deltaLat) * (180 / Math.PI);
+            setHeading(calculatedHeading);
+          }
+          
+          // Center map on simulated position if in fullscreen
+          if (isFullscreen && mapRef?.current?.setView) {
+            const currentZoom = mapRef?.current?.getZoom ? mapRef.current.getZoom() : 15;
+            mapRef.current.setView([newCoords.lat, newCoords.lon], currentZoom);
+          }
+          
+          console.log(`🚗 Simulacija: ${currentPoint.speed} km/h na poziciji ${currentPoint.lat.toFixed(4)}, ${currentPoint.lon.toFixed(4)}`);
+          console.log(`📍 State update: currentCoords=${JSON.stringify(newCoords)}, speed=${speedMs.toFixed(1)}, heading=${heading.toFixed(1)}`);
+          
+          // Move to next point
+          setSimulationIndex(prev => {
+            const next = prev + 1;
+            if (next >= simulationRoute.length) {
+              // End of route
+              console.log('🏁 Završena simulacija vožnje');
+              setIsSimulating(false);
+              return 0;
+            }
+            return next;
+          });
+        }
+      }, 2000); // Change position every 2 seconds
+    }
+    
+    return () => {
+      if (simulationInterval) {
+        clearInterval(simulationInterval);
+      }
+    };
+  }, [isSimulating, simulationIndex, isFullscreen]);
 
   // Fullscreen change listener
   useEffect(() => {
@@ -722,7 +815,7 @@ const MapCardModern = ({
                               {currentAddress}
                             </span>
                           </div>
-                        ) : currentCoords ? (
+                        ) : currentCoords && typeof currentCoords.lat === 'number' && typeof currentCoords.lon === 'number' ? (
                           <div className="flex items-center gap-2 p-3 rounded-xl bg-gradient-to-r from-emerald-50/80 to-green-50/60 backdrop-blur-sm border border-emerald-200/40">
                             <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path>
@@ -752,7 +845,7 @@ const MapCardModern = ({
                             <circle cx="12" cy="12" r="2"></circle>
                           </svg>
                           <span className="text-sm font-medium text-slate-800 truncate" title={`${selectedLocation.address}${selectedLocation.city ? `, ${selectedLocation.city}` : ''}`}>
-                            {`${selectedLocation.address}${selectedLocation.city ? `, ${selectedLocation.city}` : ''}`}
+                            {`${String(selectedLocation.address)}${selectedLocation.city ? `, ${String(selectedLocation.city)}` : ''}`}
                           </span>
                         </div>
                       </div>
@@ -761,7 +854,7 @@ const MapCardModern = ({
                       <div className="flex-shrink-0">
                         <div className="text-right bg-gradient-to-br from-blue-50/50 to-indigo-50/30 backdrop-blur-sm border border-blue-200/30 rounded-xl px-4 py-3">
                           <div className="text-base font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            {polylineAnalysis ? (
+                            {polylineAnalysis && typeof polylineAnalysis.compact === 'string' ? (
                               polylineAnalysis.compact
                             ) : routeInfo ? (
                               <>
@@ -814,7 +907,7 @@ const MapCardModern = ({
                           </div>
                         </div>
                       </div>
-                    ) : currentCoords ? (
+                    ) : currentCoords && typeof currentCoords.lat === 'number' && typeof currentCoords.lon === 'number' ? (
                       <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-sm border border-slate-200/50 shadow-lg">
                         <div className="flex items-start gap-3">
                           <span className="text-2xl">�</span>
@@ -843,7 +936,7 @@ const MapCardModern = ({
                           <span className="text-2xl">🎯</span>
                           <div className="flex-1">
                             <h4 className="font-medium text-gray-800 mb-1">Odabrana adresa</h4>
-                            <p className="text-sm text-gray-600">{`${selectedLocation.address}${selectedLocation.city ? `, ${selectedLocation.city}` : ''}`}</p>
+                            <p className="text-sm text-gray-600">{`${String(selectedLocation.address)}${selectedLocation.city ? `, ${String(selectedLocation.city)}` : ''}`}</p>
                           </div>
                         </div>
                       </div>
@@ -878,16 +971,24 @@ const MapCardModern = ({
               ) : (
                 <>
                   {/* Inject computed routeInfo and userLocation into children (e.g. MapView) so popups use real route data */}
-                  {React.Children.map(children, (child) => {
-                    if (React.isValidElement(child)) {
-                      return React.cloneElement(child, {
-                        routeInfo: routeInfo || child.props.routeInfo || null,
-                        userLocation: currentCoords || child.props.userLocation || null,
-                        selectedMarker: selectedLocation || child.props.selectedMarker || null
-                      });
-                    }
-                    return child;
-                  })}
+                  {(() => {
+                    console.log('🔍 Before React.Children.map:', { children, currentCoords, speed, heading, isSimulating, loading });
+                    return React.Children.map(children, (child) => {
+                      if (React.isValidElement(child)) {
+                        const userLocation = currentCoords ? [currentCoords.lat, currentCoords.lon] : child.props.userLocation || null;
+                        console.log('🔄 Prosleđujem u MapView:', { userLocation, speed, heading, isSimulating });
+                        return React.cloneElement(child, {
+                          routeInfo: routeInfo || child.props.routeInfo || null,
+                          userLocation: userLocation,
+                          selectedMarker: selectedLocation || child.props.selectedMarker || null,
+                          speed: speed || child.props.speed || 0,
+                          heading: heading || child.props.heading || 0,
+                          isFullscreen: isFullscreen || child.props.isFullscreen || false
+                        });
+                      }
+                      return child;
+                    });
+                  })()}
                   
                   {/* Map Controls */}
                   <div className="absolute right-6 top-6 flex flex-col gap-3 z-30">
@@ -921,6 +1022,27 @@ const MapCardModern = ({
                       </svg>
                     </button>
 
+                    {/* Simulation button */}
+                    <button 
+                      className={`w-12 h-12 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center group ${
+                        isSimulating 
+                          ? 'bg-red-500 text-white hover:bg-red-600' 
+                          : 'bg-white/90 text-slate-700 hover:text-green-600 hover:bg-white'
+                      }`}
+                      onClick={startSimulation} 
+                      title={isSimulating ? "Zaustavi simulaciju" : "Pokreni simulaciju vožnje"}
+                    >
+                      {isSimulating ? (
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                          <path d="M6 6h12v12H6z"/>
+                        </svg>
+                      ) : (
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      )}
+                    </button>
+
                     {/* Fullscreen for touch devices */}
                     {isTouchDevice && (
                       <button
@@ -939,16 +1061,23 @@ const MapCardModern = ({
                     )}
                   </div>
 
-                  {/* Location Marker */}
-                  {/* Location Marker uklonjen - prikazuje se samo na mapi preko UserLocationMarker */}
+                  {/* Current Location Marker - sada se koristi UserLocationMarker u MapView */}
+                  {/* HTML overlay marker uklonjen jer koristimo pravi Leaflet marker */}
 
                   {/* Speed Display */}
                   <div className="absolute right-6 bottom-6 bg-white/95 backdrop-blur-sm border border-slate-300 rounded-2xl px-4 py-3 shadow-xl z-1000">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                      <div className={`w-2 h-2 rounded-full animate-pulse ${
+                        isSimulating ? 'bg-green-500' : 'bg-blue-500'
+                      }`}></div>
                       <span className="font-bold text-lg text-slate-800">{speed ? (speed * 3.6).toFixed(1) : '0'}</span>
                       <span className="text-sm text-slate-700 font-medium">km/h</span>
                     </div>
+                    {isSimulating && (
+                      <div className="text-xs text-green-600 font-medium mt-1">
+                        🚗 SIMULACIJA ({simulationIndex + 1}/{simulationRoute.length})
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1016,8 +1145,46 @@ const MapCardModern = ({
               </div>
             ) : (
               <>
-                {children}
+                {/* Inject computed routeInfo and userLocation into children (e.g. MapView) so popups use real route data */}
+                {(() => {
+                  console.log('🔍 Mobile - Before React.Children.map:', { children, currentCoords, speed, heading, isSimulating, loading });
+                  return React.Children.map(children, (child) => {
+                    if (React.isValidElement(child)) {
+                      const userLocation = currentCoords ? [currentCoords.lat, currentCoords.lon] : child.props.userLocation || null;
+                      console.log('🔄 Mobile - Prosleđujem u MapView:', { userLocation, speed, heading, isSimulating });
+                      return React.cloneElement(child, {
+                        routeInfo: routeInfo || child.props.routeInfo || null,
+                        userLocation: userLocation,
+                        selectedMarker: selectedLocation || child.props.selectedMarker || null,
+                        speed: speed || child.props.speed || 0,
+                        heading: heading || child.props.heading || 0,
+                        isFullscreen: isFullscreen || child.props.isFullscreen || false
+                      });
+                    }
+                    return child;
+                  });
+                })()}
                 
+                {/* Current Address Display - Center Top (when fullscreen) */}
+                {isFullscreen && currentAddress && (
+                  <div className="absolute left-1/2 transform -translate-x-1/2 top-6 z-40">
+                    <div className="bg-white/95 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl px-4 py-3 max-w-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">📍</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{currentAddress}</p>
+                          {isSimulating && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-xs text-green-600 font-medium">Simulacija u toku</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Left Side Controls - Search (when hideSearchAndInfo is active) */}
                 {hideSearchAndInfo && isMobile && (
                   <div className="absolute left-6 top-6 flex flex-col gap-3 z-30">
@@ -1072,43 +1239,64 @@ const MapCardModern = ({
                 {/* Map Controls */}
                 <div className="absolute right-6 top-6 flex flex-col gap-3 z-30">
                   <button 
-                    className="w-12 h-12 bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-blue-600 hover:bg-white group" 
+                    className={`${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'} bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-blue-600 hover:bg-white group`}
                     onClick={handleZoomIn} 
                     title="Povećaj zoom"
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                    <svg width={isFullscreen ? "26" : "22"} height={isFullscreen ? "26" : "22"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
                       <path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"/>
                     </svg>
                   </button>
 
                   <button 
-                    className="w-12 h-12 bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-blue-600 hover:bg-white group" 
+                    className={`${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'} bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-blue-600 hover:bg-white group`}
                     onClick={handleZoomOut} 
                     title="Smanji zoom"
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                    <svg width={isFullscreen ? "26" : "22"} height={isFullscreen ? "26" : "22"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
                       <path d="M19 11H5v2h14z"/>
                     </svg>
                   </button>
 
                   <button 
-                    className="w-12 h-12 bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-emerald-600 hover:bg-white group" 
+                    className={`${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'} bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-emerald-600 hover:bg-white group`}
                     onClick={handleLocateMe} 
                     title="Lociraj me"
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                    <svg width={isFullscreen ? "26" : "22"} height={isFullscreen ? "26" : "22"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
                     </svg>
+                  </button>
+
+                  {/* Simulation button */}
+                  <button 
+                    className={`${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'} backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center group ${
+                      isSimulating 
+                        ? 'bg-red-500 text-white hover:bg-red-600' 
+                        : 'bg-white/90 text-slate-700 hover:text-green-600 hover:bg-white'
+                    }`}
+                    onClick={startSimulation} 
+                    title={isSimulating ? "Zaustavi simulaciju" : "Pokreni simulaciju vožnje"}
+                  >
+                    {isSimulating ? (
+                      <svg width={isFullscreen ? "26" : "22"} height={isFullscreen ? "26" : "22"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                        <path d="M6 6h12v12H6z"/>
+                      </svg>
+                    ) : (
+                      <svg width={isFullscreen ? "26" : "22"} height={isFullscreen ? "26" : "22"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    )}
                   </button>
 
                   {/* Fullscreen - only on touch devices */}
                   {isTouchDevice && (
                     <button
-                      className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 text-white border border-purple-400/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center hover:from-purple-600 hover:to-purple-700 group"
+                      className={`${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'} bg-gradient-to-br from-purple-500 to-purple-600 text-white border border-purple-400/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center hover:from-purple-600 hover:to-purple-700 group`}
                       onClick={handleFullscreenToggle}
                       title={isFullscreen ? "Izađi iz punog ekrana" : "Puni ekran"}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                      <svg width={isFullscreen ? "24" : "20"} height={isFullscreen ? "24" : "20"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
                         {isFullscreen ? (
                           <path d="M18 7h-3V4h-2v3H10V4H8v3H5v2h3v3H5v2h3v3h2v-3h3v3h2v-3h3v-2h-3V9h3V7z"/>
                         ) : (
@@ -1119,37 +1307,23 @@ const MapCardModern = ({
                   )}
                 </div>
 
-                {/* Location Marker */}
-                {currentCoords && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '50%',
-                      top: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      zIndex: 1000,
-                      pointerEvents: 'none'
-                    }}
-                  >
-                    {speed > 0 ? (
-                      <svg width="32" height="32" viewBox="0 0 32 32" style={{ transform: `rotate(${heading || 0}deg)` }}>
-                        <polygon points="16,4 28,28 16,22 4,28" fill="green"/>
-                      </svg>
-                    ) : (
-                      <svg width="32" height="32" viewBox="0 0 32 32">
-                        <circle cx="16" cy="16" r="12" fill="red"/>
-                      </svg>
-                    )}
-                  </div>
-                )}
+                {/* Current Location Marker - sada se koristi UserLocationMarker u MapView */}
+                {/* HTML overlay marker uklonjen jer koristimo pravi Leaflet marker */}
 
                 {/* Speed Display */}
                 <div className="absolute right-6 bottom-6 bg-white/95 backdrop-blur-sm border border-slate-300 rounded-2xl px-4 py-3 shadow-xl z-1000">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <div className={`w-2 h-2 rounded-full animate-pulse ${
+                      isSimulating ? 'bg-green-500' : 'bg-blue-500'
+                    }`}></div>
                     <span className="font-bold text-lg text-slate-800">{speed ? (speed * 3.6).toFixed(1) : '0'}</span>
                     <span className="text-sm text-slate-700 font-medium">km/h</span>
                   </div>
+                  {isSimulating && (
+                    <div className="text-xs text-green-600 font-medium mt-1">
+                      🚗 SIMULACIJA ({simulationIndex + 1}/{simulationRoute.length})
+                    </div>
+                  )}
                 </div>
               </>
             )}

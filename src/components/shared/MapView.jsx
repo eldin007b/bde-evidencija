@@ -1,8 +1,8 @@
 
-import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import ForceMapResize from './ForceMapResize';
 import ClickToVORAddress from './ClickToVORAddress';
-import L from 'leaflet';
 import React, { useCallback, useRef, useEffect } from 'react';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { formatDistance, formatDuration } from '../../utils/googleMaps';
@@ -99,12 +99,7 @@ function PopupContentSearch({ address, lat, lon, onClose, routeInfo, userLocatio
       <div className="space-y-4">
         {/* Location Info */}
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-          </div>
+          {/* Uklonjen crveni SVG marker iz popupa */}
           <div className="flex-1 min-w-0">
             <div className="text-base font-semibold text-gray-900 leading-tight">
               {line1}
@@ -131,24 +126,72 @@ function PopupContentSearch({ address, lat, lon, onClose, routeInfo, userLocatio
           onClick={() => window.open(navUrl, '_blank')}
           className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
-          <div className="flex items-center justify-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
-            </svg>
-            Pokreni navigaciju
-          </div>
+          Pokreni navigaciju
         </button>
       </div>
     </div>
   );
 }
 
-// Small helper: shows the user's current location as a CircleMarker
-function UserLocationMarker({ position }) {
-  if (!position) return null;
+// Small helper: shows the user's current location with dynamic marker based on movement
+function UserLocationMarker({ position, address, speed = 0, heading = 0, isFullscreen = false }) {
+  // Debug log
+  console.log('🎯 UserLocationMarker:', { position, speed, heading, isFullscreen });
+  
+  if (!position) {
+    console.log('❌ No position provided to UserLocationMarker');
+    return null;
+  }
+  
+  // Prikazuj marker uvijek kada imate poziciju
+  // const shouldShow = isFullscreen || speed > 0;
+  // if (!shouldShow) return null;
+  // Marker se sada prikazuje uvijek
+
+  // Custom HTML marker based on speed
+  const createCustomIcon = () => {
+    const isMoving = speed > 1; // više od 1 m/s (3.6 km/h)
+    
+    if (isMoving) {
+      // Moving - strelica koja pokazuje smjer
+      return L.divIcon({
+        html: `
+          <div style="transform: rotate(${heading}deg); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 32px; height: 32px; background: #3b82f6; border: 4px solid white; border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <path d="M12 2l8 20-8-6-8 6 8-20z"/>
+              </svg>
+            </div>
+          </div>
+        `,
+        className: 'custom-location-marker',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+    } else {
+      // Stationary - jednostavna plava tačka
+      return L.divIcon({
+        html: `
+          <div style="width: 16px; height: 16px; background: #3b82f6; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3); animation: pulse 2s infinite;">
+          </div>
+          <style>
+            @keyframes pulse {
+              0% { opacity: 1; }
+              50% { opacity: 0.5; }
+              100% { opacity: 1; }
+            }
+          </style>
+        `,
+        className: 'custom-location-marker-static',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+    }
+  };
+
   return (
-    <Marker position={position}>
-      <Popup>Moja lokacija</Popup>
+    <Marker position={position} icon={createCustomIcon()}>
+      <Popup>{typeof address !== 'undefined' && address ? String(address) : 'Moja lokacija'}</Popup>
     </Marker>
   );
 }
@@ -177,7 +220,12 @@ function SelectedLocationMarker({ marker, onAddressSelect, routeInfo, userLocati
         closeOnClick={false}
       >
         <PopupContentSearch
-          address={marker.data?.nameFormatted?.text || marker.data?.name || marker.label || `${marker.address || ''}${marker.city ? `, ${marker.city}` : ''}`}
+          address={
+            marker.data?.nameFormatted?.text ||
+            marker.data?.name ||
+            marker.label ||
+            `${String(marker.address || '')}${marker.city ? `, ${String(marker.city)}` : ''}`
+          }
           lat={marker.lat}
           lon={marker.lon}
           routeInfo={routeInfo}
@@ -194,7 +242,11 @@ export default function MapView({
   mapRef,
   selectedMarker,
   userLocation,
-  routeInfo
+  routeInfo,
+  currentAddress,
+  speed,
+  heading,
+  isFullscreen
 }) {
   const localMapRef = useRef();
   const effectiveMapRef = mapRef || localMapRef;
@@ -209,7 +261,7 @@ export default function MapView({
     <div className="relative w-full h-full bg-gray-100">
       <div className="w-full h-full">
         <MapContainer
-          center={[47.0707, 15.4395]} // Default center (Austria)
+          center={[47.0707, 15.4395]}
           zoom={8}
           className="w-full h-full z-0"
           ref={handleMapCreated}
@@ -218,38 +270,21 @@ export default function MapView({
           zoomControl={false}
           attributionControl={false}
         >
-          {/* Austrian basemap - working version */}
           <TileLayer
             url="https://maps.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png"
             attribution='Datenquelle: <a href="https://www.basemap.at">basemap.at</a>'
             maxZoom={19}
           />
-          
-          {/* VOR proxy tile layer - temporarily disabled due to API issues */}
-          {/* <TileLayer
-            url="https://dsltpiupbfopyvuiqffg.supabase.co/functions/v1/vor-proxy?z={z}&x={x}&y={y}"
-            attribution='Datenquelle: VOR Austria via Supabase'
-            maxZoom={19}
-            eventHandlers={{
-              loading: () => console.log('🗺️ VOR tiles loading...'),
-              load: () => console.log('✅ VOR tiles loaded successfully'),
-              tileerror: (e) => {
-                console.error('❌ VOR tile error:', e);
-                console.error('Failed URL:', e.tile?.src || 'unknown');
-                console.log('💡 Falling back to OpenStreetMap...');
-              },
-              tileloadstart: (e) => {
-                console.log('🔄 Loading tile:', e.url);
-              }
-            }}
-          /> */}
-          
           <ForceMapResize />
-          
           {userLocation && (
-            <UserLocationMarker position={userLocation} />
+            <UserLocationMarker 
+              position={userLocation} 
+              address={currentAddress} 
+              speed={speed}
+              heading={heading}
+              isFullscreen={isFullscreen}
+            />
           )}
-          
           {selectedMarker && (
             <SelectedLocationMarker
               marker={selectedMarker}
@@ -258,9 +293,19 @@ export default function MapView({
               userLocation={userLocation}
             />
           )}
-          
+          {/* Marker na centru ekrana uklonjen */}
           <ClickToVORAddress onAddressSelect={onAddressSelect} />
         </MapContainer>
+        {/* Prikaz brzine u fullscreen modu */}
+        {typeof speed !== 'undefined' && isFullscreen && (
+          <div className="absolute right-6 bottom-6 bg-white/95 backdrop-blur-sm border border-slate-300 rounded-2xl px-4 py-3 shadow-xl z-1000">
+            <div className="flex items-center gap-2">
+              {/* Uklonjena tačka */}
+              <span className="font-bold text-lg text-slate-800">{speed ? (speed * 3.6).toFixed(1) : '0'}</span>
+              <span className="text-sm text-slate-700 font-medium">km/h</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
