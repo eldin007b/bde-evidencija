@@ -176,7 +176,13 @@ export default function App() {
   }, []);
 
   return (
-    <Router basename="/bde-evidencija">
+    <Router 
+      basename="/bde-evidencija"
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <LocalizationProvider>
         <UserProvider>
           <DriversProvider>
