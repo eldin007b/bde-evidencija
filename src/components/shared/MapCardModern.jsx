@@ -307,10 +307,10 @@ const MapCardModern = ({
       if (elem?.requestFullscreen) {
         elem.requestFullscreen().then(() => {
           setIsFullscreen(true);
-          // Set zoom to almost maximum (19)
+          // Set zoom to 18 (jedan manje od maksimuma) samo prilikom otvaranja
           setTimeout(() => {
             if (mapRef?.current?.setView && currentCoords) {
-              mapRef.current.setView([currentCoords.lat, currentCoords.lon], 19);
+              mapRef.current.setView([currentCoords.lat, currentCoords.lon], 18);
             }
           }, 100);
         });
