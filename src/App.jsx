@@ -11,6 +11,9 @@ import AuthFlowManager from './components/AuthFlowManager.jsx';
 import PasswordChangeModal from './components/common/PasswordChangeModal.jsx';
 import realtimeService from './services/RealtimeService.js';
 
+// PWA komponente
+import PWAInstallPrompt from './components/shared/PWAInstallPrompt.jsx';
+
 // Lazy loading za bolje performanse - komponente se učitavaju tek kad su potrebne
 const HomeScreenModern = React.lazy(() => import('./screens/HomeScreenModern.jsx'));
 const DeliveriesScreen = React.lazy(() => import('./screens/DeliveriesScreen.jsx'));
@@ -184,6 +187,9 @@ export default function App() {
                 ) : (
                   <AuthFlowManager onAuthSuccess={handleAuthSuccess} />
                 )}
+                
+                {/* PWA Install Prompt - prikazuje se kad je instalacija dostupna */}
+                <PWAInstallPrompt />
               </div>
             </SyncProvider>
           </DriversProvider>

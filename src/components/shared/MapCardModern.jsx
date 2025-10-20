@@ -7,6 +7,8 @@ import { getRouteFromMapQuest } from '../../utils/mapQuest';
 import { fetchVoranachbRoute } from '../../utils/voranachb';
 import ENV from '../../config/env';
 import { analyzePolyline } from '../../utils/polylineUtils';
+import { useBatteryOptimization } from '../../services/BatteryOptimizationService';
+import { useDeboncedReverseGeocoding } from '../../services/DebouncedReverseGeocodingService';
 
 const MapCardModern = ({ 
   children, 
@@ -42,18 +44,30 @@ const MapCardModern = ({
   const [routeInfo, setRouteInfo] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [polylineAnalysis, setPolylineAnalysis] = useState(null);
-  const [reverseGeocodingLoading, setReverseGeocodingLoading] = useState(false);
   const [speed, setSpeed] = useState(0);
   const [heading, setHeading] = useState(0);
   
   const [justSelectedSuggestion, setJustSelectedSuggestion] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
+  // Battery optimization hook
+  const { config: gpsConfig, mode: batteryMode, getAdaptiveConfig } = useBatteryOptimization();
+  
+  // Debounced reverse geocoding hook
+  const { 
+    reverseGeocode: debouncedReverseGeocode, 
+    isLoading: debouncedGeocodingLoading,
+    lastResult: lastGeocodingResult,
+    service: geoService
+  } = useDeboncedReverseGeocoding();
+
   // Debug log initial props (removed for production)
 
   // Refs
   const inputRef = useRef(null);
   const mapContentRef = useRef(null);
+  const watchIdRef = useRef(null);
+  const centeredRef = useRef(false);
 
   // Touch device detection
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -327,32 +341,80 @@ const MapCardModern = ({
     }
   };
 
-  // Real-time GPS tracking
+  // Battery-optimized GPS tracking
   useEffect(() => {
-    if (navigator.geolocation) { // Uklonjen uslov za isFullscreen - sada radi uvek
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const newCoords = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          };
-          setCurrentCoords(newCoords);
-          setSpeed(position.coords.speed || 0);
-          setHeading(position.coords.heading || 0);
+    const startGpsTracking = async () => {
+      if (!navigator.geolocation) return;
 
-          // Keep map centered on current location only in fullscreen, ali zadrži trenutni zoom
-          if (isFullscreen && mapRef?.current?.setView) {
-            const currentZoom = mapRef?.current?.getZoom ? mapRef.current.getZoom() : undefined;
-            mapRef.current.setView([newCoords.lat, newCoords.lon], currentZoom);
-          }
-        },
-        (error) => console.error('GPS tracking error:', error),
-        { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
-      );
+      // Zaustavi postojeći watch ako postoji
+      if (watchIdRef.current) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
 
-      return () => navigator.geolocation.clearWatch(watchId);
-    }
-  }, []); // Uklonjen isFullscreen iz dependencies - sada se pokreće samo jednom
+      try {
+        // Dobij adaptivnu konfiguraciju na osnovu baterije
+        const adaptiveConfig = await getAdaptiveConfig();
+        
+        console.log(`🔋 [GPS] Starting tracking in ${batteryMode} mode:`, adaptiveConfig);
+
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const newCoords = {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            };
+            setCurrentCoords(newCoords);
+            setSpeed(position.coords.speed || 0);
+            setHeading(position.coords.heading || 0);
+
+            // Keep map centered on current location only in fullscreen, ali zadrži trenutni zoom
+            if (isFullscreen && mapRef?.current?.setView) {
+              const currentZoom = mapRef?.current?.getZoom ? mapRef.current.getZoom() : undefined;
+              mapRef.current.setView([newCoords.lat, newCoords.lon], currentZoom);
+            }
+          },
+          (error) => {
+            console.error(`🔋 [GPS] Tracking error in ${batteryMode} mode:`, error);
+          },
+          adaptiveConfig
+        );
+
+        watchIdRef.current = watchId;
+      } catch (error) {
+        console.error('🔋 [GPS] Failed to start adaptive tracking:', error);
+        // Fallback na osnovnu konfiguraciju
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const newCoords = {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            };
+            setCurrentCoords(newCoords);
+            setSpeed(position.coords.speed || 0);
+            setHeading(position.coords.heading || 0);
+
+            if (isFullscreen && mapRef?.current?.setView) {
+              const currentZoom = mapRef?.current?.getZoom ? mapRef.current.getZoom() : undefined;
+              mapRef.current.setView([newCoords.lat, newCoords.lon], currentZoom);
+            }
+          },
+          (error) => console.error('GPS tracking error:', error),
+          { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+        );
+        watchIdRef.current = watchId;
+      }
+    };
+
+    startGpsTracking();
+
+    return () => {
+      if (watchIdRef.current && navigator.geolocation?.clearWatch) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [batteryMode, isFullscreen]); // Restartuj tracking kada se promeni battery mode
 
   // Fullscreen change listener
   useEffect(() => {
@@ -364,13 +426,27 @@ const MapCardModern = ({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Reverse geocoding when coordinates change
+  // Debounced reverse geocoding when coordinates change
   useEffect(() => {
     if (currentCoords && currentCoords.lat && currentCoords.lon) {
-      console.log('📍 Coordinates changed, starting reverse geocoding:', currentCoords);
-      reverseGeocode(currentCoords.lat, currentCoords.lon);
+      console.log('📍 Coordinates changed, starting debounced reverse geocoding:', currentCoords);
+      debouncedReverseGeocode(currentCoords.lat, currentCoords.lon, speed);
     }
-  }, [currentCoords]);
+  }, [currentCoords, speed]);
+
+  // Listen to debounced reverse geocoding results
+  useEffect(() => {
+    const listener = (event) => {
+      if (event.type === 'result' && event.data) {
+        const formatted = `${event.data.address}${event.data.city ? ', ' + event.data.city : ''}`;
+        setCurrentAddress(formatted);
+        console.log('📍 Address updated from debounced service:', formatted);
+      }
+    };
+
+    const unsubscribe = geoService.addListener(listener);
+    return unsubscribe;
+  }, [geoService]);
 
   // Compute driving route when we have both current location and a selected location
   useEffect(() => {
