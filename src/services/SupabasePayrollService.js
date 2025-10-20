@@ -11,7 +11,13 @@ export async function getPayrollFiles(ime) {
     return [];
   }
   // Vrati samo PDF fajlove, ignoriši foldere
-  return (data || []).filter(f => f.name && f.name.endsWith('.pdf'));
+  // Defensive check: ensure file has valid name property
+  return (data || []).filter(f => 
+    f && 
+    f.name && 
+    typeof f.name === 'string' && 
+    f.name.endsWith('.pdf')
+  );
 }
 
 // Download platne liste

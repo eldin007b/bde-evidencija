@@ -80,11 +80,11 @@ export function parseHafasConnectionHTML(htmlString) {
 
       // fallback: search whole text for first duration and distance
       const whole = doc.body ? doc.body.textContent : htmlString;
-      if (!durationText) {
+      if (!durationText && whole && typeof whole === 'string') {
         const dm = whole.match(/\b\d{1,2}:\d{2}\b/);
         if (dm) durationText = dm[0];
       }
-      if (!distanceText) {
+      if (!distanceText && whole && typeof whole === 'string') {
         const km = whole.match(/\d+[\.,]?\d*\s*(km|m)\b/i);
         if (km) distanceText = km[0];
       }
@@ -98,8 +98,8 @@ export function parseHafasConnectionHTML(htmlString) {
   }
 
   // Regex fallback: search for duration and distance in raw string
-  const durMatch = htmlString.match(/\b\d{1,2}:\d{2}\b/);
-  const distMatch = htmlString.match(/\d+[\.,]?\d*\s*(km|m)\b/i);
+  const durMatch = (htmlString && typeof htmlString === 'string') ? htmlString.match(/\b\d{1,2}:\d{2}\b/) : null;
+  const distMatch = (htmlString && typeof htmlString === 'string') ? htmlString.match(/\d+[\.,]?\d*\s*(km|m)\b/i) : null;
   const durationText = durMatch ? durMatch[0] : null;
   const distanceText = distMatch ? distMatch[0] : null;
   const durationMinutes = durationText ? parseDurationToMinutes(durationText) : null;

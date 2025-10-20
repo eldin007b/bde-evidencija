@@ -14,23 +14,25 @@ export async function extractNetoBrutoFromPDF(arrayBuffer) {
     text += content.items.map(item => item.str).join('\n');
   }
   // Parsiranje Brutto
-  const brutoMatch = text.match(/Brutto\s*([\d\.\,]+)/i);
+  const brutoMatch = (text && typeof text === 'string') ? text.match(/Brutto\s*([\d\.\,]+)/i) : null;
   let neto = 0;
-  const nettoIndex = text.indexOf('Netto');
-  if (nettoIndex !== -1) {
-    const afterNetto = text.substring(nettoIndex + 5);
-    const euroMatches = afterNetto.match(/-?[\d\.\,]+/g);
-    if (euroMatches) {
-      const firstPositive = euroMatches.find(val => !val.startsWith('-'));
-      if (firstPositive) {
-        neto = parseFloat(firstPositive.replace(/\./g, '').replace(',', '.'));
+  if (text && typeof text === 'string') {
+    const nettoIndex = text.indexOf('Netto');
+    if (nettoIndex !== -1) {
+      const afterNetto = text.substring(nettoIndex + 5);
+      const euroMatches = afterNetto.match(/-?[\d\.\,]+/g);
+      if (euroMatches) {
+        const firstPositive = euroMatches.find(val => !val.startsWith('-'));
+        if (firstPositive) {
+          neto = parseFloat(firstPositive.replace(/\./g, '').replace(',', '.'));
+        }
       }
     }
   }
   // Parsiranje Gesamtaufwand (ukupni trosak poslodavca)
   let ukupni_trosak = 0;
   // Regex dozvoljava razmak, dvotačku, više linija između riječi i iznosa
-  const gesamtMatch = text.match(/Gesamtaufwand[\s\S]*?(\d{1,3}(?:\.\d{3})*,\d{2})/i);
+  const gesamtMatch = (text && typeof text === 'string') ? text.match(/Gesamtaufwand[\s\S]*?(\d{1,3}(?:\.\d{3})*,\d{2})/i) : null;
   if (gesamtMatch && gesamtMatch[1]) {
     ukupni_trosak = parseFloat(gesamtMatch[1].replace(/\./g, '').replace(',', '.'));
   }

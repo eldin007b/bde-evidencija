@@ -11,7 +11,7 @@ import { useUserContext } from '../context/UserContext';
 
 /**
  * PayrollScreen - Pregled i preuzimanje platnih lista za vozače
- * Struktura u Google Drive: Platne liste/{vozac_id}/{mjesec}/file.pdf
+ * Platne liste se čuvaju u Supabase Storage bucket 'payrolls'
  */
 function PayrollScreen() {
   const user = useUserContext();
@@ -77,64 +77,21 @@ function PayrollScreen() {
     loadPayrollFiles(inputDriverName.trim().toLowerCase());
   };
 
-  // Učitaj platne liste iz Google Drive
+  // Učitaj platne liste iz Supabase Storage
   const loadPayrollFiles = async (driverId) => {
     try {
       setLoading(true);
-      // Provjeri da li su potrebne env varijable postavljene
-      if (!import.meta.env.VITE_GOOGLE_DRIVE_API_KEY) {
-        console.warn('Google Drive API ključ nije postavljen, koristim mock podatke');
-        loadMockData();
-        return;
-      }
-      // Pozovi Google Drive API
-      const files = await getPayrollFiles(user.driverName.trim().toLowerCase());
+      const files = await getPayrollFiles(driverId);
       setPayrollFiles(files);
       setLoading(false);
     } catch (error) {
       console.error('Greška pri učitavanju platnih lista:', error);
-      setError('Greška pri učitavanju platnih lista iz Google Drive');
+      setError('Greška pri učitavanju platnih lista iz Supabase Storage');
       setLoading(false);
     }
   };
 
-  // Fallback mock podatci za testiranje
-  const loadMockData = () => {
-    const mockFiles = [
-      {
-        id: '1',
-        month: '01/2025',
-        fileName: '01/2025.pdf',
-        fileId: 'mock_file_id_1',
-        downloadUrl: '#',
-        uploadDate: '2025-01-15T10:30:00.000Z',
-        size: '245 KB'
-      },
-      {
-        id: '2', 
-        month: '02/2025',
-        fileName: '02/2025.pdf',
-        fileId: 'mock_file_id_2',
-        downloadUrl: '#',
-        uploadDate: '2025-02-15T10:30:00.000Z',
-        size: '251 KB'
-      },
-      {
-        id: '3',
-        month: '03/2025', 
-        fileName: '03/2025.pdf',
-        fileId: 'mock_file_id_3',
-        downloadUrl: '#',
-        uploadDate: '2025-03-15T10:30:00.000Z',
-        size: '238 KB'
-      }
-    ];
 
-    setTimeout(() => {
-      setPayrollFiles(mockFiles);
-      setLoading(false);
-    }, 1000);
-  };
 
   // Preuzmi platnu listu
   const downloadPayroll = async (file) => {
@@ -197,6 +154,10 @@ function PayrollScreen() {
   const sortedPayrollFiles = [...payrollFiles].sort((a, b) => {
     // Podržava formate: 01_2025.pdf, 09_2024.pdf, 12_2026.pdf
     const parse = (file) => {
+      // Defensive check: ensure file and file.name exist
+      if (!file || !file.name || typeof file.name !== 'string') {
+        return { year: 0, month: 0 };
+      }
       const match = file.name.match(/(\d{2})_(\d{4})/);
       if (!match) return { year: 0, month: 0 };
       return { year: parseInt(match[2]), month: parseInt(match[1]) };

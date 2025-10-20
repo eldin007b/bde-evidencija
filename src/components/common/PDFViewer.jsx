@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 /**
  * PDFViewer - Komponenta za prikazivanje PDF fajlova u aplikaciji
- * Podržava Google Drive URL-ove i blob podatke
+ * Podržava Supabase Storage URL-ove i blob podatke
  */
 function PDFViewer({ pdfUrl, fileName, onClose, isVisible }) {
   const [loading, setLoading] = useState(true);
@@ -16,46 +16,15 @@ function PDFViewer({ pdfUrl, fileName, onClose, isVisible }) {
     }
   }, [pdfUrl, isVisible]);
 
-  const loadPDF = async () => {
+    const loadPdf = async () => {
+    if (!pdfUrl) return;
+
     try {
       setLoading(true);
       setError(null);
 
-      // Ako je URL lokalni blob, koristi direktno
-      if (pdfUrl.startsWith('blob:')) {
-        setPdfBlob(pdfUrl);
-        setLoading(false);
-        return;
-      }
-
-      // Za vanjski PDF, koristi PDF.js viewer ili Google PDF viewer
-      let viewerUrl = pdfUrl;
-      
-      // Google Drive specijalno rukovanje
-      if (pdfUrl.includes('drive.google.com')) {
-        // Ako je već preview URL, koristi direktno
-        if (pdfUrl.includes('/preview')) {
-          viewerUrl = pdfUrl;
-        }
-        // Ako je download URL, konvertuj u preview
-        else {
-          const fileIdMatch = pdfUrl.match(/id=([a-zA-Z0-9-_]+)/);
-          if (fileIdMatch) {
-            const fileId = fileIdMatch[1];
-            viewerUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-          }
-        }
-      }
-      // Ako je lokalni PDF, koristi direktno
-      else if (pdfUrl.startsWith('/')) {
-        viewerUrl = pdfUrl;
-      }
-      // Za druge vanjski URL-ove, pokušaj direktno bez PDF.js
-      else if (pdfUrl.startsWith('http')) {
-        viewerUrl = pdfUrl;
-      }
-
-      setPdfBlob(viewerUrl);
+      // Svi PDF URL-ovi iz Supabase Storage su direktno prikazivi
+      setPdfBlob(pdfUrl);
       setLoading(false);
 
     } catch (error) {
@@ -70,46 +39,7 @@ function PDFViewer({ pdfUrl, fileName, onClose, isVisible }) {
       try {
         setDownloading(true);
         
-        // Ako je Google Drive URL, koristi API za direktni download
-        if (pdfUrl.includes('drive.google.com')) {
-          let fileId = null;
-          
-          // Izvuci file ID iz različitih Google Drive URL formata
-          if (pdfUrl.includes('/preview')) {
-            const previewMatch = pdfUrl.match(/\/file\/d\/([a-zA-Z0-9-_]+)\/preview/);
-            if (previewMatch) fileId = previewMatch[1];
-          } else {
-            const downloadMatch = pdfUrl.match(/id=([a-zA-Z0-9-_]+)/);
-            if (downloadMatch) fileId = downloadMatch[1];
-          }
-          
-          if (fileId) {
-            // Koristi Google Drive API sa API key za direktni pristup
-            const apiKey = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY;
-            if (apiKey) {
-              const apiUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
-              
-              const response = await fetch(apiUrl);
-              if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName || 'dokument.pdf';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                window.URL.revokeObjectURL(url);
-                setDownloading(false);
-                return;
-              }
-            }
-          }
-        }
-        
-        // Fallback na osnovni download
+        // Jednostavan download iz Supabase Storage
         const link = document.createElement('a');
         link.href = pdfUrl;
         link.download = fileName || 'dokument.pdf';
@@ -123,7 +53,7 @@ function PDFViewer({ pdfUrl, fileName, onClose, isVisible }) {
       } catch (error) {
         console.error('Download error:', error);
         setDownloading(false);
-        // Final fallback
+        // Fallback
         window.open(pdfUrl, '_blank');
       }
     }
@@ -131,16 +61,7 @@ function PDFViewer({ pdfUrl, fileName, onClose, isVisible }) {
 
   const handleOpenInNewTab = () => {
     if (pdfUrl) {
-      // Za Google Drive fajlove, koristi view URL
-      let openUrl = pdfUrl;
-      if (pdfUrl.includes('drive.google.com')) {
-        const fileIdMatch = pdfUrl.match(/id=([a-zA-Z0-9-_]+)/);
-        if (fileIdMatch) {
-          const fileId = fileIdMatch[1];
-          openUrl = `https://drive.google.com/file/d/${fileId}/view`;
-        }
-      }
-      window.open(openUrl, '_blank');
+      window.open(pdfUrl, '_blank');
     }
   };
 
@@ -240,16 +161,6 @@ function PDFViewer({ pdfUrl, fileName, onClose, isVisible }) {
                   setLoading(false);
                 }}
                 onError={(e) => {
-                  // Pokušaj sa direktnim download link-om
-                  if (pdfUrl.includes('drive.google.com') && !pdfBlob.includes('/preview')) {
-                    const fileIdMatch = pdfUrl.match(/id=([a-zA-Z0-9-_]+)/);
-                    if (fileIdMatch) {
-                      const fileId = fileIdMatch[1];
-                      const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                      setPdfBlob(directUrl);
-                      return;
-                    }
-                  }
                   setError('PDF se nije mogao učitati. Molimo koristite Download dugme.');
                   setLoading(false);
                 }}
