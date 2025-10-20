@@ -46,14 +46,10 @@ const MapCardModern = ({
   const [speed, setSpeed] = useState(0);
   const [heading, setHeading] = useState(0);
   
-  // Simulation states
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationIndex, setSimulationIndex] = useState(0);
   const [justSelectedSuggestion, setJustSelectedSuggestion] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
-  // Debug log initial props
-  console.log('🎯 MapCardModern initialized with props:', { address, city, selectedMarker });
+  // Debug log initial props (removed for production)
 
   // Refs
   const inputRef = useRef(null);
@@ -123,37 +119,6 @@ const MapCardModern = ({
     if (!meters || meters <= 0) return null;
     const hours = meters / 1000 / avgSpeedKmh;
     return Math.round(hours * 3600);
-  };
-
-  // Simulation functions
-  const simulationRoute = [
-    // Simulacija vožnje kroz Graz (ili možete promijeniti koordinate)
-    { lat: 47.0707, lon: 15.4395, speed: 0 },   // Start - parking
-    { lat: 47.0710, lon: 15.4400, speed: 20 },  // Polako kretanje
-    { lat: 47.0715, lon: 15.4410, speed: 30 },  // Ubrzavanje
-    { lat: 47.0725, lon: 15.4420, speed: 50 },  // Normalna brzina
-    { lat: 47.0735, lon: 15.4435, speed: 60 },  // Brža vožnja
-    { lat: 47.0745, lon: 15.4450, speed: 40 },  // Usporavanje za semafor
-    { lat: 47.0750, lon: 15.4460, speed: 0 },   // Stop na semaforu
-    { lat: 47.0755, lon: 15.4465, speed: 25 },  // Kretanje sa semafora
-    { lat: 47.0765, lon: 15.4475, speed: 55 },  // Ubrzavanje
-    { lat: 47.0775, lon: 15.4485, speed: 65 },  // Autoput brzina
-    { lat: 47.0785, lon: 15.4495, speed: 45 },  // Skretanje
-    { lat: 47.0795, lon: 15.4505, speed: 30 },  // Ulazak u grad
-    { lat: 47.0805, lon: 15.4515, speed: 20 },  // Parkiranje
-    { lat: 47.0810, lon: 15.4520, speed: 0 }    // Destination - parkirano
-  ];
-
-  const startSimulation = () => {
-    if (!isSimulating) {
-      setIsSimulating(true);
-      setSimulationIndex(0);
-      console.log('🚗 Pokretam simulaciju vožnje...');
-    } else {
-      setIsSimulating(false);
-      setSpeed(0);
-      console.log('🛑 Zaustavlja simulaciju vožnje');
-    }
   };
 
   // Map controls
@@ -388,64 +353,6 @@ const MapCardModern = ({
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []); // Uklonjen isFullscreen iz dependencies - sada se pokreće samo jednom
-
-  // Simulation useEffect
-  useEffect(() => {
-    let simulationInterval;
-    
-    if (isSimulating && simulationRoute.length > 0) {
-      simulationInterval = setInterval(() => {
-        const currentPoint = simulationRoute[simulationIndex];
-        
-        if (currentPoint) {
-          // Update coordinates
-          const newCoords = { lat: currentPoint.lat, lon: currentPoint.lon };
-          setCurrentCoords(newCoords);
-          
-          // Update speed (convert from km/h to m/s for realism)
-          const speedMs = currentPoint.speed / 3.6;
-          setSpeed(speedMs);
-          
-          // Calculate heading based on next point
-          const nextIndex = simulationIndex + 1;
-          if (nextIndex < simulationRoute.length) {
-            const nextPoint = simulationRoute[nextIndex];
-            const deltaLat = nextPoint.lat - currentPoint.lat;
-            const deltaLon = nextPoint.lon - currentPoint.lon;
-            const calculatedHeading = Math.atan2(deltaLon, deltaLat) * (180 / Math.PI);
-            setHeading(calculatedHeading);
-          }
-          
-          // Center map on simulated position if in fullscreen
-          if (isFullscreen && mapRef?.current?.setView) {
-            const currentZoom = mapRef?.current?.getZoom ? mapRef.current.getZoom() : 15;
-            mapRef.current.setView([newCoords.lat, newCoords.lon], currentZoom);
-          }
-          
-          console.log(`🚗 Simulacija: ${currentPoint.speed} km/h na poziciji ${currentPoint.lat.toFixed(4)}, ${currentPoint.lon.toFixed(4)}`);
-          console.log(`📍 State update: currentCoords=${JSON.stringify(newCoords)}, speed=${speedMs.toFixed(1)}, heading=${heading.toFixed(1)}`);
-          
-          // Move to next point
-          setSimulationIndex(prev => {
-            const next = prev + 1;
-            if (next >= simulationRoute.length) {
-              // End of route
-              console.log('🏁 Završena simulacija vožnje');
-              setIsSimulating(false);
-              return 0;
-            }
-            return next;
-          });
-        }
-      }, 2000); // Change position every 2 seconds
-    }
-    
-    return () => {
-      if (simulationInterval) {
-        clearInterval(simulationInterval);
-      }
-    };
-  }, [isSimulating, simulationIndex, isFullscreen]);
 
   // Fullscreen change listener
   useEffect(() => {
@@ -972,11 +879,9 @@ const MapCardModern = ({
                 <>
                   {/* Inject computed routeInfo and userLocation into children (e.g. MapView) so popups use real route data */}
                   {(() => {
-                    console.log('🔍 Before React.Children.map:', { children, currentCoords, speed, heading, isSimulating, loading });
                     return React.Children.map(children, (child) => {
                       if (React.isValidElement(child)) {
                         const userLocation = currentCoords ? [currentCoords.lat, currentCoords.lon] : child.props.userLocation || null;
-                        console.log('🔄 Prosleđujem u MapView:', { userLocation, speed, heading, isSimulating });
                         return React.cloneElement(child, {
                           routeInfo: routeInfo || child.props.routeInfo || null,
                           userLocation: userLocation,
@@ -991,7 +896,7 @@ const MapCardModern = ({
                   })()}
                   
                   {/* Map Controls */}
-                  <div className="absolute right-6 top-6 flex flex-col gap-3 z-30">
+                  <div className="absolute right-6 top-20 flex flex-col gap-3 z-30">
                     <button 
                       className="w-12 h-12 bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-blue-600 hover:bg-white group" 
                       onClick={handleZoomIn} 
@@ -1022,27 +927,6 @@ const MapCardModern = ({
                       </svg>
                     </button>
 
-                    {/* Simulation button */}
-                    <button 
-                      className={`w-12 h-12 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center group ${
-                        isSimulating 
-                          ? 'bg-red-500 text-white hover:bg-red-600' 
-                          : 'bg-white/90 text-slate-700 hover:text-green-600 hover:bg-white'
-                      }`}
-                      onClick={startSimulation} 
-                      title={isSimulating ? "Zaustavi simulaciju" : "Pokreni simulaciju vožnje"}
-                    >
-                      {isSimulating ? (
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
-                          <path d="M6 6h12v12H6z"/>
-                        </svg>
-                      ) : (
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                      )}
-                    </button>
-
                     {/* Fullscreen for touch devices */}
                     {isTouchDevice && (
                       <button
@@ -1067,17 +951,10 @@ const MapCardModern = ({
                   {/* Speed Display */}
                   <div className="absolute right-6 bottom-6 bg-white/95 backdrop-blur-sm border border-slate-300 rounded-2xl px-4 py-3 shadow-xl z-1000">
                     <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full animate-pulse ${
-                        isSimulating ? 'bg-green-500' : 'bg-blue-500'
-                      }`}></div>
+                      <div className="w-2 h-2 rounded-full animate-pulse bg-blue-500"></div>
                       <span className="font-bold text-lg text-slate-800">{speed ? (speed * 3.6).toFixed(1) : '0'}</span>
                       <span className="text-sm text-slate-700 font-medium">km/h</span>
                     </div>
-                    {isSimulating && (
-                      <div className="text-xs text-green-600 font-medium mt-1">
-                        🚗 SIMULACIJA ({simulationIndex + 1}/{simulationRoute.length})
-                      </div>
-                    )}
                   </div>
                 </>
               )}
@@ -1147,11 +1024,9 @@ const MapCardModern = ({
               <>
                 {/* Inject computed routeInfo and userLocation into children (e.g. MapView) so popups use real route data */}
                 {(() => {
-                  console.log('🔍 Mobile - Before React.Children.map:', { children, currentCoords, speed, heading, isSimulating, loading });
                   return React.Children.map(children, (child) => {
                     if (React.isValidElement(child)) {
                       const userLocation = currentCoords ? [currentCoords.lat, currentCoords.lon] : child.props.userLocation || null;
-                      console.log('🔄 Mobile - Prosleđujem u MapView:', { userLocation, speed, heading, isSimulating });
                       return React.cloneElement(child, {
                         routeInfo: routeInfo || child.props.routeInfo || null,
                         userLocation: userLocation,
@@ -1166,28 +1041,39 @@ const MapCardModern = ({
                 })()}
                 
                 {/* Current Address Display - Center Top (when fullscreen) */}
-                {isFullscreen && currentAddress && (
-                  <div className="absolute left-1/2 transform -translate-x-1/2 top-6 z-40">
-                    <div className="bg-white/95 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl px-4 py-3 max-w-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">📍</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800 truncate">{currentAddress}</p>
-                          {isSimulating && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-xs text-green-600 font-medium">Simulacija u toku</span>
-                            </div>
-                          )}
+                {isFullscreen && currentAddress && (() => {
+                  // Extract street name and number from full address
+                  const getStreetAndNumber = (fullAddress) => {
+                    if (!fullAddress) return '';
+                    
+                    // Split by comma and take the first part (usually street + number)
+                    const firstPart = fullAddress.split(',')[0].trim();
+                    
+                    // Remove common prefixes and clean up
+                    const cleaned = firstPart
+                      .replace(/^(Adresa:|Address:|Lokacija:|Location:)/i, '')
+                      .trim();
+                    
+                    return cleaned || fullAddress;
+                  };
+
+                  const streetDisplay = getStreetAndNumber(currentAddress);
+
+                  return (
+                    <div className="absolute left-0 right-0 top-4 z-40">
+                      <div className="mx-4 bg-white/95 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl px-4 py-3">
+                        <div className="flex items-center justify-center gap-3">
+                          <span className="text-lg">📍</span>
+                          <p className="text-base font-bold text-slate-800 truncate">{streetDisplay}</p>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Left Side Controls - Search (when hideSearchAndInfo is active) */}
                 {hideSearchAndInfo && isMobile && (
-                  <div className="absolute left-6 top-6 flex flex-col gap-3 z-30">
+                  <div className="absolute left-6 top-20 flex flex-col gap-3 z-30">
                     <button
                       className="w-12 h-12 bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-blue-600 hover:bg-white group"
                       onClick={() => {
@@ -1237,7 +1123,7 @@ const MapCardModern = ({
                 )}
 
                 {/* Map Controls */}
-                <div className="absolute right-6 top-6 flex flex-col gap-3 z-30">
+                <div className="absolute right-6 top-20 flex flex-col gap-3 z-30">
                   <button 
                     className={`${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'} bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center text-slate-700 hover:text-blue-600 hover:bg-white group`}
                     onClick={handleZoomIn} 
@@ -1268,27 +1154,6 @@ const MapCardModern = ({
                     </svg>
                   </button>
 
-                  {/* Simulation button */}
-                  <button 
-                    className={`${isFullscreen ? 'w-14 h-14' : 'w-12 h-12'} backdrop-blur-sm border border-slate-200/50 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center group ${
-                      isSimulating 
-                        ? 'bg-red-500 text-white hover:bg-red-600' 
-                        : 'bg-white/90 text-slate-700 hover:text-green-600 hover:bg-white'
-                    }`}
-                    onClick={startSimulation} 
-                    title={isSimulating ? "Zaustavi simulaciju" : "Pokreni simulaciju vožnje"}
-                  >
-                    {isSimulating ? (
-                      <svg width={isFullscreen ? "26" : "22"} height={isFullscreen ? "26" : "22"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
-                        <path d="M6 6h12v12H6z"/>
-                      </svg>
-                    ) : (
-                      <svg width={isFullscreen ? "26" : "22"} height={isFullscreen ? "26" : "22"} viewBox="0 0 24 24" fill="currentColor" className="group-hover:scale-110 transition-transform">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    )}
-                  </button>
-
                   {/* Fullscreen - only on touch devices */}
                   {isTouchDevice && (
                     <button
@@ -1313,17 +1178,10 @@ const MapCardModern = ({
                 {/* Speed Display */}
                 <div className="absolute right-6 bottom-6 bg-white/95 backdrop-blur-sm border border-slate-300 rounded-2xl px-4 py-3 shadow-xl z-1000">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full animate-pulse ${
-                      isSimulating ? 'bg-green-500' : 'bg-blue-500'
-                    }`}></div>
+                    <div className="w-2 h-2 rounded-full animate-pulse bg-blue-500"></div>
                     <span className="font-bold text-lg text-slate-800">{speed ? (speed * 3.6).toFixed(1) : '0'}</span>
                     <span className="text-sm text-slate-700 font-medium">km/h</span>
                   </div>
-                  {isSimulating && (
-                    <div className="text-xs text-green-600 font-medium mt-1">
-                      🚗 SIMULACIJA ({simulationIndex + 1}/{simulationRoute.length})
-                    </div>
-                  )}
                 </div>
               </>
             )}

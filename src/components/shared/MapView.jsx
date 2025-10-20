@@ -135,11 +135,7 @@ function PopupContentSearch({ address, lat, lon, onClose, routeInfo, userLocatio
 
 // Small helper: shows the user's current location with dynamic marker based on movement
 function UserLocationMarker({ position, address, speed = 0, heading = 0, isFullscreen = false }) {
-  // Debug log
-  console.log('🎯 UserLocationMarker:', { position, speed, heading, isFullscreen });
-  
   if (!position) {
-    console.log('❌ No position provided to UserLocationMarker');
     return null;
   }
   
