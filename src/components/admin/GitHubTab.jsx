@@ -109,8 +109,10 @@ const GitHubTab = ({ currentTheme }) => {
       
       if (!GITHUB_TOKEN) {
         console.warn('ℹ️ GitHub token nije postavljen - koristim javni API (limitiran)');
-        setError('GitHub token nije postavljen - neki features neće biti dostupni');
+        setError('GitHub token nije postavljen - koristim javni API (ograničeno na 60 poziva/sat)');
         // Nastavi sa javnim API pozivom bez tokena
+      } else {
+        console.log('🔑 GitHub token konfigurisan - koristim potpun API pristup');
       }
       
       // Pokušaj sa glavnim repo
@@ -221,7 +223,27 @@ const GitHubTab = ({ currentTheme }) => {
       } else {
         console.error('Greška pri dohvatanju workflow-a:', response.status, response.statusText);
         if (response.status === 401) {
-          setError('GitHub token je nevaljan ili nema dozvole');
+          console.warn('🔑 GitHub token neispravka ili nema dozvole - prebacujem na javni API');
+          setError('⚠️ GitHub token neispravka - koristim javni API (ograničeno)');
+          // Pokušaj bez tokena kao fallback
+          try {
+            const publicResponse = await fetch(
+              `${GITHUB_API_BASE}/${REPO_OWNER}/${REPO_NAME}/actions/runs?per_page=10`,
+              {
+                headers: { 'Accept': 'application/vnd.github.v3+json' }
+              }
+            );
+            if (publicResponse.ok) {
+              data = await publicResponse.json();
+              repoUsed = GITHUB_REPO + ' (javni API)';
+              console.log('✅ Javni GitHub API radi - dobio', data?.workflow_runs?.length, 'workflow-ova');
+              setError('ℹ️ Koristim javni GitHub API (60 poziva/sat limit)');
+            } else {
+              console.error('❌ Javni API takođe ne radi:', publicResponse.status);
+            }
+          } catch (fallbackError) {
+            console.error('❌ Fallback API poziv neuspešan:', fallbackError);
+          }
         } else if (response.status === 404) {
           setError('GitHub repo ili Actions nisu dostupni');
         } else {

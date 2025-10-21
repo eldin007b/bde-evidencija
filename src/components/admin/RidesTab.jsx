@@ -216,11 +216,19 @@ const RidesTab = () => {
         .limit(50);
 
       if (approvedError) {
-        console.error('Error fetching approved rides:', approvedError);
+        console.error('❌ [RidesTab] Error fetching approved rides:', approvedError);
       }
       if (pendingError) {
         console.error('❌ [RidesTab] Error fetching pending rides:', pendingError);
       }
+      
+      // Debug log da vidimo šta smo dobili
+      console.log('📊 [RidesTab] Raw data fetched:', {
+        approved: approvedData?.length || 0,
+        pending: pendingData?.length || 0,
+        approvedSample: approvedData?.[0],
+        pendingSample: pendingData?.[0]
+      });
 
       // Mapiranje podataka iz baze u format koji komponenta očekuje sa error handling
       const mappedPending = (pendingData || []).map(ride => {
@@ -250,7 +258,9 @@ const RidesTab = () => {
           const details = ride.ride_details || {};
           const rideDate = details.date || ride.created_at || new Date().toISOString();
           
-          return {
+          console.log('🔄 [RidesTab] Mapping approved ride:', { ride, details });
+          
+          const mapped = {
             id: ride.id,
             vozac: ride.driver_name || ride.driver_id || 'N/A',
             datum: format(new Date(rideDate), 'dd.MM.yyyy'),
@@ -261,11 +271,21 @@ const RidesTab = () => {
             status: 'approved',
             napomena: ride.notes || ''
           };
+          
+          console.log('✅ [RidesTab] Mapped approved ride:', mapped);
+          return mapped;
         } catch (err) {
           console.error('❌ [RidesTab] Error mapping approved ride:', ride, err);
           return null;
         }
       }).filter(Boolean);
+
+      console.log('🎯 [RidesTab] Final mapped data:', {
+        pending: mappedPending.length,
+        approved: mappedApproved.length,
+        pendingSample: mappedPending[0],
+        approvedSample: mappedApproved[0]
+      });
 
       setPendingRides(mappedPending);
       setApprovedRides(mappedApproved);

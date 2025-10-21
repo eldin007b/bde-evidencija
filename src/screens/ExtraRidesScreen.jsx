@@ -134,18 +134,66 @@ export default function ExtraRidesScreen() {
       const from = format(startDate, 'yyyy-MM-dd');
       const to = format(endDate, 'yyyy-MM-dd');
 
-      const { data: approved } = await supabase
+      console.log('📊 [FETCH RIDES] Date range:', { from, to });
+      console.log('📊 [FETCH RIDES] Filter params:', { filterYear, filterMonth });
+      console.log('📊 [FETCH RIDES] Učitavam odobrene vožnje iz extra_rides tabele...');
+      
+      // Filtriraj po created_at za ovaj mesec
+      const { data: approved, error: approvedError } = await supabase
         .from('extra_rides')
         .select('*')
-        .gte('date', from).lte('date', to).eq('status', 'approved');
+        .gte('created_at', `${filterYear}-${(filterMonth + 1).toString().padStart(2, '0')}-01`)
+        .lte('created_at', `${filterYear}-${(filterMonth + 1).toString().padStart(2, '0')}-31`);
+      
+      console.log('📊 [FETCH RIDES] Raw approved data:', approved);
+      console.log('📊 [FETCH RIDES] Approved error:', approvedError);
 
-      const { data: pending } = await supabase
+      console.log('📊 [FETCH RIDES] Učitavam pending vožnje iz extra_rides_pending tabele...');
+      // Filtriraj po datumu za ovaj mesec
+      const { data: pending, error: pendingError } = await supabase
         .from('extra_rides_pending')
         .select('*')
-        .gte('date', from).lte('date', to).eq('status', 'pending');
+        .gte('date', from)
+        .lte('date', to)
+        .eq('status', 'pending');
+      
+      console.log('📊 [FETCH RIDES] Raw pending data:', pending);
+      console.log('📊 [FETCH RIDES] Pending error:', pendingError);
 
-      let allApproved = approved || [];
+      // Map approved rides from JSONB structure 
+      let allApproved = (approved || []).map((ride, index) => {
+        console.log(`🔄 [FETCH RIDES] Mapping approved ride ${index + 1}:`, ride);
+        
+        if (ride.ride_details) {
+          // JSONB struktura
+          const details = ride.ride_details;
+          const mappedRide = {
+            id: ride.id,
+            driver: details.driver || details.vozac || ride.driver_name,
+            date: details.date || details.datum,
+            tura: details.tura,
+            plz: details.plz,
+            broj_adresa: details.broj_adresa || details.brojAdresa,
+            cijena: details.cijena || 0,
+            status: 'approved',
+            created_at: ride.created_at
+          };
+          console.log(`✅ [FETCH RIDES] Mapped approved ride ${index + 1}:`, mappedRide);
+          console.log(`📅 [FETCH RIDES] Date value for ride ${index + 1}:`, mappedRide.date, typeof mappedRide.date);
+          return mappedRide;
+        } else {
+          // Obična struktura (backup)
+          const mappedRide = { ...ride, status: 'approved' };
+          console.log(`📅 [FETCH RIDES] Direct mapped ride ${index + 1}:`, mappedRide);
+          console.log(`📅 [FETCH RIDES] Date value for direct ride ${index + 1}:`, mappedRide.date, typeof mappedRide.date);
+          return mappedRide;
+        }
+      });
+      
       let allPending = pending || [];
+
+      console.log('🔄 [FETCH RIDES] Mapped approved rides:', allApproved);
+      console.log('🔄 [FETCH RIDES] Raw pending rides:', allPending);
 
       if (filterDriver) {
         allApproved = allApproved.filter(r => r.driver === filterDriver);
@@ -185,7 +233,12 @@ export default function ExtraRidesScreen() {
       alert('Unesite sve podatke!');
       return;
     }
+    
+    console.log('🚀 [DODAJ VOŽNJU] Početak dodavanja vožnje...');
+    console.log('🔍 [DODAJ VOŽNJU] Supabase client status:', !!supabase);
+    console.log('🔍 [DODAJ VOŽNJU] Supabase URL:', supabase?.supabaseUrl);
     setSubmitting(true);
+    
     try {
       const currentUser = (() => { try { return JSON.parse(localStorage.getItem('bde_current_user') || 'null'); } catch { return null; } })();
       const adresaNum = parseInt(brojAdresa);
@@ -209,12 +262,24 @@ export default function ExtraRidesScreen() {
         created_at: new Date().toISOString()
       };
 
+      console.log('🔄 [DODAJ VOŽNJU] Podaci za slanje:', rideData);
+      console.log('🔄 [DODAJ VOŽNJU] Pozivam supabase.from("extra_rides_pending").insert()...');
+      
       const { error } = await supabase.from('extra_rides_pending').insert([rideData]);
+      
+      console.log('✅ [DODAJ VOŽNJU] Supabase odgovor - error:', error);
       if (error) throw error;
 
+      console.log('✅ [DODAJ VOŽNJU] Vožnja uspešno dodana u bazu!');
+      
       // 🚀 INSTANT CACHE INVALIDATION - sada će svi videti nove podatke odmah!
-      console.log('🔄 Triggering instant cache refresh after new ride added');
-      realtimeService.triggerDataChange('extraRides');
+      console.log('🔄 [DODAJ VOŽNJU] Pozivam realtimeService.triggerDataChange()...');
+      try {
+        realtimeService.triggerDataChange('extraRides');
+        console.log('✅ [DODAJ VOŽNJU] RealtimeService triggerovan uspešno');
+      } catch (realtimeErr) {
+        console.error('❌ [DODAJ VOŽNJU] RealtimeService greška:', realtimeErr);
+      }
       
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setTura(''); setPlz(''); setBrojAdresa(''); setCijena(0);
@@ -222,11 +287,23 @@ export default function ExtraRidesScreen() {
       if (turaRef.current) {
         turaRef.current.focus();
       }
-      fetchRides();
+      console.log('🔄 [DODAJ VOŽNJU] Pozivam fetchRides() za refresh podataka...');
+      try {
+        await fetchRides();
+        console.log('✅ [DODAJ VOŽNJU] fetchRides() završen uspešno');
+      } catch (fetchErr) {
+        console.error('❌ [DODAJ VOŽNJU] fetchRides() greška:', fetchErr);
+      }
+      
       alert('Vožnja dodana!');
     } catch (err) {
+      console.error('❌ [DODAJ VOŽNJU] GREŠKA:', err);
+      console.error('❌ [DODAJ VOŽNJU] Error name:', err.name);
+      console.error('❌ [DODAJ VOŽNJU] Error message:', err.message);
+      console.error('❌ [DODAJ VOŽNJU] Error stack:', err.stack);
       alert('Greška: ' + err.message);
     } finally {
+      console.log('🏁 [DODAJ VOŽNJU] Završetak procesa dodavanja');
       setSubmitting(false);
     }
   };
@@ -530,7 +607,17 @@ export default function ExtraRidesScreen() {
                       className={`border-t ${currentTheme === 'night' ? 'border-gray-700/50 hover:bg-gray-700/30' : 'border-gray-200/50 hover:bg-gray-50'} cursor-pointer transition-colors`}
                     >
                       <td className="px-4 py-3 text-sm" style={{ color: currentTheme === 'night' ? '#e5e7eb' : '#374151' }}>
-                        {format(new Date(ride.date), 'dd.MM.yyyy')}
+                        {(() => {
+                          try {
+                            if (!ride.date) return 'N/A';
+                            const date = new Date(ride.date);
+                            if (isNaN(date.getTime())) return 'Invalid Date';
+                            return format(date, 'dd.MM.yyyy');
+                          } catch (err) {
+                            console.error('❌ Date formatting error for ride:', ride, err);
+                            return 'Error';
+                          }
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-sm" style={{ color: currentTheme === 'night' ? '#e5e7eb' : '#374151' }}>
                         {ride.driver}
