@@ -149,31 +149,43 @@ const GitHubTab = ({ currentTheme }) => {
       }
 
       if (data) {
-        // Ako koristimo glavni repo, prikaži SVE workflow-e
-        if (repoUsed === GITHUB_REPO) {
-          console.log(`📊 [GitHubTab] Prikazujem sve workflow-e iz ${GITHUB_REPO}:`, (data.workflow_runs || []).length);
-          setWorkflows(data.workflow_runs || []);
-        } else {
-          // Za fallback repo, filtriraj samo scraper workflow-e
-          let scraperWorkflows = (data.workflow_runs || []).filter(run => {
-            const name = (run.name || '').toLowerCase();
-            return name.includes('gls scraper') || name.includes('scraper') || name.includes('gls') || name.includes('sync') || name.includes('data');
-          });
-          console.log(`📊 Pronašao ${scraperWorkflows.length} scraper workflow-a u ${repoUsed}:`, scraperWorkflows.map(w => w.name));
-          setWorkflows(scraperWorkflows);
+        // Pretraži sve workflow-e koji mogu biti scraper
+        let scraperWorkflows = (data.workflow_runs || []).filter(run => {
+          const name = (run.name || '').toLowerCase();
+          return name.includes('gls scraper') || name.includes('scraper') || name.includes('gls') || name.includes('sync') || name.includes('data');
+        });
+
+        // If primary repo returned runs but none match scraper-like names, try fallback repo
+        if ((!scraperWorkflows || scraperWorkflows.length === 0) && repoUsed === GITHUB_REPO && GITHUB_REPO_FALLBACK) {
+          console.log(`ℹ️ Nema scraper-like workflow-a u ${GITHUB_REPO}, pokušavam fallback ${GITHUB_REPO_FALLBACK}...`);
+          const [fallbackOwner, fallbackName] = GITHUB_REPO_FALLBACK.split('/');
+          const fallbackResp = await fetch(
+            `${GITHUB_API_BASE}/${fallbackOwner}/${fallbackName}/actions/runs?per_page=20`,
+            {
+              headers: {
+                'Accept': 'application/vnd.github.v3+json',
+                ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
+              }
+            }
+          );
+          if (fallbackResp.ok) {
+            const fallbackData = await fallbackResp.json();
+            scraperWorkflows = (fallbackData.workflow_runs || []).filter(run => {
+              const name = (run.name || '').toLowerCase();
+              return name.includes('gls scraper') || name.includes('scraper') || name.includes('gls') || name.includes('sync') || name.includes('data');
+            });
+            if (scraperWorkflows.length > 0) {
+              repoUsed = GITHUB_REPO_FALLBACK;
+              data = fallbackData;
+            }
+          }
         }
 
-        // Fallback je već izvršen u slučaju da glavni repo ne radi
+        console.log(`📊 Pronašao ${scraperWorkflows.length} workflow-a u ${repoUsed}:`, scraperWorkflows.map(w => w.name));
+        setWorkflows(scraperWorkflows);
 
-        // Sačuvaj poslednji uspešan workflow u localStorage za HomeScreen (samo za scraper workflow-e)
-        const allWorkflows = data.workflow_runs || [];
-        if (allWorkflows.length > 0) {
-          // Za localStorage, čuvaj samo scraper-like workflow-e
-          const scraperWorkflows = allWorkflows.filter(run => {
-            const name = (run.name || '').toLowerCase();
-            return name.includes('gls scraper') || name.includes('scraper') || name.includes('gls') || name.includes('sync') || name.includes('data');
-          });
-          
+        // Sačuvaj poslednji uspešan workflow u localStorage za HomeScreen
+        if (scraperWorkflows.length > 0) {
           const lastSuccessful = scraperWorkflows.find(w => w.conclusion === 'success');
           if (lastSuccessful) {
             const isoTs = lastSuccessful.updated_at || lastSuccessful.run_started_at || lastSuccessful.created_at || new Date().toISOString();

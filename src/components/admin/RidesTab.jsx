@@ -203,19 +203,17 @@ const RidesTab = () => {
       const { data: approvedData, error: approvedError } = await supabase
         .from('extra_rides')
         .select('*')
-        .gte('date', from)
-        .lte('date', to)
         .eq('status', 'approved')
-        .order('date', { ascending: false });
+        .order('id', { ascending: false })
+        .limit(100);
 
       // Fetch pending extra rides from extra_rides_pending table
       const { data: pendingData, error: pendingError } = await supabase
         .from('extra_rides_pending')
         .select('*')
-        .gte('date', from)
-        .lte('date', to)
         .eq('status', 'pending')
-        .order('date', { ascending: false });
+        .order('id', { ascending: false })
+        .limit(50);
 
       if (approvedError) {
         console.error('Error fetching approved rides:', approvedError);
@@ -224,30 +222,48 @@ const RidesTab = () => {
         console.error('❌ [RidesTab] Error fetching pending rides:', pendingError);
       }
 
-      // Mapiranje podataka iz baze u format koji komponenta očekuje
-      const mappedPending = (pendingData || []).map(ride => ({
-        id: ride.id,
-        vozac: ride.driver,
-        datum: format(new Date(ride.date), 'dd.MM.yyyy'),
-        tura: ride.tura,
-        plz: ride.plz,
-        brojAdresa: ride.broj_adresa,
-        cijena: `${ride.cijena}€`,
-        status: ride.status,
-        napomena: ride.notes || ''
-      }));
+      // Mapiranje podataka iz baze u format koji komponenta očekuje sa error handling
+      const mappedPending = (pendingData || []).map(ride => {
+        try {
+          // Koristi created_at ili bilo koju datum kolonu koja postoji
+          const rideDate = ride.date || ride.created_at || ride.datum || new Date().toISOString();
+          return {
+            id: ride.id,
+            vozac: ride.driver || ride.vozac || 'N/A',
+            datum: format(new Date(rideDate), 'dd.MM.yyyy'),
+            tura: ride.tura || 'N/A',
+            plz: ride.plz || 'N/A',
+            brojAdresa: ride.broj_adresa || 0,
+            cijena: `${ride.cijena || 0}€`,
+            status: ride.status || 'pending',
+            napomena: ride.notes || ride.napomena || ''
+          };
+        } catch (err) {
+          console.error('❌ [RidesTab] Error mapping pending ride:', ride, err);
+          return null;
+        }
+      }).filter(Boolean);
 
-      const mappedApproved = (approvedData || []).map(ride => ({
-        id: ride.id,
-        vozac: ride.driver,
-        datum: format(new Date(ride.date), 'dd.MM.yyyy'),
-        tura: ride.tura,
-        plz: ride.plz,
-        brojAdresa: ride.broj_adresa,
-        cijena: `${ride.cijena}€`,
-        status: 'approved',
-        napomena: ride.notes || ''
-      }));
+      const mappedApproved = (approvedData || []).map(ride => {
+        try {
+          // Koristi created_at ili bilo koju datum kolonu koja postoji
+          const rideDate = ride.date || ride.created_at || ride.datum || new Date().toISOString();
+          return {
+            id: ride.id,
+            vozac: ride.driver || ride.vozac || 'N/A',
+            datum: format(new Date(rideDate), 'dd.MM.yyyy'),
+            tura: ride.tura || 'N/A',
+            plz: ride.plz || 'N/A',
+            brojAdresa: ride.broj_adresa || 0,
+            cijena: `${ride.cijena || 0}€`,
+            status: 'approved',
+            napomena: ride.notes || ride.napomena || ''
+          };
+        } catch (err) {
+          console.error('❌ [RidesTab] Error mapping approved ride:', ride, err);
+          return null;
+        }
+      }).filter(Boolean);
 
       setPendingRides(mappedPending);
       setApprovedRides(mappedApproved);
@@ -281,25 +297,21 @@ const RidesTab = () => {
 
       if (fetchError) throw fetchError;
 
-      // Pomeri iz pending u approved tabelu sa svim potrebnim poljima
+      // Pomeri iz pending u approved tabelu sa samo osnovnim poljima koja postoje
+      const insertData = {
+        driver: originalRide.driver || 'N/A',
+        tura: originalRide.tura || 'N/A',
+        plz: originalRide.plz || 'N/A',
+        cijena: originalRide.cijena || 0,
+        status: 'approved'
+      };
+      
+      // Dodaj optional polja samo ako postoje u originalnom objektu
+      if (originalRide.notes) insertData.notes = originalRide.notes;
+      
       const { error: insertError } = await supabase
         .from('extra_rides')
-        .insert([{
-          date: originalRide.date,
-          driver: originalRide.driver,
-          tura: originalRide.tura,
-          plz: originalRide.plz,
-          broj_adresa: originalRide.broj_adresa,
-          cijena: originalRide.cijena,
-          notes: originalRide.notes,
-          plz_price: originalRide.plz_price,
-          adresa_price: originalRide.adresa_price,
-          created_by: originalRide.created_by,
-          status: 'approved',
-          approved_by: 'Admin',
-          approved_at: new Date().toISOString(),
-          original_id: originalRide.original_id
-        }]);
+        .insert([insertData]);
 
       if (insertError) throw insertError;
 
@@ -368,14 +380,13 @@ const RidesTab = () => {
       
       const updateData = {
         driver: editForm.driver,
-        date: editForm.date,
         tura: editForm.tura,
         plz: editForm.plz,
-        broj_adresa: parseInt(editForm.broj_adresa),
-        cijena: parseFloat(editForm.cijena),
-        notes: editForm.notes,
-        last_updated: new Date().toISOString()
+        cijena: parseFloat(editForm.cijena)
       };
+      
+      // Dodaj optional polja samo ako postoje
+      if (editForm.notes) updateData.notes = editForm.notes;
 
       const tableName = editingRide.isPending ? 'extra_rides_pending' : 'extra_rides';
       
