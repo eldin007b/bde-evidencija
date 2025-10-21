@@ -97,9 +97,9 @@ const GitHubTab = ({ currentTheme }) => {
   // GitHub konfiguracija iz environment variables
   const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || 'eldin007b/bde-evidencija';
   const GITHUB_REPO_FALLBACK = import.meta.env.VITE_GITHUB_REPO_FALLBACK || 'eldin007b/gls-scraper';
-  // Za produkciju koristimo javni API da izbegnemo GitHub secret scanning
+  // GitHub token iz environment varijabli (radi i lokalno i na production)
+  const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
   const isProduction = window.location.hostname.includes('github.io');
-  const GITHUB_TOKEN = isProduction ? null : import.meta.env.VITE_GITHUB_TOKEN;
   const [REPO_OWNER, REPO_NAME] = GITHUB_REPO.split('/');
 
   const fetchWorkflows = async () => {
@@ -109,25 +109,20 @@ const GitHubTab = ({ currentTheme }) => {
       let data = null;
       let repoUsed = '';
       
-      if (!GITHUB_TOKEN || isProduction) {
-        console.warn('ℹ️ Koristim javni GitHub API (bez tokena)');
-        setError(
-          isProduction 
-            ? 'ℹ️ Production verzija - koristi javni GitHub API (bezbedno)'
-            : 'ℹ️ Javni GitHub API (ograničeno na 60 poziva/sat)'
-        );
-        // Koristi javni API bez tokena
+      if (!GITHUB_TOKEN) {
+        console.warn('ℹ️ GitHub token nije postavljen - koristim javni API (ograničeno)');
+        setError('ℹ️ Javni GitHub API (ograničeno na 60 poziva/sat)');
       } else {
         console.log('🔑 GitHub token konfigurisan - koristim potpun API pristup');
       }
       
-      // Pokušaj sa glavnim repo (javni API na produkciji)
+      // Pokušaj sa glavnim repo
       let response = await fetch(
         `${GITHUB_API_BASE}/${REPO_OWNER}/${REPO_NAME}/actions/runs?per_page=20`,
         {
           headers: {
             'Accept': 'application/vnd.github.v3+json',
-            ...(GITHUB_TOKEN && !isProduction && { 'Authorization': `token ${GITHUB_TOKEN}` })
+            ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
           }
         }
       );
@@ -145,7 +140,7 @@ const GitHubTab = ({ currentTheme }) => {
           {
             headers: {
               'Accept': 'application/vnd.github.v3+json',
-              ...(GITHUB_TOKEN && !isProduction && { 'Authorization': `token ${GITHUB_TOKEN}` })
+              ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
             }
           }
         );
@@ -172,7 +167,7 @@ const GitHubTab = ({ currentTheme }) => {
             {
               headers: {
                 'Accept': 'application/vnd.github.v3+json',
-                ...(GITHUB_TOKEN && !isProduction && { 'Authorization': `token ${GITHUB_TOKEN}` })
+                ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
               }
             }
           );
@@ -314,9 +309,7 @@ const GitHubTab = ({ currentTheme }) => {
 
   const handleWorkflowDispatch = async () => {
     if (!GITHUB_TOKEN) {
-      const message = isProduction 
-        ? 'Pokretanje workflow-a nije dostupno na production verziji iz bezbednosnih razloga.\n\nKoristite lokalnu verziju ili idite direktno na:\nhttps://github.com/eldin007b/gls-scraper/actions'
-        : 'GitHub token nije konfigurisan u .env fajlu.\n\nDodajte VITE_GITHUB_TOKEN u .env da biste mogli pokretati workflow-ove.';
+      const message = 'GitHub token nije konfigurisan.\n\nDodajte VITE_GITHUB_TOKEN u environment varijable da biste mogli pokretati workflow-ove.';
       alert(message);
       return;
     }
@@ -517,14 +510,13 @@ const GitHubTab = ({ currentTheme }) => {
           
           <ActionButton
             onClick={handleWorkflowDispatch}
-            variant={isProduction ? "secondary" : "success"}
+            variant="success"
             size="sm"
             icon={<Play className="w-4 h-4" />}
-            className={`w-full justify-center ${isProduction ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={isProduction}
-            title={isProduction ? 'Pokretanje workflow-a nije dostupno na production verziji' : 'Pokreni GLS Scraper workflow'}
+            className="w-full justify-center"
+            title="Pokreni GLS Scraper workflow"
           >
-            {isProduction ? 'Scraper (Readonly)' : 'Pokreni Scraper'}
+            Pokreni Scraper
           </ActionButton>
         </motion.div>
       </motion.div>
@@ -666,13 +658,7 @@ const GitHubTab = ({ currentTheme }) => {
             🔄 Fallback repo: <span className="font-mono">{GITHUB_REPO_FALLBACK}</span>
           </p>
           <p>
-            🔑 Token: {
-              isProduction 
-                ? '🌐 Javni API (bezbedno za produkciju)' 
-                : GITHUB_TOKEN 
-                  ? '✅ Konfigurisan (potpun pristup)' 
-                  : '❌ Nedostaje'
-            }
+            🔑 Token: {GITHUB_TOKEN ? '✅ Konfigurisan (potpun pristup)' : '❌ Nedostaje'}
           </p>
           <div className="flex items-center gap-4 mt-2">
             <span>🌐 GitHub Actions:</span>
