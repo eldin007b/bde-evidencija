@@ -111,7 +111,11 @@ const GitHubTab = ({ currentTheme }) => {
       
       if (!GITHUB_TOKEN || isProduction) {
         console.warn('ℹ️ Koristim javni GitHub API (bez tokena)');
-        setError('ℹ️ Javni GitHub API (ograničeno na 60 poziva/sat)');
+        setError(
+          isProduction 
+            ? 'ℹ️ Production verzija - koristi javni GitHub API (bezbedno)'
+            : 'ℹ️ Javni GitHub API (ograničeno na 60 poziva/sat)'
+        );
         // Koristi javni API bez tokena
       } else {
         console.log('🔑 GitHub token konfigurisan - koristim potpun API pristup');
@@ -310,7 +314,10 @@ const GitHubTab = ({ currentTheme }) => {
 
   const handleWorkflowDispatch = async () => {
     if (!GITHUB_TOKEN) {
-      alert('GitHub token nije konfigurisan. Ne mogu pokrenuti workflow.');
+      const message = isProduction 
+        ? 'Pokretanje workflow-a nije dostupno na production verziji iz bezbednosnih razloga.\n\nKoristite lokalnu verziju ili idite direktno na:\nhttps://github.com/eldin007b/gls-scraper/actions'
+        : 'GitHub token nije konfigurisan u .env fajlu.\n\nDodajte VITE_GITHUB_TOKEN u .env da biste mogli pokretati workflow-ove.';
+      alert(message);
       return;
     }
 
@@ -510,12 +517,14 @@ const GitHubTab = ({ currentTheme }) => {
           
           <ActionButton
             onClick={handleWorkflowDispatch}
-            variant="success"
+            variant={isProduction ? "secondary" : "success"}
             size="sm"
             icon={<Play className="w-4 h-4" />}
-            className="w-full justify-center"
+            className={`w-full justify-center ${isProduction ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isProduction}
+            title={isProduction ? 'Pokretanje workflow-a nije dostupno na production verziji' : 'Pokreni GLS Scraper workflow'}
           >
-            Pokreni Scraper
+            {isProduction ? 'Scraper (Readonly)' : 'Pokreni Scraper'}
           </ActionButton>
         </motion.div>
       </motion.div>
@@ -657,7 +666,13 @@ const GitHubTab = ({ currentTheme }) => {
             🔄 Fallback repo: <span className="font-mono">{GITHUB_REPO_FALLBACK}</span>
           </p>
           <p>
-            🔑 Token: {GITHUB_TOKEN ? '✅ Konfigurisan' : '❌ Nedostaje'}
+            🔑 Token: {
+              isProduction 
+                ? '🌐 Javni API (bezbedno za produkciju)' 
+                : GITHUB_TOKEN 
+                  ? '✅ Konfigurisan (potpun pristup)' 
+                  : '❌ Nedostaje'
+            }
           </p>
           <div className="flex items-center gap-4 mt-2">
             <span>🌐 GitHub Actions:</span>
