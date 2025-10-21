@@ -89,11 +89,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: 5173,
-    host: true,
-    hmr: {
-      port: 5173
-    }
+    // No proxy needed since we're using full Supabase URLs
   },
   resolve: {
     alias: {
