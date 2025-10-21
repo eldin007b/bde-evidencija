@@ -97,7 +97,9 @@ const GitHubTab = ({ currentTheme }) => {
   // GitHub konfiguracija iz environment variables
   const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || 'eldin007b/bde-evidencija';
   const GITHUB_REPO_FALLBACK = import.meta.env.VITE_GITHUB_REPO_FALLBACK || 'eldin007b/gls-scraper';
-  const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
+  // Za produkciju koristimo javni API da izbegnemo GitHub secret scanning
+  const isProduction = window.location.hostname.includes('github.io');
+  const GITHUB_TOKEN = isProduction ? null : import.meta.env.VITE_GITHUB_TOKEN;
   const [REPO_OWNER, REPO_NAME] = GITHUB_REPO.split('/');
 
   const fetchWorkflows = async () => {
@@ -107,21 +109,21 @@ const GitHubTab = ({ currentTheme }) => {
       let data = null;
       let repoUsed = '';
       
-      if (!GITHUB_TOKEN) {
-        console.warn('ℹ️ GitHub token nije postavljen - koristim javni API (limitiran)');
-        setError('GitHub token nije postavljen - koristim javni API (ograničeno na 60 poziva/sat)');
-        // Nastavi sa javnim API pozivom bez tokena
+      if (!GITHUB_TOKEN || isProduction) {
+        console.warn('ℹ️ Koristim javni GitHub API (bez tokena)');
+        setError('ℹ️ Javni GitHub API (ograničeno na 60 poziva/sat)');
+        // Koristi javni API bez tokena
       } else {
         console.log('🔑 GitHub token konfigurisan - koristim potpun API pristup');
       }
       
-      // Pokušaj sa glavnim repo
+      // Pokušaj sa glavnim repo (javni API na produkciji)
       let response = await fetch(
         `${GITHUB_API_BASE}/${REPO_OWNER}/${REPO_NAME}/actions/runs?per_page=20`,
         {
           headers: {
             'Accept': 'application/vnd.github.v3+json',
-            ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
+            ...(GITHUB_TOKEN && !isProduction && { 'Authorization': `token ${GITHUB_TOKEN}` })
           }
         }
       );
@@ -139,7 +141,7 @@ const GitHubTab = ({ currentTheme }) => {
           {
             headers: {
               'Accept': 'application/vnd.github.v3+json',
-              ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
+              ...(GITHUB_TOKEN && !isProduction && { 'Authorization': `token ${GITHUB_TOKEN}` })
             }
           }
         );
@@ -166,7 +168,7 @@ const GitHubTab = ({ currentTheme }) => {
             {
               headers: {
                 'Accept': 'application/vnd.github.v3+json',
-                ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
+                ...(GITHUB_TOKEN && !isProduction && { 'Authorization': `token ${GITHUB_TOKEN}` })
               }
             }
           );
