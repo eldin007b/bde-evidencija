@@ -6,6 +6,7 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   base: '/bde-evidencija/',
+
   build: {
     chunkSizeWarningLimit: 600, // Increase warning limit slightly
     rollupOptions: {
