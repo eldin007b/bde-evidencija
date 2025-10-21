@@ -319,6 +319,13 @@ const GitHubTab = ({ currentTheme }) => {
     const tryDispatch = async (repo) => {
       const [owner, name] = repo.split('/');
       const url = `${GITHUB_API_BASE}/${owner}/${name}/actions/workflows/${workflowFile}/dispatches`;
+      
+      // Debug logging
+      console.log('🔍 [WORKFLOW DISPATCH] URL:', url);
+      console.log('🔍 [WORKFLOW DISPATCH] Token exists:', !!GITHUB_TOKEN);
+      console.log('🔍 [WORKFLOW DISPATCH] Token length:', GITHUB_TOKEN?.length);
+      console.log('🔍 [WORKFLOW DISPATCH] Token preview:', GITHUB_TOKEN?.substring(0, 7) + '...');
+      
       try {
         const resp = await fetch(url, {
           method: 'POST',
@@ -329,6 +336,10 @@ const GitHubTab = ({ currentTheme }) => {
           },
           body: JSON.stringify({ ref: 'main' })
         });
+        
+        console.log('🔍 [WORKFLOW DISPATCH] Response status:', resp.status);
+        console.log('🔍 [WORKFLOW DISPATCH] Response headers:', Object.fromEntries(resp.headers.entries()));
+        
         return resp;
       } catch (err) {
         return { ok: false, status: 0, statusText: err.message };
@@ -368,7 +379,16 @@ const GitHubTab = ({ currentTheme }) => {
             bodyText = resp.statusText;
           }
         }
-        const msg = `Neuspjeh pri pokretanju workflow-a: ${resp.status} ${resp.statusText} - ${bodyText}`;
+        
+        let msg = `Neuspjeh pri pokretanju workflow-a: ${resp.status} ${resp.statusText} - ${bodyText}`;
+        
+        if (resp.status === 401) {
+          msg += '\n\n🔍 Debug info:';
+          msg += `\n• Token postoji: ${!!GITHUB_TOKEN}`;
+          msg += `\n• Token length: ${GITHUB_TOKEN?.length || 0}`;  
+          msg += `\n• Token početak: ${GITHUB_TOKEN?.substring(0, 10) || 'N/A'}...`;
+        }
+        
         alert(msg);
         try {
           localStorage.setItem('github_scraper_last_event', JSON.stringify({
