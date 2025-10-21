@@ -90,6 +90,7 @@ const GitHubTab = ({ currentTheme }) => {
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [error, setError] = useState(null);
   const isNightTheme = currentTheme === 'night';
 
   const GITHUB_API_BASE = 'https://api.github.com/repos';
@@ -101,9 +102,16 @@ const GitHubTab = ({ currentTheme }) => {
 
   const fetchWorkflows = async () => {
     setLoading(true);
+    setError(null);
     try {
       let data = null;
       let repoUsed = '';
+      
+      if (!GITHUB_TOKEN) {
+        console.warn('ℹ️ GitHub token nije postavljen - koristim javni API (limitiran)');
+        setError('GitHub token nije postavljen - neki features neće biti dostupni');
+        // Nastavi sa javnim API pozivom bez tokena
+      }
       
       // Pokušaj sa glavnim repo
       let response = await fetch(
@@ -212,12 +220,17 @@ const GitHubTab = ({ currentTheme }) => {
         setLastUpdate(new Date());
       } else {
         console.error('Greška pri dohvatanju workflow-a:', response.status, response.statusText);
-        if (response.status === 404) {
-          console.log('❌ Ni jedan repo nema GitHub Actions');
+        if (response.status === 401) {
+          setError('GitHub token je nevaljan ili nema dozvole');
+        } else if (response.status === 404) {
+          setError('GitHub repo ili Actions nisu dostupni');
+        } else {
+          setError(`GitHub API greška: ${response.status}`);
         }
       }
     } catch (error) {
       console.error('Greška pri GitHub API pozivu:', error);
+      setError('Mrežna greška pri povezivanju sa GitHub API');
     } finally {
       setLoading(false);
     }
@@ -378,11 +391,17 @@ const GitHubTab = ({ currentTheme }) => {
   };
 
   useEffect(() => {
-    fetchWorkflows();
+    // Delay initial fetch to avoid blocking render
+    const timer = setTimeout(() => {
+      fetchWorkflows();
+    }, 1000);
     
     // Osvežavaj svake 5 minuta
     const interval = setInterval(fetchWorkflows, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -580,9 +599,14 @@ const GitHubTab = ({ currentTheme }) => {
             <Github className={`w-8 h-8 ${isNightTheme ? 'text-gray-400' : 'text-gray-500'}`} />
           </motion.div>
           <p className={`text-lg font-medium mb-2 ${isNightTheme ? 'text-gray-300' : 'text-gray-700'}`}>
-            {loading ? 'Učitavam workflow podatke...' : 'Nema pronađenih workflow-a'}
+            {loading ? 'Učitavam workflow podatke...' : error ? 'Greška pri učitavanju' : 'Nema pronađenih workflow-a'}
           </p>
-          {!loading && (
+          {!loading && error && (
+            <p className={`text-sm ${isNightTheme ? 'text-red-400' : 'text-red-600'} mb-2`}>
+              {error}
+            </p>
+          )}
+          {!loading && !error && (
             <p className={`text-sm ${isNightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
               Proveri da li repo ima GitHub Actions ili proveri naziv repo.
             </p>

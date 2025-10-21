@@ -203,51 +203,75 @@ const RidesTab = () => {
       const { data: approvedData, error: approvedError } = await supabase
         .from('extra_rides')
         .select('*')
-        .gte('date', from)
-        .lte('date', to)
         .eq('status', 'approved')
-        .order('date', { ascending: false });
+        .order('id', { ascending: false })
+        .limit(100);
 
-      // Fetch pending extra rides from extra_rides_pending table
+      // Fetch pending extra rides from extra_rides_pending table  
       const { data: pendingData, error: pendingError } = await supabase
         .from('extra_rides_pending')
         .select('*')
-        .gte('date', from)
-        .lte('date', to)
         .eq('status', 'pending')
-        .order('date', { ascending: false });
+        .order('id', { ascending: false })
+        .limit(50);
 
       if (approvedError) {
-        console.error('Error fetching approved rides:', approvedError);
+        console.error('❌ [RidesTab] Error fetching approved rides:', approvedError);
       }
       if (pendingError) {
         console.error('❌ [RidesTab] Error fetching pending rides:', pendingError);
       }
+      
+      // Debug log da vidimo šta smo dobili
+      console.log('📊 [RidesTab] Data fetched:', {
+        approved: approvedData?.length || 0,
+        pending: pendingData?.length || 0,
+        approvedSample: approvedData?.[0],
+        pendingSample: pendingData?.[0]
+      });
 
-      // Mapiranje podataka iz baze u format koji komponenta očekuje
-      const mappedPending = (pendingData || []).map(ride => ({
-        id: ride.id,
-        vozac: ride.driver,
-        datum: format(new Date(ride.date), 'dd.MM.yyyy'),
-        tura: ride.tura,
-        plz: ride.plz,
-        brojAdresa: ride.broj_adresa,
-        cijena: `${ride.cijena}€`,
-        status: ride.status,
-        napomena: ride.notes || ''
-      }));
+      // Mapiranje podataka iz baze u format koji komponenta očekuje sa error handling
+      const mappedPending = (pendingData || []).map(ride => {
+        try {
+          // Koristi created_at ili bilo koju datum kolonu koja postoji
+          const rideDate = ride.date || ride.created_at || ride.datum || new Date().toISOString();
+          return {
+            id: ride.id,
+            vozac: ride.driver || ride.vozac || 'N/A',
+            datum: format(new Date(rideDate), 'dd.MM.yyyy'),
+            tura: ride.tura || 'N/A',
+            plz: ride.plz || 'N/A',
+            brojAdresa: ride.broj_adresa || 0,
+            cijena: `${ride.cijena || 0}€`,
+            status: ride.status || 'pending',
+            napomena: ride.notes || ride.napomena || ''
+          };
+        } catch (err) {
+          console.error('❌ [RidesTab] Error mapping pending ride:', ride, err);
+          return null;
+        }
+      }).filter(Boolean);
 
-      const mappedApproved = (approvedData || []).map(ride => ({
-        id: ride.id,
-        vozac: ride.driver,
-        datum: format(new Date(ride.date), 'dd.MM.yyyy'),
-        tura: ride.tura,
-        plz: ride.plz,
-        brojAdresa: ride.broj_adresa,
-        cijena: `${ride.cijena}€`,
-        status: 'approved',
-        napomena: ride.notes || ''
-      }));
+      const mappedApproved = (approvedData || []).map(ride => {
+        try {
+          // Koristi created_at ili bilo koju datum kolonu koja postoji
+          const rideDate = ride.date || ride.created_at || ride.datum || new Date().toISOString();
+          return {
+            id: ride.id,
+            vozac: ride.driver || ride.vozac || 'N/A',
+            datum: format(new Date(rideDate), 'dd.MM.yyyy'),
+            tura: ride.tura || 'N/A',
+            plz: ride.plz || 'N/A',
+            brojAdresa: ride.broj_adresa || 0,
+            cijena: `${ride.cijena || 0}€`,
+            status: 'approved',
+            napomena: ride.notes || ride.napomena || ''
+          };
+        } catch (err) {
+          console.error('❌ [RidesTab] Error mapping approved ride:', ride, err);
+          return null;
+        }
+      }).filter(Boolean);
 
       setPendingRides(mappedPending);
       setApprovedRides(mappedApproved);
