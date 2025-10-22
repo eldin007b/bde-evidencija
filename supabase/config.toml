@@ -1,5 +1,5 @@
 # Supabase Configuration
-project_id = "your-project-id"
+project_id = "dsltpiupbfopyvuiqffg"
 
 [api]
 enabled = true
@@ -10,12 +10,7 @@ max_rows = 1000
 
 [auth]
 enabled = true
-port = 54320
-external_url = "http://localhost:3000"
 
-[edge_functions]
-enabled = true
-port = 54323
 
 [functions.auto-push]
 verify_jwt = false
