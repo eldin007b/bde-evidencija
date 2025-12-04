@@ -1,0 +1,7 @@
+{
+  "method": "POST",
+  "path": "/repos/eldin007b/gls-scraper/actions/workflows/scraper.yml/dispatches",
+  "body": {
+    "ref": "main"
+  }
+}

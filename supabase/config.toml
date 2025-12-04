@@ -1,0 +1,21 @@
+# Supabase Configuration
+project_id = "dsltpiupbfopyvuiqffg"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+
+
+[functions.auto-push]
+verify_jwt = false
+
+[secrets]
+# These will be set via: supabase secrets set KEY=value
+# VAPID_PRIVATE_KEY = "u2wSemK8AM2p6L_o0H51jPmBgsgPX1--1cOOoSU5nAo"
+# VAPID_SUBJECT = "mailto:admin@bd-evidencija.com"
