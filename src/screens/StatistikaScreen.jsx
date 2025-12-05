@@ -133,6 +133,23 @@ const StatistikaScreen = () => {
         return new Date(date.getTime() - offset).toISOString().slice(0, 10);
       };
 
+      // Define Urlaub days
+      const urlaubMarks = {
+        '2025-11-07-8620': true,
+        '2025-11-10-8620': true,
+        '2025-11-17-8640': true,
+        '2025-11-25-8640': true,
+        '2025-12-10-8620': true,
+        '2025-12-11-8620': true,
+        '2025-12-12-8620': true
+      };
+
+      const isUrlaub = (date, tura) => {
+        if (!date || !tura) return false;
+        const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
+        return urlaubMarks[`${dateStr}-${tura}`];
+      };
+
       const currentDate = new Date();
       const today = toLocalISO(currentDate);
       const monthStart = toLocalISO(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1));
@@ -140,18 +157,21 @@ const StatistikaScreen = () => {
       const yearStart = toLocalISO(new Date(currentDate.getFullYear(), 0, 1));
       const yearEnd = toLocalISO(new Date(currentDate.getFullYear(), 11, 31));
 
-      // Nađi zadnji dan dostave
+      // Nađi zadnji dan dostave (fetch more to skip Urlaub days)
       const { data: lastDayData } = await supabase
         .from('deliveries')
         .select('*')
         .eq('driver', driver.tura)
         .eq('deleted', 0)
         .order('date', { ascending: false })
-        .limit(1);
+        .limit(10);
 
-      const lastDay = lastDayData?.[0]?.date ? (
-        typeof lastDayData[0].date === 'string' 
-          ? lastDayData[0].date.slice(0, 10) 
+      // Find first non-Urlaub day
+      const lastDayItem = lastDayData?.find(item => !isUrlaub(item.date, driver.tura));
+
+      const lastDay = lastDayItem?.date ? (
+        typeof lastDayItem.date === 'string' 
+          ? lastDayItem.date.slice(0, 10) 
           : today
       ) : today;
 
@@ -202,6 +222,8 @@ const StatistikaScreen = () => {
 
           filteredData = data.filter(item => {
             if (!item?.date) return false;
+            if (isUrlaub(item.date, item.driver)) return false;
+
             const dateStr = typeof item.date === 'string' ? item.date.slice(0, 10) : item.date;
             const d = new Date(dateStr);
             
@@ -219,13 +241,15 @@ const StatistikaScreen = () => {
                    validPaketi;
           });
         } else if (period === 'year') {
-          filteredData = data.filter(item => 
-            parseInt(item?.produktivitaet_stops || 0, 10) > 0
-          );
+          filteredData = data.filter(item => {
+            if (isUrlaub(item.date, item.driver)) return false;
+            return parseInt(item?.produktivitaet_stops || 0, 10) > 0;
+          });
         } else if (period === 'day') {
-          filteredData = data.filter(item => 
-            parseInt(item?.produktivitaet_stops || 0, 10) > 0
-          );
+          filteredData = data.filter(item => {
+            if (isUrlaub(item.date, item.driver)) return false;
+            return parseInt(item?.produktivitaet_stops || 0, 10) > 0;
+          });
         }
 
         const packages = filteredData.reduce((s, it) => 

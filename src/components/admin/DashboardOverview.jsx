@@ -26,6 +26,23 @@ const formatDate = (year, monthIndexZeroBased, day) => {
 
 // ----------------- CLEAN HELPERS (radimo sve u JS, ne u SQL-u) -----------------
 
+// Define Urlaub days
+const urlaubMarks = {
+  '2025-11-07-8620': true,
+  '2025-11-10-8620': true,
+  '2025-11-17-8640': true,
+  '2025-11-25-8640': true,
+  '2025-12-10-8620': true,
+  '2025-12-11-8620': true,
+  '2025-12-12-8620': true
+};
+
+const isUrlaub = (date, tura) => {
+  if (!date || !tura) return false;
+  const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
+  return urlaubMarks[`${dateStr}-${tura}`];
+};
+
 // Iz driver stringa (npr. "8610 Eldin") izvučemo samo broj rute ("8610")
 const normalizeDriver = (raw) => {
   if (raw === null || raw === undefined) return null;
@@ -64,7 +81,8 @@ const cleanRows = (rows) => {
       (r) =>
         r.driverClean &&
         ROUTES.includes(r.driverClean) &&
-        (r.deletedFlag === null || r.deletedFlag === 0)
+        (r.deletedFlag === null || r.deletedFlag === 0) &&
+        !isUrlaub(r.date, r.driverClean)
     );
 };
 
