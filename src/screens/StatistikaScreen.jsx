@@ -141,13 +141,16 @@ const StatistikaScreen = () => {
         '2025-11-25-8640': true,
         '2025-12-10-8620': true,
         '2025-12-11-8620': true,
-        '2025-12-12-8620': true
+        '2025-12-12-8620': true,
+        '2025-12-13-8620': true
       };
 
       const isUrlaub = (date, tura) => {
         if (!date || !tura) return false;
         const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
-        return urlaubMarks[`${dateStr}-${tura}`];
+        // Ensure tura is a string and trimmed for consistent key matching
+        const turaStr = String(tura).trim();
+        return urlaubMarks[`${dateStr}-${turaStr}`];
       };
 
       const currentDate = new Date();
@@ -164,7 +167,7 @@ const StatistikaScreen = () => {
         .eq('driver', driver.tura)
         .eq('deleted', 0)
         .order('date', { ascending: false })
-        .limit(10);
+        .limit(20);
 
       // Find first non-Urlaub day
       const lastDayItem = lastDayData?.find(item => !isUrlaub(item.date, driver.tura));

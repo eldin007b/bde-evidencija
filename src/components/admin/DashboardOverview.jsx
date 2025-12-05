@@ -34,13 +34,16 @@ const urlaubMarks = {
   '2025-11-25-8640': true,
   '2025-12-10-8620': true,
   '2025-12-11-8620': true,
-  '2025-12-12-8620': true
+  '2025-12-12-8620': true,
+  '2025-12-13-8620': true
 };
 
 const isUrlaub = (date, tura) => {
   if (!date || !tura) return false;
   const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
-  return urlaubMarks[`${dateStr}-${tura}`];
+  // Ensure tura is a string and trimmed for consistent key matching
+  const turaStr = String(tura).trim();
+  return urlaubMarks[`${dateStr}-${turaStr}`];
 };
 
 // Iz driver stringa (npr. "8610 Eldin") izvučemo samo broj rute ("8610")
@@ -156,19 +159,50 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
   // dohvatimo latestDate iz baze da ne ovisimo o props.data
   useEffect(() => {
     const fetchLatest = async () => {
+      // Fetch last 10 dates to handle holidays
       const { data: latestRows, error: latestError } = await supabase
         .from('deliveries')
-        .select('date')
+        .select('date, driver')
         .order('date', { ascending: false })
-        .limit(1);
+        .limit(20);
 
       if (!latestError && latestRows && latestRows.length > 0) {
-        const dbDate = latestRows[0].date; // YYYY-MM-DD
-        setLatestDate(dbDate);
-        const d = new Date(dbDate);
-        setSelectedYear(d.getFullYear());
-        setSelectedMonth(d.getMonth());
-        setSelectedDay(dbDate);
+        // Find first date where at least one driver is NOT on vacation
+        // This is global dashboard, so we want the latest working day for ANY driver
+        // But typically we just want the latest date that is not a holiday for EVERYONE
+        // Or simplest: find the latest date where ANY driver has worked
+        
+        // Filter out dates where all entries are Urlaub
+        // Or check if the date itself is a global holiday? No, Urlaub is per driver.
+        
+        // Strategy: Iterate through dates. For a date to be valid "latest", 
+        // at least one driver should have data and NOT be on Urlaub.
+        
+        const validDateRow = latestRows.find(row => {
+            // Check if this specific entry is Urlaub
+            // normalizeDriver handles nulls
+            const driver = normalizeDriver(row.driver);
+            if (!driver) return false; 
+            return !isUrlaub(row.date, driver);
+        });
+
+        if (validDateRow) {
+            const dbDate = validDateRow.date;
+            setLatestDate(dbDate);
+            const d = new Date(dbDate);
+            setSelectedYear(d.getFullYear());
+            setSelectedMonth(d.getMonth());
+            setSelectedDay(dbDate);
+        } else {
+             // Fallback to first row if everything is Urlaub (shouldn't happen usually)
+             const dbDate = latestRows[0].date;
+             setLatestDate(dbDate);
+             const d = new Date(dbDate);
+             setSelectedYear(d.getFullYear());
+             setSelectedMonth(d.getMonth());
+             setSelectedDay(dbDate);
+        }
+
       } else if (data?.latestDate) {
         setLatestDate(data.latestDate);
       }
