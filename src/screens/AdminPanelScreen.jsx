@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Truck, Settings, Github, ArrowLeft, Crown, Activity, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, Truck, Settings, Github, ArrowLeft, Crown, Activity, FileText, Palmtree } from 'lucide-react';
 import useDrivers from '../hooks/useDrivers';
 import RidesTab from '../components/admin/RidesTab';
 import DriversTab from '../components/admin/DriversTab';
 import SystemTab from '../components/admin/SystemTab';
 import GitHubTab from '../components/admin/GitHubTab';
 import InvoicesTab from '../components/admin/InvoicesTab';
+import UrlaubTab from '../components/admin/UrlaubTab';
 import { useDashboardData } from '../hooks/useDashboardData';
 import DashboardOverview from '../components/admin/DashboardOverview';
 import PayrollAnalytics from '../components/admin/PayrollAnalytics';
@@ -18,6 +19,7 @@ import useSimpleAuth from '../hooks/useSimpleAuth';
 const TABS_CONFIG = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, component: 'dashboard', description: 'Pregled sistema u realnom vremenu', gradient: 'from-blue-500 to-purple-600' },
   { id: 'users', label: 'Vozači', icon: Users, component: DriversTab, description: 'Upravljanje vozačima i korisnicima', gradient: 'from-green-500 to-teal-600' },
+  { id: 'urlaub', label: 'Urlaub', icon: Palmtree, component: UrlaubTab, description: 'Godišnji odmori i austrijski praznici', gradient: 'from-amber-500 to-orange-600' },
   { id: 'rides', label: 'Vožnje', icon: Truck, component: RidesTab, description: 'Extra vožnje i odobravanja', gradient: 'from-orange-500 to-red-600' },
   { id: 'invoices', label: 'Računi', icon: FileText, component: InvoicesTab, description: 'GLS Rechnung Generator', gradient: 'from-indigo-500 to-blue-600' },
   { id: 'settings', label: 'Sistem', icon: Settings, component: SystemTab, description: 'Sistemske postavke i konfiguracija', gradient: 'from-purple-500 to-pink-600' },

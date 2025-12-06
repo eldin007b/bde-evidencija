@@ -47,6 +47,7 @@ const StatistikaScreen = () => {
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [urlaubMarks, setUrlaubMarks] = useState({});
 
   const memoizedCurrentMonth = useMemo(() => mjeseci[new Date().getMonth()], []);
   const memoizedCurrentYear = useMemo(() => new Date().getFullYear(), []);
@@ -64,6 +65,30 @@ const StatistikaScreen = () => {
     if (tura === '8620' || tura === '8630') return 85;
     if (tura === '8640') return 80;
     return 50;
+  }, []);
+
+  // Dohvati urlaub marks iz baze
+  useEffect(() => {
+    const fetchUrlaubMarks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('urlaub_marks')
+          .select('date, driver')
+          .eq('is_active', true);
+
+        if (error) throw error;
+
+        const marks = {};
+        (data || []).forEach((row) => {
+          const dateStr = typeof row.date === 'string' ? row.date.slice(0, 10) : row.date;
+          marks[`${dateStr}-${row.driver}`] = true;
+        });
+        setUrlaubMarks(marks);
+      } catch (err) {
+        console.error('Greška pri dohvaćanju urlaub marks:', err);
+      }
+    };
+    fetchUrlaubMarks();
   }, []);
 
   // Učitaj vozače
@@ -133,24 +158,12 @@ const StatistikaScreen = () => {
         return new Date(date.getTime() - offset).toISOString().slice(0, 10);
       };
 
-      // Define Urlaub days
-      const urlaubMarks = {
-        '2025-11-07-8620': true,
-        '2025-11-10-8620': true,
-        '2025-11-17-8640': true,
-        '2025-11-25-8640': true,
-        '2025-12-10-8620': true,
-        '2025-12-11-8620': true,
-        '2025-12-12-8620': true,
-        '2025-12-13-8620': true
-      };
-
+      // Koristi urlaubMarks iz state-a
       const isUrlaub = (date, tura) => {
         if (!date || !tura) return false;
         const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
-        // Ensure tura is a string and trimmed for consistent key matching
         const turaStr = String(tura).trim();
-        return urlaubMarks[`${dateStr}-${turaStr}`];
+        return urlaubMarks[`${dateStr}-${turaStr}`] === true;
       };
 
       const currentDate = new Date();
@@ -358,7 +371,7 @@ const StatistikaScreen = () => {
     } finally {
       setStatsLoading(false);
     }
-  }, [getTargetStops, memoizedCurrentMonth, memoizedCurrentYear]);
+  }, [getTargetStops, memoizedCurrentMonth, memoizedCurrentYear, urlaubMarks]);
 
   useEffect(() => {
     if (selectedDriver) {

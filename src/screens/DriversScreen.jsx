@@ -7,24 +7,13 @@ import useWorkdays from '../hooks/useWorkdays';
 import SyncProgressBar from '../components/common/SyncProgressBar';
 import { useUserContext } from '../context/UserContext';
 import { useDriversQuery, useDriverDeliveriesQuery, useHolidaysQuery } from '../hooks/queries';
+import { supabase } from '../db/supabaseClient';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const MONTHS = [
   'Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni',
   'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'
 ];
-
-// Eldin 8610, Denis 8620, Nina 8630, Arnes 8640
-// Urlaub dani: Denis 07.11, 10.11; Arnes 17.11, 25.11
-const URLAUB_MARKS = {
-    '2025-11-07-8620': true,
-    '2025-11-10-8620': true,
-    '2025-11-17-8640': true,
-    '2025-11-25-8640': true,
-	'2025-12-10-8620': true,
-	'2025-12-11-8620': true,
-	'2025-12-12-8620': true,
-};
 
 export default function DriversScreen() {
   const navigate = useNavigate();
@@ -67,6 +56,32 @@ export default function DriversScreen() {
   const { driverName } = useUserContext();
   const { data: drivers = [], isLoading: driversLoading } = useDriversQuery();
   const { data: holidays = [] } = useHolidaysQuery(year);
+
+  // Dohvati Urlaub marks iz baze
+  const [urlaubMarks, setUrlaubMarks] = useState({});
+  
+  useEffect(() => {
+    const fetchUrlaubMarks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('urlaub_marks')
+          .select('date, driver')
+          .eq('is_active', true);
+
+        if (error) throw error;
+
+        const marks = {};
+        (data || []).forEach((row) => {
+          const dateStr = typeof row.date === 'string' ? row.date.slice(0, 10) : row.date;
+          marks[`${dateStr}-${row.driver}`] = true;
+        });
+        setUrlaubMarks(marks);
+      } catch (err) {
+        console.error('Greška pri dohvaćanju urlaub marks:', err);
+      }
+    };
+    fetchUrlaubMarks();
+  }, []);
 
   const previousMonth = () => {
     if (month === 0) {
@@ -170,30 +185,47 @@ export default function DriversScreen() {
       grouped[date].totalTime += minutes;
     });
 
-    const tura = driverObj.tura?.toString();
-
-    // Ako je Eldin (8610) – dodaj Urlaub stopove sa 8620 i 8640
-    if (tura === '8610') {
-      Object.keys(URLAUB_MARKS).forEach(key => {
-        if (!URLAUB_MARKS[key]) return;
-        const [dateStr, urlaubTura] = key.split('-'); // npr 2025-11-07-8620
-        const day = grouped[dateStr];
-        if (!day) return;
-
-        // u driverDeliveries za 8610 nema direktno podataka 8620/8640,
-        // pa se ovo realno treba raditi u DeliveriesScreen/backendu;
-        // ovdje samo markiramo da je taj dan Urlaub da vidiš ga u listi
-        if (urlaubTura === '8620' || urlaubTura === '8640') {
-          day.isUrlaubDay = true;
-        }
-      });
+    // Dodaj sve datume iz mjeseca koji imaju urlaub i koji su prošli ili danas
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Resetuj vrijeme na ponoć
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const currentDate = new Date(dateStr);
+      
+      // Provjeri da li je datum prošao ili danas
+      if (currentDate > today) continue;
+      
+      // Provjeri da li ima urlaub za bilo kojeg vozača na ovaj datum
+      const hasUrlaub = Object.keys(urlaubMarks).some(key => key.startsWith(dateStr));
+      
+      if (hasUrlaub && !grouped[dateStr]) {
+        grouped[dateStr] = {
+          date: dateStr,
+          stops: 0,
+          packages: 0,
+          pickupPackages: 0,
+          complaints: 0,
+          totalTime: 0,
+          realPercentage: 0,
+          undelivered: 0,
+          pickupPercentage: 0,
+          pickupUndelivered: 0,
+          firstComplaints: 0,
+          secondComplaints: 0,
+          stopsPerHourRaw: '0',
+          isUrlaubDay: false
+        };
+      }
     }
 
-    // Ako je Denis 8620 ili Arnes 8640 – prikaži dan kao Urlaub (0 stopova)
-    if (tura === '8620' || tura === '8640') {
+    const tura = driverObj.tura?.toString();
+
+    // Ako je Eldin (8610) – prikaži Urlaub samo ako je Eldin na odmoru
+    if (tura === '8610') {
       Object.keys(grouped).forEach(dateStr => {
         const key = `${dateStr}-${tura}`;
-        if (URLAUB_MARKS[key]) {
+        if (urlaubMarks[key]) {
           grouped[dateStr].isUrlaubDay = true;
           grouped[dateStr].stops = 0;
           grouped[dateStr].packages = 0;
@@ -204,18 +236,39 @@ export default function DriversScreen() {
       });
     }
 
-    return Object.values(grouped).map(d => {
-      const percentage = d.realPercentage > 0
-        ? d.realPercentage
-        : (d.stops > 0 ? ((d.packages / d.stops) * 100) : 0);
+    // Ako je Denis 8620 ili Arnes 8640 – prikaži dan kao Urlaub (0 stopova)
+    if (tura === '8620' || tura === '8640') {
+      Object.keys(grouped).forEach(dateStr => {
+        const key = `${dateStr}-${tura}`;
+        if (urlaubMarks[key]) {
+          grouped[dateStr].isUrlaubDay = true;
+          grouped[dateStr].stops = 0;
+          grouped[dateStr].packages = 0;
+          grouped[dateStr].pickupPackages = 0;
+          grouped[dateStr].complaints = 0;
+          grouped[dateStr].totalTime = 0;
+        }
+      });
+    }
 
-      return {
-        ...d,
-        percentage,
-        stopsPerHour: d.totalTime > 0 ? (d.stops / (d.totalTime / 60)) : 0,
-      };
-    }).sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [driverDeliveries, year, month, driverObj]); 
+    return Object.values(grouped)
+      .filter(d => {
+        // Prikazuj samo datume koji imaju podatke (stops > 0) ili su označeni kao urlaub
+        return d.stops > 0 || d.isUrlaubDay;
+      })
+      .map(d => {
+        const percentage = d.realPercentage > 0
+          ? d.realPercentage
+          : (d.stops > 0 ? ((d.packages / d.stops) * 100) : 0);
+
+        return {
+          ...d,
+          percentage,
+          stopsPerHour: d.totalTime > 0 ? (d.stops / (d.totalTime / 60)) : 0,
+        };
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [driverDeliveries, year, month, driverObj, urlaubMarks]); 
 
   const monthStats = useMemo(() => {
     const totalWorkdays = workdays.length;

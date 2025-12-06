@@ -479,7 +479,7 @@ const MapCardModern = ({
     // Expose a manual trigger during debugging so you can invoke routing from Browser Console:
     // window.__triggerRoute()
     try {
-      // eslint-disable-next-line no-undef
+       
       window.__triggerRoute = async () => {
         if (!currentCoords || !selectedLocation) {
           console.warn('window.__triggerRoute: missing currentCoords or selectedLocation', { currentCoords, selectedLocation });

@@ -26,24 +26,12 @@ const formatDate = (year, monthIndexZeroBased, day) => {
 
 // ----------------- CLEAN HELPERS (radimo sve u JS, ne u SQL-u) -----------------
 
-// Define Urlaub days
-const urlaubMarks = {
-  '2025-11-07-8620': true,
-  '2025-11-10-8620': true,
-  '2025-11-17-8640': true,
-  '2025-11-25-8640': true,
-  '2025-12-10-8620': true,
-  '2025-12-11-8620': true,
-  '2025-12-12-8620': true,
-  '2025-12-13-8620': true
-};
-
-const isUrlaub = (date, tura) => {
+// Helper za provjeru urlauba - prima urlaubMarks objekt
+const createIsUrlaub = (urlaubMarks) => (date, tura) => {
   if (!date || !tura) return false;
   const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
-  // Ensure tura is a string and trimmed for consistent key matching
   const turaStr = String(tura).trim();
-  return urlaubMarks[`${dateStr}-${turaStr}`];
+  return urlaubMarks[`${dateStr}-${turaStr}`] === true;
 };
 
 // Iz driver stringa (npr. "8610 Eldin") izvučemo samo broj rute ("8610")
@@ -75,9 +63,10 @@ const cleanRow = (row) => {
   };
 };
 
-// Pospremi cijeli niz redova
-const cleanRows = (rows) => {
+// Pospremi cijeli niz redova - prima urlaubMarks objekt
+const cleanRows = (rows, urlaubMarks = {}) => {
   if (!rows || !Array.isArray(rows)) return [];
+  const isUrlaub = createIsUrlaub(urlaubMarks);
   return rows
     .map(cleanRow)
     .filter(
@@ -114,6 +103,9 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
   ); // YYYY-MM-DD
 
   const [latestDate, setLatestDate] = useState(null);
+  
+  // Urlaub marks iz baze
+  const [urlaubMarks, setUrlaubMarks] = useState({});
 
   // osnovne metrike
   const [dailyStops, setDailyStops] = useState(0);
@@ -156,46 +148,92 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Urlaub marks loaded flag
+  const [urlaubMarksLoaded, setUrlaubMarksLoaded] = useState(false);
+
+  // Dohvati urlaub marks iz baze
+  useEffect(() => {
+    const fetchUrlaubMarks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('urlaub_marks')
+          .select('date, driver')
+          .eq('is_active', true);
+
+        if (error) throw error;
+
+        // Pretvori u objekt za brzu provjeru
+        const marks = {};
+        (data || []).forEach((row) => {
+          const dateStr = typeof row.date === 'string' ? row.date.slice(0, 10) : row.date;
+          marks[`${dateStr}-${row.driver}`] = true;
+        });
+        setUrlaubMarks(marks);
+      } catch (err) {
+        console.error('Greška pri dohvaćanju urlaub marks:', err);
+      } finally {
+        setUrlaubMarksLoaded(true);
+      }
+    };
+    fetchUrlaubMarks();
+  }, []);
+
   // dohvatimo latestDate iz baze da ne ovisimo o props.data
   useEffect(() => {
+    // Čekaj da se urlaubMarks učitaju
+    if (!urlaubMarksLoaded) return;
+    
+    const isUrlaub = createIsUrlaub(urlaubMarks);
+    
     const fetchLatest = async () => {
-      // Fetch last 10 dates to handle holidays
+      // Dohvati zadnjih 50 redova da imamo dovoljno podataka
       const { data: latestRows, error: latestError } = await supabase
         .from('deliveries')
-        .select('date, driver')
+        .select('date, driver, produktivitaet_stops, deleted')
+        .eq('deleted', 0)
         .order('date', { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (!latestError && latestRows && latestRows.length > 0) {
-        // Find first date where at least one driver is NOT on vacation
-        // This is global dashboard, so we want the latest working day for ANY driver
-        // But typically we just want the latest date that is not a holiday for EVERYONE
-        // Or simplest: find the latest date where ANY driver has worked
-        
-        // Filter out dates where all entries are Urlaub
-        // Or check if the date itself is a global holiday? No, Urlaub is per driver.
-        
-        // Strategy: Iterate through dates. For a date to be valid "latest", 
-        // at least one driver should have data and NOT be on Urlaub.
-        
-        const validDateRow = latestRows.find(row => {
-            // Check if this specific entry is Urlaub
-            // normalizeDriver handles nulls
-            const driver = normalizeDriver(row.driver);
-            if (!driver) return false; 
-            return !isUrlaub(row.date, driver);
+        // Grupiši po datumu i pronađi prvi datum gdje bar jedan vozač ima podatke i NIJE na urlaubu
+        const dateMap = {};
+        latestRows.forEach(row => {
+          const dateStr = row.date?.slice?.(0, 10) || row.date;
+          if (!dateMap[dateStr]) dateMap[dateStr] = [];
+          dateMap[dateStr].push(row);
         });
 
-        if (validDateRow) {
-            const dbDate = validDateRow.date;
-            setLatestDate(dbDate);
-            const d = new Date(dbDate);
+        // Sortiraj datume silazno
+        const sortedDates = Object.keys(dateMap).sort((a, b) => b.localeCompare(a));
+        
+        // Pronađi prvi datum gdje bar jedan vozač ima stvarne podatke (nije urlaub)
+        let validDate = null;
+        for (const dateStr of sortedDates) {
+          const rows = dateMap[dateStr];
+          const hasValidData = rows.some(row => {
+            const driver = normalizeDriver(row.driver);
+            if (!driver || !ROUTES.includes(driver)) return false;
+            // Provjeri da nije urlaub i da ima stopove
+            const stops = parseInt(row.produktivitaet_stops || 0, 10);
+            return !isUrlaub(dateStr, driver) && stops > 0;
+          });
+          if (hasValidData) {
+            validDate = dateStr;
+            break;
+          }
+        }
+
+        if (validDate) {
+            console.log('✅ Valid latest date found:', validDate);
+            setLatestDate(validDate);
+            const d = new Date(validDate);
             setSelectedYear(d.getFullYear());
             setSelectedMonth(d.getMonth());
-            setSelectedDay(dbDate);
+            setSelectedDay(validDate);
         } else {
-             // Fallback to first row if everything is Urlaub (shouldn't happen usually)
+             // Fallback na prvi datum
              const dbDate = latestRows[0].date;
+             console.log('⚠️ No valid date found, using fallback:', dbDate);
              setLatestDate(dbDate);
              const d = new Date(dbDate);
              setSelectedYear(d.getFullYear());
@@ -208,8 +246,8 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
       }
     };
     fetchLatest();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+     
+  }, [urlaubMarksLoaded]);
 
   // glavni efekat: kad se promijeni godina/mjesec/dan -> povuci podatke i izračunaj metrike
   useEffect(() => {
@@ -254,7 +292,7 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
         if (dayError) {
           console.error('❌ daily query', dayError);
         }
-        const dayRows = cleanRows(dayRaw);
+        const dayRows = cleanRows(dayRaw, urlaubMarks);
 
         // 2) MJESACNI PODACI
         const { data: monthRaw, error: monthError } = await supabase
@@ -266,7 +304,7 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
         if (monthError) {
           console.error('❌ month query', monthError);
         }
-        const monthRows = cleanRows(monthRaw);
+        const monthRows = cleanRows(monthRaw, urlaubMarks);
 
         // 3) GODISNJI PODACI
         const { data: yearRaw, error: yearError } = await supabase
@@ -278,15 +316,18 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
         if (yearError) {
           console.error('❌ year query', yearError);
         }
-        const yearRows = cleanRows(yearRaw);
+        const yearRows = cleanRows(yearRaw, urlaubMarks);
 
         console.log('📊 daily rows:', dayRows.length);
         console.log('📊 month rows:', monthRows.length);
         console.log('📊 year rows:', yearRows.length);
 
-        // WORK DAYS
-        const monthWD = uniqueDatesCount(monthRows);
-        const yearWD = uniqueDatesCount(yearRows);
+        // WORK DAYS - brojimo samo dane koji imaju STVARNI broj stopova (> 0)
+        const monthRowsWithStops = monthRows.filter(r => (r.stops || 0) > 0);
+        const yearRowsWithStops = yearRows.filter(r => (r.stops || 0) > 0);
+
+        const monthWD = uniqueDatesCount(monthRowsWithStops);
+        const yearWD = uniqueDatesCount(yearRowsWithStops);
 
         setMonthlyWorkDays(monthWD);
         setYearlyWorkDays(yearWD);
@@ -338,7 +379,7 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
     };
 
     fetchStats();
-  }, [selectedDay, selectedMonth, selectedYear]);
+  }, [selectedDay, selectedMonth, selectedYear, urlaubMarks]);
 
   // kombinovani loading
   if (loading || statsLoading) {
