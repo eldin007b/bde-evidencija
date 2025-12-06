@@ -173,7 +173,7 @@ const StatistikaScreen = () => {
       const yearStart = toLocalISO(new Date(currentDate.getFullYear(), 0, 1));
       const yearEnd = toLocalISO(new Date(currentDate.getFullYear(), 11, 31));
 
-      // Nađi zadnji dan dostave (fetch more to skip Urlaub days)
+      // Nađi zadnji dan dostave (fetch više zapisa da možemo preskočiti Urlaub i dane bez stvarnih stopova)
       const { data: lastDayData } = await supabase
         .from('deliveries')
         .select('*')
@@ -182,8 +182,12 @@ const StatistikaScreen = () => {
         .order('date', { ascending: false })
         .limit(20);
 
-      // Find first non-Urlaub day
-      const lastDayItem = lastDayData?.find(item => !isUrlaub(item.date, driver.tura));
+      // Nađi zadnji dan koji NIJE urlaub i ima stvarne stopove (> 0), isto kao u kalkulaciji
+      const lastDayItem = lastDayData?.find(item => {
+        if (isUrlaub(item.date, driver.tura)) return false;
+        const stops = parseInt(item?.produktivitaet_stops || 0, 10);
+        return stops > 0;
+      });
 
       const lastDay = lastDayItem?.date ? (
         typeof lastDayItem.date === 'string' 
