@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
-import ErrorBoundary from './components/ErrorBoundary.jsx'
+import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 
 // ULTRA NUCLEAR CACHE BUST - Force browser to recognize new version
 console.log('🚀 BDEVidencija v5.0.0 - ULTRA NUCLEAR FORCE UPDATE - 20251020-HOOKS-FIXED');

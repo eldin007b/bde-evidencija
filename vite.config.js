@@ -25,22 +25,22 @@ export default defineConfig({
           'vendor-utils': ['date-fns'],
           
           // App specific chunks
-          'screens': [
-            './src/screens/HomeScreenModern.jsx',
-            './src/screens/DeliveriesScreen.jsx',
-            './src/screens/DriversScreen.jsx',
-            './src/screens/StatistikaScreen.jsx'
+          'pages': [
+            './src/pages/HomeScreenModern.jsx',
+            './src/pages/DeliveriesScreen.jsx',
+            './src/pages/DriversScreen.jsx',
+            './src/pages/StatistikaScreen.jsx'
           ],
           'admin': [
-            './src/screens/AdminPanelScreen.jsx',
+            './src/pages/AdminPanelScreen.jsx',
             './src/components/admin/GitHubTab.jsx',
             './src/components/admin/DriversTab.jsx',
             './src/components/admin/RidesTab.jsx'
           ],
           'services': [
             './src/services/AutoSyncService.js',
-            './src/services/SupabasePayrollService.js',
-            './src/db/supabaseClient.js'
+            './src/api/SupabasePayrollService.js',
+            './src/api/supabaseClient.js'
           ]
         }
       }
