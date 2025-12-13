@@ -11,10 +11,10 @@ export default defineConfig({
     chunkSizeWarningLimit: 600, // Increase warning limit slightly
     rollupOptions: {
       output: {
-        // Force completely new filenames with timestamp
-  entryFileNames: `assets/app-v5-${Date.now()}-[hash].js`,
-  chunkFileNames: `assets/chunk-v5-${Date.now()}-[hash].js`,
-  assetFileNames: `assets/asset-v5-${Date.now()}-[hash].[ext]`,
+        // Stabilni nazivi fajlova sa verzijskim prefiksom (bez Date.now)
+        entryFileNames: `assets/app-v5-[hash].js`,
+        chunkFileNames: `assets/chunk-v5-[hash].js`,
+        assetFileNames: `assets/asset-v5-[hash].[ext]`,
         // Manual chunking strategy
         manualChunks: {
           // Vendor libraries
@@ -25,20 +25,17 @@ export default defineConfig({
           'vendor-utils': ['date-fns'],
           
           // App specific chunks
-          'pages': [
-            './src/pages/HomeScreenModern.jsx',
+          'pages': [            './src/pages/HomeScreenModern.jsx',
             './src/pages/DeliveriesScreen.jsx',
             './src/pages/DriversScreen.jsx',
             './src/pages/StatistikaScreen.jsx'
           ],
-          'admin': [
-            './src/pages/AdminPanelScreen.jsx',
+          'admin': [            './src/pages/AdminPanelScreen.jsx',
             './src/components/admin/GitHubTab.jsx',
             './src/components/admin/DriversTab.jsx',
             './src/components/admin/RidesTab.jsx'
           ],
-          'services': [
-            './src/services/AutoSyncService.js',
+          'services': [            './src/services/AutoSyncService.js',
             './src/api/SupabasePayrollService.js',
             './src/api/supabaseClient.js'
           ]
@@ -46,8 +43,7 @@ export default defineConfig({
       }
     }
   },
-  plugins: [
-    react(),
+  plugins: [    react(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
@@ -55,27 +51,25 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png}'],
         skipWaiting: true,
         clientsClaim: true,
-        // ULTRA AGGRESSIVE cache busting
-        runtimeCaching: [{
-          urlPattern: /^https?.*/,
+        // Stabilno runtime keširanje (bez Date.now u imenu cache-a)
+        runtimeCaching: [{          urlPattern: /^https?.*/,
           handler: 'NetworkFirst',
           options: {
-            cacheName: `bde-v5-ultra-${Date.now()}`,
+            cacheName: `bde-v5-ultra`,
             networkTimeoutSeconds: 3,
           }
         }]
       },
       includeAssets: ['favicon.png', 'assets/icon.png', 'assets/logo.png'],
-  manifest: {
-  name: 'BDEVidencija - Evidencija dostave v5.0',
-  short_name: 'BDEVidencija v5',
+      manifest: {
+        name: 'BDEVidencija - Evidencija dostave v5.0',
+        short_name: 'BDEVidencija v5',
         start_url: '/bde-evidencija/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#1e3a8a',
         description: 'Vaša digitalna evidencija vožnji i dostava',
-        icons: [
-          {
+        icons: [          {
             src: 'assets/icon.png',
             sizes: '192x192',
             type: 'image/png',

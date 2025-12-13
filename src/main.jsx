@@ -11,10 +11,17 @@ import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 console.log('🚀 BDEVidencija v5.0.0 - ULTRA NUCLEAR FORCE UPDATE - 20251020-HOOKS-FIXED');
 console.log('📱 PWA Cache Status: FORCED REFRESH');
 
-// Automatski reload kad se pojavi novi service worker
+// Automatski reload kad se pojavi novi service worker – ograničeno na jedan reload
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    window.location.reload();
+  let hasReloaded = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // Spriječi potencijalnu petlju reloadova
+    if (!hasReloaded) {
+      hasReloaded = true;
+      console.log('🔄 [APP] Service worker controllerchange – izvršavam jedan reload stranice');
+      window.location.reload();
+    }
   });
 }
 
