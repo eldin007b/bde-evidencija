@@ -765,29 +765,35 @@ const StatistikaScreen = () => {
                     {/* Premium solid background with gradients */}
                     <div className={`absolute inset-0 rounded-3xl border-2 shadow-2xl transform group-hover:scale-105 transition-transform duration-300 ${
                       isSonderfahrt
-                        ? 'bg-gradient-to-br from-red-600 via-red-500 to-rose-500 border-red-300/80 shadow-[0_18px_45px_-12px_rgba(220,38,38,0.30)]'
+                        ? 'bg-gradient-to-br from-white via-rose-50 to-white border-red-400/90 shadow-[0_18px_45px_-12px_rgba(220,38,38,0.18)]'
                         : 'bg-gradient-to-br from-white via-gray-50 to-gray-100 border-gray-200/60'
                     }`}></div>
+
+                    {isSonderfahrt && (
+                      <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-black tracking-wide shadow-lg">
+                        SONDERFAHRT
+                      </div>
+                    )}
                     
                     {/* Subtle inner shadow for depth */}
                     <div className={`absolute inset-1 rounded-3xl bg-gradient-to-br pointer-events-none ${
                       isSonderfahrt
-                        ? 'from-red-500/15 to-transparent'
+                        ? 'from-white/70 to-transparent'
                         : 'from-white/80 to-transparent'
                     }`}></div>
                     
                     {/* Animated glow effect */}
                     <motion.div 
                       className={`absolute inset-0 rounded-3xl transition-opacity duration-500 ${
-                        isSonderfahrt ? 'opacity-15' : 'opacity-0 group-hover:opacity-100'
+                        isSonderfahrt ? 'opacity-20' : 'opacity-0 group-hover:opacity-100'
                       }`}
                       animate={{
                         background: isSonderfahrt
                           ? [
-                              "radial-gradient(circle at 0% 0%, rgba(239, 68, 68, 0.28) 0%, transparent 55%)",
-                              "radial-gradient(circle at 100% 100%, rgba(244, 63, 94, 0.26) 0%, transparent 55%)",
-                              "radial-gradient(circle at 0% 100%, rgba(190, 18, 60, 0.22) 0%, transparent 55%)",
-                              "radial-gradient(circle at 100% 0%, rgba(239, 68, 68, 0.28) 0%, transparent 55%)"
+                              "radial-gradient(circle at 0% 0%, rgba(239, 68, 68, 0.20) 0%, transparent 58%)",
+                              "radial-gradient(circle at 100% 100%, rgba(244, 63, 94, 0.18) 0%, transparent 58%)",
+                              "radial-gradient(circle at 0% 100%, rgba(190, 18, 60, 0.15) 0%, transparent 58%)",
+                              "radial-gradient(circle at 100% 0%, rgba(239, 68, 68, 0.20) 0%, transparent 58%)"
                             ]
                           : [
                               "radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
