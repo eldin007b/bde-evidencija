@@ -765,21 +765,21 @@ const StatistikaScreen = () => {
                     {/* Premium solid background with gradients */}
                     <div className={`absolute inset-0 rounded-3xl border-2 shadow-2xl transform group-hover:scale-105 transition-transform duration-300 ${
                       isSonderfahrt
-                        ? 'bg-gradient-to-br from-red-700 via-red-600 to-rose-600 border-red-400/90 shadow-[0_20px_55px_-12px_rgba(220,38,38,0.55)]'
+                        ? 'bg-gradient-to-br from-red-600 via-red-500 to-rose-500 border-red-300/80 shadow-[0_18px_45px_-12px_rgba(220,38,38,0.30)]'
                         : 'bg-gradient-to-br from-white via-gray-50 to-gray-100 border-gray-200/60'
                     }`}></div>
                     
                     {/* Subtle inner shadow for depth */}
                     <div className={`absolute inset-1 rounded-3xl bg-gradient-to-br pointer-events-none ${
                       isSonderfahrt
-                        ? 'from-red-500/25 to-transparent'
+                        ? 'from-red-500/15 to-transparent'
                         : 'from-white/80 to-transparent'
                     }`}></div>
                     
                     {/* Animated glow effect */}
                     <motion.div 
                       className={`absolute inset-0 rounded-3xl transition-opacity duration-500 ${
-                        isSonderfahrt ? 'opacity-30' : 'opacity-0 group-hover:opacity-100'
+                        isSonderfahrt ? 'opacity-15' : 'opacity-0 group-hover:opacity-100'
                       }`}
                       animate={{
                         background: isSonderfahrt
