@@ -859,232 +859,234 @@ const StatistikaScreen = () => {
                         </motion.div>
                         
                         <div className="text-right">
-                          <h3 className="text-lg font-bold text-gray-800">
+                          <h3 className={`text-lg font-bold ${isSonderfahrt ? 'text-red-700' : 'text-gray-800'}`}>
                             {card.title}
                           </h3>
-                          <p className="text-sm text-gray-600 font-medium">{card.period}</p>
+                          <p className={`text-sm font-medium ${isSonderfahrt ? 'text-red-600' : 'text-gray-600'}`}>{card.period}</p>
                         </div>
                       </div>
 
                       {/* Main metrics with enhanced visuals */}
                       <div className="space-y-6 flex-grow">
-                        
-                        {/* Delivery Section */}
-                        <div className="relative">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                              Dostavljeno
-                            </span>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                            >
-                              <DeliveryTrendIcon className={`w-5 h-5 ${getTrendColor(card.delivery.trend)} drop-shadow-sm`} />
-                            </motion.div>
-                          </div>
-                          
-                          <div className="flex items-baseline justify-between mb-4">
-                            <motion.span 
-                              className="text-4xl font-black text-gray-900"
-                              animate={{ 
-                                textShadow: [
-                                  "2px 2px 4px rgba(0,0,0,0.1)",
-                                  "3px 3px 6px rgba(59,130,246,0.3)",
-                                  "2px 2px 4px rgba(0,0,0,0.1)"
-                                ]
-                              }}
-                              transition={{ duration: 3, repeat: Infinity }}
-                            >
-                              {card.delivery.value}
-                            </motion.span>
-                            <span className="text-lg font-bold text-gray-600">stopova</span>
-                            {card.delivery.diff !== undefined && card.delivery.diff !== 0 && (
-                              <motion.span 
-                                className={`px-2 py-1 rounded-full text-sm font-bold ${
-                                  card.delivery.diff > 0 
-                                    ? 'bg-green-100 text-green-700' 
-                                    : 'bg-red-100 text-red-700'
-                                }`}
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.3, type: "spring" }}
-                              >
-                                {card.delivery.diff > 0 ? '+' : ''}{card.delivery.diff}
-                              </motion.span>
-                            )}
-                          </div>
-
-                          {/* Ultra Premium Progress Bar */}
-                          {card.delivery.target > 0 && (
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm font-bold">
-                                <span className="text-gray-800">Cilj: {card.delivery.target}</span>
-                                <motion.span 
-                                  className={`font-black ${
-                                    successRate >= 100 
-                                      ? 'text-green-700' 
-                                      : successRate >= 98 
-                                        ? 'text-blue-700' 
-                                        : 'text-red-700'
-                                  }`}
-                                  animate={successRate >= 100 ? {
-                                    scale: [1, 1.15, 1],
-                                    textShadow: [
-                                      "1px 1px 2px rgba(0,0,0,0.2)",
-                                      "2px 2px 4px rgba(34,197,94,0.4)",
-                                      "1px 1px 2px rgba(0,0,0,0.2)"
-                                    ]
-                                  } : successRate >= 98 ? {
-                                    scale: [1, 1.08, 1],
-                                    textShadow: [
-                                      "1px 1px 2px rgba(0,0,0,0.2)",
-                                      "2px 2px 4px rgba(59,130,246,0.4)",
-                                      "1px 1px 2px rgba(0,0,0,0.2)"
-                                    ]
-                                  } : {
-                                    scale: [1, 1.1, 1],
-                                    textShadow: [
-                                      "1px 1px 2px rgba(0,0,0,0.2)",
-                                      "2px 2px 4px rgba(220,38,38,0.4)",
-                                      "1px 1px 2px rgba(0,0,0,0.2)"
-                                    ]
-                                  }}
-                                  transition={{ duration: 1.5, repeat: Infinity }}
+                            
+                            {/* Delivery Section */}
+                            <div className="relative">
+                              <div className="flex items-center justify-between mb-3">
+                                <span className={`text-sm font-bold uppercase tracking-wide ${isSonderfahrt ? 'text-red-700' : 'text-gray-700'}`}>
+                                  Dostavljeno
+                                </span>
+                                <motion.div
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                                 >
-                                  {Math.round(successRate)}%
-                                </motion.span>
+                                  <DeliveryTrendIcon className={`w-5 h-5 ${getTrendColor(card.delivery.trend)} drop-shadow-sm`} />
+                                </motion.div>
                               </div>
                               
-                              <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
-                                <motion.div 
-                                  className={`h-full rounded-full relative ${
-                                    successRate >= 100
-                                      ? 'bg-gradient-to-r from-green-400 via-green-500 to-emerald-600' 
-                                      : successRate >= 98
-                                        ? 'bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-600'
-                                        : 'bg-gradient-to-r from-red-400 via-red-500 to-red-600'
-                                  }`}
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${Math.min(successRate, 100)}%` }}
-                                  transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+                              <div className="flex items-baseline justify-between mb-4">
+                                <motion.span 
+                                  className={`text-4xl font-black ${isSonderfahrt ? 'text-red-700' : 'text-gray-900'}`}
+                                  animate={{ 
+                                    textShadow: [
+                                      "2px 2px 4px rgba(0,0,0,0.1)",
+                                      "4px 4px 8px rgba(0,0,0,0.15)",
+                                      "2px 2px 4px rgba(0,0,0,0.1)"
+                                    ]
+                                  }}
+                                  transition={{ duration: 3, repeat: Infinity }}
                                 >
+                                  {card.delivery.value}
+                                </motion.span>
+                                <span className={`text-lg font-bold ${isSonderfahrt ? 'text-red-600' : 'text-gray-600'}`}>stopova</span>
+                                {card.delivery.diff !== undefined && card.delivery.diff !== 0 && (
+                                  <motion.span 
+                                    className={`px-2 py-1 rounded-full text-sm font-bold ${
+                                      card.delivery.diff > 0 
+                                        ? 'bg-green-100 text-green-700' 
+                                        : 'bg-red-100 text-red-700'
+                                    }`}
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.3, type: "spring" }}
+                                  >
+                                    {card.delivery.diff > 0 ? '+' : ''}{card.delivery.diff}
+                                  </motion.span>
+                                )}
+                              </div>
+
+                              {/* Ultra Premium Progress Bar */}
+                              {card.delivery.target > 0 && (
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-sm font-bold">
+                                    <span className={`${isSonderfahrt ? 'text-red-700' : 'text-gray-800'}`}>Cilj: {card.delivery.target}</span>
+                                    <motion.span 
+                                      className={`font-black ${
+                                        successRate >= 100 
+                                          ? 'text-green-600'
+                                          : successRate >= 80 
+                                            ? 'text-blue-700' 
+                                            : 'text-red-700'
+                                      }`}
+                                      animate={successRate >= 100 ? {
+                                        scale: [1, 1.15, 1],
+                                        textShadow: [
+                                          "1px 1px 2px rgba(0,0,0,0.2)",
+                                          "2px 2px 4px rgba(34,197,94,0.4)",
+                                          "1px 1px 2px rgba(0,0,0,0.2)"
+                                        ]
+                                      } : successRate >= 80 ? {
+                                        scale: [1, 1.08, 1],
+                                        textShadow: [
+                                          "1px 1px 2px rgba(0,0,0,0.2)",
+                                          "2px 2px 4px rgba(59,130,246,0.4)",
+                                          "1px 1px 2px rgba(0,0,0,0.2)"
+                                        ]
+                                      } : {
+                                        scale: [1, 1.1, 1],
+                                        textShadow: [
+                                          "1px 1px 2px rgba(0,0,0,0.2)",
+                                          "2px 2px 4px rgba(220,38,38,0.4)",
+                                          "1px 1px 2px rgba(0,0,0,0.2)"
+                                        ]
+                                      }}
+                                      transition={{ duration: 1.5, repeat: Infinity }}
+                                    >
+                                      {Math.round(successRate)}%
+                                    </motion.span>
+                                  </div>
+                                  
+                                  <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
+                                    <motion.div 
+                                      className={`h-full rounded-full relative ${
+                                        successRate >= 100
+                                          ? 'bg-gradient-to-r from-green-400 via-green-500 to-emerald-600' 
+                                          : successRate >= 80
+                                            ? 'bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-600'
+                                            : 'bg-gradient-to-r from-red-400 via-red-500 to-red-600'
+                                      }`}
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${Math.min(successRate, 100)}%` }}
+                                      transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+                                    >
+                                      <motion.div
+                                        className="absolute inset-0 bg-white/30"
+                                        animate={{
+                                          x: ["-100%", "100%"]
+                                        }}
+                                        transition={{
+                                          duration: 2,
+                                          repeat: Infinity,
+                                          ease: "linear"
+                                        }}
+                                      />
+                                    </motion.div>
+                                    
+                                    {successRate >= 100 && (
+                                      <motion.div
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                        animate={{
+                                          scale: [1, 1.2, 1],
+                                          rotate: [0, 10, -10, 0]
+                                        }}
+                                        transition={{ duration: 2, repeat: Infinity }}
+                                      >
+                                        <span className="text-xs font-bold text-white drop-shadow">🎯</span>
+                                      </motion.div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Complaints Section with clean solid design */}
+                            <div className={`relative p-4 rounded-2xl transition-all duration-500 border-2 ${
+                              hasComplaints 
+                                ? 'bg-red-50 border-red-200 shadow-lg shadow-red-100' 
+                                : 'bg-green-50 border-green-200 shadow-lg shadow-green-100'
+                            }`}> 
+                              <div className="flex items-center justify-between mb-2">
+                                <span className={`text-sm font-bold uppercase tracking-wide ${isSonderfahrt ? 'text-red-700' : 'text-gray-700'}`}>
+                                  Reklamacije
+                                </span>
+                                {hasComplaints ? (
                                   <motion.div
-                                    className="absolute inset-0 bg-white/30"
-                                    animate={{
-                                      x: ["-100%", "100%"]
+                                    initial={{ scale: 0 }}
+                                    animate={{ 
+                                      rotate: [0, -10, 10, -10, 0],
+                                      scale: [1, 1.2, 1]
                                     }}
-                                    transition={{
+                                    transition={{ 
+                                      duration: 1,
+                                      repeat: Infinity,
+                                      ease: "easeInOut"
+                                    }}
+                                  >
+                                    <AlertTriangle className="w-5 h-5 text-red-600 drop-shadow-sm" />
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ 
+                                      scale: [1, 1.1, 1],
+                                      rotate: [0, 5, -5, 0]
+                                    }}
+                                    transition={{ 
                                       duration: 2,
                                       repeat: Infinity,
-                                      ease: "linear"
+                                      ease: "easeInOut"
                                     }}
-                                  />
-                                </motion.div>
-                                
-                                {successRate >= 100 && (
-                                  <motion.div
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                    animate={{
-                                      scale: [1, 1.2, 1],
-                                      rotate: [0, 10, -10, 0]
-                                    }}
-                                    transition={{ duration: 2, repeat: Infinity }}
                                   >
-                                    <span className="text-xs font-bold text-white drop-shadow">🎯</span>
+                                    <CheckCircle2 className="w-5 h-5 text-green-600 drop-shadow-sm" />
+                                  </motion.div>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                <motion.span 
+                                  className={`text-3xl font-black ${
+                                    hasComplaints ? 'text-red-700' : 'text-green-700'
+                                  }`}
+                                  animate={hasComplaints ? {
+                                    scale: [1, 1.1, 1],
+                                    textShadow: [
+                                      "1px 1px 2px rgba(0,0,0,0.1)",
+                                      "2px 2px 4px rgba(220, 38, 38, 0.3)",
+                                      "1px 1px 2px rgba(0,0,0,0.1)"
+                                    ]
+                                  } : {
+                                    textShadow: [
+                                      "1px 1px 2px rgba(0,0,0,0.1)",
+                                      "2px 2px 4px rgba(34, 197, 94, 0.3)",
+                                      "1px 1px 2px rgba(0,0,0,0.1)"
+                                    ]
+                                  }}
+                                  transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                  {card.complaints.value}
+                                </motion.span>
+                                
+                                {hasComplaints ? (
+                                  <motion.div
+                                    initial={{ scale: 0, rotate: 180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
+                                    className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1"
+                                  >
+                                    <span>≈</span>
+                                    <span>{(card.complaints.value * 80).toLocaleString()}€</span>
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
+                                    className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full shadow-lg"
+                                  >
+                                    SAVRŠENO!
                                   </motion.div>
                                 )}
                               </div>
                             </div>
-                          )}
-                        </div>
-
-                        {/* Complaints Section with clean solid design */}
-                        <div className={`relative p-4 rounded-2xl transition-all duration-500 border-2 ${
-                          hasComplaints 
-                            ? 'bg-red-50 border-red-200 shadow-lg shadow-red-100' 
-                            : 'bg-green-50 border-green-200 shadow-lg shadow-green-100'
-                        }`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                              Reklamacije
-                            </span>
-                            {hasComplaints ? (
-                              <motion.div
-                                animate={{ 
-                                  rotate: [0, -10, 10, -10, 0],
-                                  scale: [1, 1.2, 1]
-                                }}
-                                transition={{ 
-                                  duration: 1,
-                                  repeat: Infinity,
-                                  ease: "easeInOut"
-                                }}
-                              >
-                                <AlertTriangle className="w-5 h-5 text-red-600 drop-shadow-sm" />
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                animate={{ 
-                                  scale: [1, 1.1, 1],
-                                  rotate: [0, 5, -5, 0]
-                                }}
-                                transition={{ 
-                                  duration: 2,
-                                  repeat: Infinity,
-                                  ease: "easeInOut"
-                                }}
-                              >
-                                <CheckCircle2 className="w-5 h-5 text-green-600 drop-shadow-sm" />
-                              </motion.div>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <motion.span 
-                              className={`text-3xl font-black ${
-                                hasComplaints ? 'text-red-700' : 'text-green-700'
-                              }`}
-                              animate={hasComplaints ? {
-                                scale: [1, 1.1, 1],
-                                textShadow: [
-                                  "1px 1px 2px rgba(0,0,0,0.1)",
-                                  "2px 2px 4px rgba(220, 38, 38, 0.3)",
-                                  "1px 1px 2px rgba(0,0,0,0.1)"
-                                ]
-                              } : {
-                                textShadow: [
-                                  "1px 1px 2px rgba(0,0,0,0.1)",
-                                  "2px 2px 4px rgba(34, 197, 94, 0.3)",
-                                  "1px 1px 2px rgba(0,0,0,0.1)"
-                                ]
-                              }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            >
-                              {card.complaints.value}
-                            </motion.span>
-                            
-                            {hasComplaints ? (
-                              <motion.div
-                                initial={{ scale: 0, rotate: 180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
-                                className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1"
-                              >
-                                <span>≈</span>
-                                <span>{(card.complaints.value * 80).toLocaleString()}€</span>
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
-                                className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full shadow-lg"
-                              >
-                                SAVRŠENO!
-                              </motion.div>
-                            )}
-                          </div>
-                        </div>
                       </div>
 
                       {/* Floating action indicator */}
