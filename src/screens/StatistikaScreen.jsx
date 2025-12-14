@@ -765,7 +765,7 @@ const StatistikaScreen = () => {
                     {/* Premium solid background with gradients */}
                     <div className={`absolute inset-0 rounded-3xl border-2 shadow-2xl transform group-hover:scale-105 transition-transform duration-300 ${
                       isSonderfahrt
-                        ? 'bg-gradient-to-br from-rose-50 via-red-50 to-rose-100 border-red-200/70'
+                        ? 'bg-gradient-to-br from-rose-50 via-red-50 to-rose-100 border-red-300/90 shadow-[0_20px_50px_-12px_rgba(239,68,68,0.25)]'
                         : 'bg-gradient-to-br from-white via-gray-50 to-gray-100 border-gray-200/60'
                     }`}></div>
                     
@@ -774,7 +774,9 @@ const StatistikaScreen = () => {
                     
                     {/* Animated glow effect */}
                     <motion.div 
-                      className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                      className={`absolute inset-0 rounded-3xl transition-opacity duration-500 ${
+                        isSonderfahrt ? 'opacity-30' : 'opacity-0 group-hover:opacity-100'
+                      }`}
                       animate={{
                         background: isSonderfahrt
                           ? [
