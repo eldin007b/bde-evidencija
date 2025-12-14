@@ -8,66 +8,74 @@ export default defineConfig({
   base: '/bde-evidencija/',
 
   build: {
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 600, // Increase warning limit slightly
     rollupOptions: {
       output: {
-        entryFileNames: `assets/app-v5-[hash].js`,
-        chunkFileNames: `assets/chunk-v5-[hash].js`,
-        assetFileNames: `assets/asset-v5-[hash].[ext]`,
+        // Force completely new filenames with timestamp
+  entryFileNames: `assets/app-v5-${Date.now()}-[hash].js`,
+  chunkFileNames: `assets/chunk-v5-${Date.now()}-[hash].js`,
+  assetFileNames: `assets/asset-v5-${Date.now()}-[hash].[ext]`,
+        // Manual chunking strategy
         manualChunks: {
+          // Vendor libraries
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['framer-motion', 'lucide-react'],
           'vendor-maps': ['leaflet', 'react-leaflet'],
           'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
           'vendor-utils': ['date-fns'],
-          'pages': [            './src/pages/HomeScreenModern.jsx',
-            './src/pages/DeliveriesScreen.jsx',
-            './src/pages/DriversScreen.jsx',
-            './src/pages/StatistikaScreen.jsx'
+          
+          // App specific chunks
+          'screens': [
+            './src/screens/HomeScreenModern.jsx',
+            './src/screens/DeliveriesScreen.jsx',
+            './src/screens/DriversScreen.jsx',
+            './src/screens/StatistikaScreen.jsx'
           ],
-          'admin': [            './src/pages/AdminPanelScreen.jsx',
+          'admin': [
+            './src/screens/AdminPanelScreen.jsx',
             './src/components/admin/GitHubTab.jsx',
             './src/components/admin/DriversTab.jsx',
             './src/components/admin/RidesTab.jsx'
           ],
-          'services': [            './src/services/AutoSyncService.js',
-            './src/api/SupabasePayrollService.js',
-            './src/api/supabaseClient.js'
+          'services': [
+            './src/services/AutoSyncService.js',
+            './src/services/SupabasePayrollService.js',
+            './src/db/supabaseClient.js'
           ]
         }
       }
     }
   },
-
-  plugins: [    react(),
+  plugins: [
+    react(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: {
-        enabled: true // PWA radi i u developmentu
-      },
       workbox: {
         navigateFallback: '/bde-evidencija/',
         globPatterns: ['**/*.{js,css,html,ico,png}'],
         skipWaiting: true,
         clientsClaim: true,
-        runtimeCaching: [{          urlPattern: /^https?.*/,
+        // ULTRA AGGRESSIVE cache busting
+        runtimeCaching: [{
+          urlPattern: /^https?.*/,
           handler: 'NetworkFirst',
           options: {
-            cacheName: `bde-v5-ultra`,
+            cacheName: `bde-v5-ultra-${Date.now()}`,
             networkTimeoutSeconds: 3,
           }
         }]
       },
       includeAssets: ['favicon.png', 'assets/icon.png', 'assets/logo.png'],
-      manifest: {
-        name: 'BDEVidencija - Evidencija dostave v5.0',
-        short_name: 'BDEVidencija v5',
+  manifest: {
+  name: 'BDEVidencija - Evidencija dostave v5.0',
+  short_name: 'BDEVidencija v5',
         start_url: '/bde-evidencija/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#1e3a8a',
         description: 'Vaša digitalna evidencija vožnji i dostava',
-        icons: [          {
+        icons: [
+          {
             src: 'assets/icon.png',
             sizes: '192x192',
             type: 'image/png',
@@ -81,7 +89,6 @@ export default defineConfig({
       },
     }),
   ],
-
   server: {
     port: 5173,
     host: true,
@@ -90,15 +97,9 @@ export default defineConfig({
       host: 'localhost'
     }
   },
-
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '@/components': path.resolve(__dirname, 'src/components'),
-      '@/hooks': path.resolve(__dirname, 'src/hooks'),
-      '@/services': path.resolve(__dirname, 'src/services'),
-      '@/utils': path.resolve(__dirname, 'src/utils'),
-      '@/pages': path.resolve(__dirname, 'src/pages'),
     },
   },
 })
