@@ -609,7 +609,7 @@ const StatistikaScreen = () => {
                     <div className="flex items-center gap-2">
                       <Target className={`w-4 h-4 ${isNightTheme ? 'text-gray-400' : 'text-gray-600'}`} />
                       <span className={`text-sm ${isNightTheme ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Cilj: {getTargetStops(selectedDriver.tura)} stopova/dan
+                        Cilj: {parseInt(selectedDriver?.target_per_day ?? (selectedDriver?.id === 'sonderfahrt-8699' ? 0 : getTargetStops(selectedDriver.tura)) ?? 0, 10) || 0} stopova/dan
                       </span>
                     </div>
                   </motion.div>
