@@ -121,33 +121,6 @@ const StatistikaScreen = () => {
         
         console.log('🚗 StatistikaScreen - Loaded drivers:', data?.length || 0);
         console.log('👤 Current user:', currentUser);
-        
-        // Prvo pokušaj da odabereš ulogovanog vozača po imenu
-        if (currentUser && (currentUser.name || currentUser.ime) && data && data.length > 0) {
-          const userName = currentUser.name || currentUser.ime;
-          console.log('🔍 Looking for driver with name:', userName);
-          const loggedInDriver = data.find(driver => driver.ime === userName);
-          if (loggedInDriver) {
-            console.log('✅ Found driver by name:', loggedInDriver.ime);
-            setSelectedDriver(loggedInDriver);
-          } else {
-            console.log('🔍 Driver not found by name, trying by tura:', currentUser.username || currentUser.tura);
-            // Ako ulogovani vozač nije pronađen po imenu, pokušaj po turi
-            const loggedInDriverByTura = data.find(driver => driver.tura === (currentUser.username || currentUser.tura));
-            if (loggedInDriverByTura) {
-              console.log('✅ Found driver by tura:', loggedInDriverByTura.ime);
-              setSelectedDriver(loggedInDriverByTura);
-            } else {
-              console.log('❌ Driver not found, selecting first driver');
-              // Ako ni po turi nije pronađen, odaberi prvog
-              setSelectedDriver(data[0]);
-            }
-          }
-        } else if (data && data.length > 0) {
-          console.log('❌ No current user, selecting first driver');
-          // Ako nema ulogovanog korisnika, odaberi prvog vozača
-          setSelectedDriver(data[0]);
-        }
       } catch (err) {
         console.error('Greška pri učitavanju vozača:', err);
         setError(err.message);
@@ -157,7 +130,41 @@ const StatistikaScreen = () => {
     };
 
     fetchDrivers();
-  }, [currentUser]); // Promenjeno sa user na currentUser
+  }, []);
+
+  useEffect(() => {
+    if (!drivers || drivers.length === 0) return;
+    if (!currentUser) return;
+
+    // Ne prepisuj ručno odabranog vozača
+    if (selectedDriver) return;
+
+    const userName = currentUser.name || currentUser.ime;
+    const userTura = currentUser.username || currentUser.tura;
+
+    if (userName) {
+      console.log('🔍 Looking for driver with name:', userName);
+      const loggedInDriver = drivers.find((driver) => driver.ime === userName);
+      if (loggedInDriver) {
+        console.log('✅ Found driver by name:', loggedInDriver.ime);
+        setSelectedDriver(loggedInDriver);
+        return;
+      }
+    }
+
+    if (userTura) {
+      console.log('🔍 Driver not found by name, trying by tura:', userTura);
+      const loggedInDriverByTura = drivers.find((driver) => String(driver.tura).trim() === String(userTura).trim());
+      if (loggedInDriverByTura) {
+        console.log('✅ Found driver by tura:', loggedInDriverByTura.ime);
+        setSelectedDriver(loggedInDriverByTura);
+        return;
+      }
+    }
+
+    console.log('❌ Logged-in driver not matched, selecting first driver');
+    setSelectedDriver(drivers[0]);
+  }, [currentUser, drivers, selectedDriver]);
 
   // ISTA loadDriverStats funkcija kao u HomeScreenModern
   const loadDriverStats = useCallback(async (driver) => {
