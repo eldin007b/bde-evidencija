@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../db/supabaseClient';
 import driversSync from '../services/driversSync';
+import { invalidateQueries } from '../lib/queryClient';
 
 /**
  * useDrivers Hook - Business layer koji koristi drivers tabelu  
@@ -10,6 +11,16 @@ export default function useDrivers() {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const notifyDriversUpdated = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined' && window?.dispatchEvent) {
+        window.dispatchEvent(new Event('drivers-updated'));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   const fetchDrivers = useCallback(async () => {
     setLoading(true);
@@ -103,6 +114,14 @@ export default function useDrivers() {
         aktivan: driverData.aktivan
       });
 
+      try {
+        invalidateQueries.drivers();
+      } catch (e) {
+        // ignore cache invalidation errors
+      }
+
+      notifyDriversUpdated();
+
       await fetchDrivers(); // Refresh lista
       return data[0];
     } catch (err) {
@@ -141,6 +160,14 @@ export default function useDrivers() {
         });
       }
 
+      try {
+        invalidateQueries.drivers();
+      } catch (e) {
+        // ignore cache invalidation errors
+      }
+
+      notifyDriversUpdated();
+
       await fetchDrivers(); // Refresh lista
       return data[0];
     } catch (err) {
@@ -161,6 +188,15 @@ export default function useDrivers() {
         .eq('id', id);
         
       if (error) throw error;
+
+      try {
+        invalidateQueries.drivers();
+      } catch (e) {
+        // ignore cache invalidation errors
+      }
+
+      notifyDriversUpdated();
+
       await fetchDrivers(); // Refresh lista
     } catch (err) {
       setError(err);
@@ -189,6 +225,14 @@ export default function useDrivers() {
         });
       }
 
+      try {
+        invalidateQueries.drivers();
+      } catch (e) {
+        // ignore cache invalidation errors
+      }
+
+      notifyDriversUpdated();
+
       await fetchDrivers(); // Refresh lista
     } catch (err) {
       setError(err);
@@ -209,6 +253,15 @@ export default function useDrivers() {
         .eq('deleted', 0);
         
       if (error) throw error;
+
+      try {
+        invalidateQueries.drivers();
+      } catch (e) {
+        // ignore cache invalidation errors
+      }
+
+      notifyDriversUpdated();
+
       await fetchDrivers(); // Refresh lista
       
       return true;
@@ -239,6 +292,17 @@ export default function useDrivers() {
 
   useEffect(() => {
     fetchDrivers();
+  }, [fetchDrivers]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window?.addEventListener) return;
+
+    const handler = () => {
+      fetchDrivers();
+    };
+
+    window.addEventListener('drivers-updated', handler);
+    return () => window.removeEventListener('drivers-updated', handler);
   }, [fetchDrivers]);
 
   return { 
