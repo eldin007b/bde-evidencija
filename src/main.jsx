@@ -1,35 +1,20 @@
 import './index.css';
-import 'leaflet/dist/leaflet.css';
+import 'leaflet/dist/leaflet.css'; // Leaflet CSS stilovi za pravilno renderovanje mape
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
-import ErrorBoundary from './components/common/ErrorBoundary.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
-// Global error logging
-window.addEventListener('error', (event) => {
-  console.error('🚨 [GLOBAL] Uncaught error:', event.error);
-});
+// ULTRA NUCLEAR CACHE BUST - Force browser to recognize new version
+console.log('🚀 BDEVidencija v5.0.0 - ULTRA NUCLEAR FORCE UPDATE - 20251020-HOOKS-FIXED');
+console.log('📱 PWA Cache Status: FORCED REFRESH');
 
-window.addEventListener('unhandledrejection', (event) => {
-  console.error('🚨 [GLOBAL] Unhandled promise rejection:', event.reason);
-});
-
-// ULTRA NUCLEAR CACHE BUST
-console.log('🚀 BDEVidencija v5.0.0 - ULTRA NUCLEAR FORCE UPDATE - 20251213-REORGANIZED');
-console.log('📱 PWA Cache Status: STABLE v5');
-
-// Service Worker - safe reload (max 1x)
+// Automatski reload kad se pojavi novi service worker
 if ('serviceWorker' in navigator) {
-  let hasReloaded = false;
-
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!hasReloaded) {
-      hasReloaded = true;
-      console.log('🔄 [APP] Service worker controllerchange – jedan reload');
-      window.location.reload();
-    }
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    window.location.reload();
   });
 }
 
