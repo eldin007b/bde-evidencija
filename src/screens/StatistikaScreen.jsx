@@ -727,6 +727,7 @@ const StatistikaScreen = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <AnimatePresence>
               {statCards.map((card, index) => {
+                const isSonderfahrt = selectedDriver?.id === 'sonderfahrt-8699';
                 const Icon = card.icon;
                 const DeliveryTrendIcon = getTrendIcon(card.delivery.trend);
                 const ComplaintTrendIcon = getTrendIcon(card.complaints.trend);
@@ -762,7 +763,11 @@ const StatistikaScreen = () => {
                     style={{ perspective: "1000px" }}
                   >
                     {/* Premium solid background with gradients */}
-                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white via-gray-50 to-gray-100 border-2 border-gray-200/60 shadow-2xl transform group-hover:scale-105 transition-transform duration-300"></div>
+                    <div className={`absolute inset-0 rounded-3xl border-2 shadow-2xl transform group-hover:scale-105 transition-transform duration-300 ${
+                      isSonderfahrt
+                        ? 'bg-gradient-to-br from-rose-50 via-red-50 to-rose-100 border-red-200/70'
+                        : 'bg-gradient-to-br from-white via-gray-50 to-gray-100 border-gray-200/60'
+                    }`}></div>
                     
                     {/* Subtle inner shadow for depth */}
                     <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/80 to-transparent pointer-events-none"></div>
@@ -771,12 +776,19 @@ const StatistikaScreen = () => {
                     <motion.div 
                       className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                       animate={{
-                        background: [
-                          "radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
-                          "radial-gradient(circle at 100% 100%, rgba(147, 51, 234, 0.3) 0%, transparent 50%)",
-                          "radial-gradient(circle at 0% 100%, rgba(236, 72, 153, 0.3) 0%, transparent 50%)",
-                          "radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)"
-                        ]
+                        background: isSonderfahrt
+                          ? [
+                              "radial-gradient(circle at 0% 0%, rgba(239, 68, 68, 0.28) 0%, transparent 55%)",
+                              "radial-gradient(circle at 100% 100%, rgba(244, 63, 94, 0.26) 0%, transparent 55%)",
+                              "radial-gradient(circle at 0% 100%, rgba(190, 18, 60, 0.22) 0%, transparent 55%)",
+                              "radial-gradient(circle at 100% 0%, rgba(239, 68, 68, 0.28) 0%, transparent 55%)"
+                            ]
+                          : [
+                              "radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                              "radial-gradient(circle at 100% 100%, rgba(147, 51, 234, 0.3) 0%, transparent 50%)",
+                              "radial-gradient(circle at 0% 100%, rgba(236, 72, 153, 0.3) 0%, transparent 50%)",
+                              "radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)"
+                            ]
                       }}
                       transition={{
                         duration: 4,
