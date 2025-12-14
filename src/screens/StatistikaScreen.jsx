@@ -52,6 +52,20 @@ const StatistikaScreen = () => {
   const memoizedCurrentMonth = useMemo(() => mjeseci[new Date().getMonth()], []);
   const memoizedCurrentYear = useMemo(() => new Date().getFullYear(), []);
 
+  const sonderfahrtDriver = useMemo(() => ({
+    id: 'sonderfahrt-8699',
+    ime: 'Sonderfahrt',
+    tura: '8699',
+    routes: ['8696', '8697', '8698', '8699'],
+    aktivan: true,
+    target_per_day: 0,
+  }), []);
+
+  const displayDrivers = useMemo(() => {
+    const active = Array.isArray(drivers) ? drivers.filter(d => d && d.aktivan) : [];
+    return [...active, sonderfahrtDriver];
+  }, [drivers, sonderfahrtDriver]);
+
   // Fixed NIGHT Theme
   useEffect(() => {
     setCurrentTheme('night'); // Always use night theme
@@ -173,18 +187,22 @@ const StatistikaScreen = () => {
       const yearStart = toLocalISO(new Date(currentDate.getFullYear(), 0, 1));
       const yearEnd = toLocalISO(new Date(currentDate.getFullYear(), 11, 31));
 
+      const driverRoutes = Array.isArray(driver?.routes) && driver.routes.length > 0
+        ? driver.routes.map(r => String(r).trim()).filter(Boolean)
+        : [String(driver.tura).trim()];
+
       // Nađi zadnji dan dostave (fetch više zapisa da možemo preskočiti Urlaub i dane bez stvarnih stopova)
       const { data: lastDayData } = await supabase
         .from('deliveries')
         .select('*')
-        .eq('driver', driver.tura)
+        .in('driver', driverRoutes)
         .eq('deleted', 0)
         .order('date', { ascending: false })
         .limit(20);
 
       // Nađi zadnji dan koji NIJE urlaub i ima stvarne stopove (> 0), isto kao u kalkulaciji
       const lastDayItem = lastDayData?.find(item => {
-        if (isUrlaub(item.date, driver.tura)) return false;
+        if (isUrlaub(item.date, item.driver)) return false;
         const stops = parseInt(item?.produktivitaet_stops || 0, 10);
         return stops > 0;
       });
@@ -200,27 +218,27 @@ const StatistikaScreen = () => {
         supabase
           .from('deliveries')
           .select('*')
-          .eq('driver', driver.tura)
+          .in('driver', driverRoutes)
           .gte('date', `${lastDay}T00:00:00`)
           .lte('date', `${lastDay}T23:59:59`)
           .eq('deleted', 0),
         supabase
           .from('deliveries')
           .select('*')
-          .eq('driver', driver.tura)
+          .in('driver', driverRoutes)
           .gte('date', monthStart)
           .lte('date', monthEnd)
           .eq('deleted', 0),
         supabase
           .from('deliveries')
           .select('*')
-          .eq('driver', driver.tura)
+          .in('driver', driverRoutes)
           .gte('date', yearStart)
           .lte('date', yearEnd)
           .eq('deleted', 0)
       ]);
 
-      const targetStops = getTargetStops(driver.tura);
+      const targetStops = parseInt(driver?.target_per_day ?? getTargetStops(driver.tura) ?? 0, 10) || 0;
 
       // Kalkulacije - ISTA logika kao u HomeScreenModern
       const calculate = (data, period) => {
@@ -465,17 +483,17 @@ const StatistikaScreen = () => {
 
   // Driver navigation functions
   const previousDriver = () => {
-    if (!selectedDriver || drivers.length === 0) return;
-    const currentIndex = drivers.findIndex(d => d.id === selectedDriver.id);
-    const prevIndex = currentIndex === 0 ? drivers.length - 1 : currentIndex - 1;
-    setSelectedDriver(drivers[prevIndex]);
+    if (!selectedDriver || displayDrivers.length === 0) return;
+    const currentIndex = displayDrivers.findIndex(d => d.id === selectedDriver.id);
+    const prevIndex = currentIndex === 0 ? displayDrivers.length - 1 : currentIndex - 1;
+    setSelectedDriver(displayDrivers[prevIndex]);
   };
 
   const nextDriver = () => {
-    if (!selectedDriver || drivers.length === 0) return;
-    const currentIndex = drivers.findIndex(d => d.id === selectedDriver.id);
-    const nextIndex = currentIndex === drivers.length - 1 ? 0 : currentIndex + 1;
-    setSelectedDriver(drivers[nextIndex]);
+    if (!selectedDriver || displayDrivers.length === 0) return;
+    const currentIndex = displayDrivers.findIndex(d => d.id === selectedDriver.id);
+    const nextIndex = currentIndex === displayDrivers.length - 1 ? 0 : currentIndex + 1;
+    setSelectedDriver(displayDrivers[nextIndex]);
   };
 
   return (

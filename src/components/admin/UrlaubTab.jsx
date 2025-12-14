@@ -3,12 +3,11 @@ import { motion } from 'framer-motion';
 import { Calendar, Plus, Trash2, RefreshCw, Sun, Palmtree, AlertCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '../../db/supabaseClient';
 
-// Vozači
-const DRIVERS = [
-  { id: '8610', name: 'Eldin' },
-  { id: '8620', name: 'Denis' },
-  { id: '8630', name: 'Emrah' },
-  { id: '8640', name: 'Arnes' },
+const FALLBACK_DRIVERS = [
+  { id: '8610', name: '8610' },
+  { id: '8620', name: '8620' },
+  { id: '8630', name: '8630' },
+  { id: '8640', name: '8640' },
 ];
 
 export default function UrlaubTab({ drivers: driversFromProps }) {
@@ -17,6 +16,12 @@ export default function UrlaubTab({ drivers: driversFromProps }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [holidays, setHolidays] = useState([]);
+
+  const driversList = (Array.isArray(driversFromProps) && driversFromProps.length > 0)
+    ? driversFromProps
+        .filter(d => d && d.aktivan)
+        .map(d => ({ id: String(d.tura), name: d.ime }))
+    : FALLBACK_DRIVERS;
   
   // Form state
   const [selectedDriver, setSelectedDriver] = useState('8620');
@@ -174,8 +179,8 @@ export default function UrlaubTab({ drivers: driversFromProps }) {
       }
 
       // 5. Upiši urlaub u tabelu urlaub_marks
-      const driverName = DRIVERS.find(d => d.id === selectedDriver)?.name || selectedDriver;
-      const targetDriverName = DRIVERS.find(d => d.id === targetDriver)?.name || targetDriver;
+      const driverName = driversList.find(d => d.id === selectedDriver)?.name || selectedDriver;
+      const targetDriverName = driversList.find(d => d.id === targetDriver)?.name || targetDriver;
 
       const { error: urlaubError } = await supabase
         .from('urlaub_marks')
@@ -289,7 +294,7 @@ export default function UrlaubTab({ drivers: driversFromProps }) {
                 onChange={(e) => setSelectedDriver(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 focus:border-amber-500 focus:outline-none"
               >
-                {DRIVERS.map(d => (
+                {driversList.map(d => (
                   <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
                 ))}
               </select>
@@ -303,7 +308,7 @@ export default function UrlaubTab({ drivers: driversFromProps }) {
                 onChange={(e) => setTargetDriver(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 focus:border-amber-500 focus:outline-none"
               >
-                {DRIVERS.filter(d => d.id !== selectedDriver).map(d => (
+                {driversList.filter(d => d.id !== selectedDriver).map(d => (
                   <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
                 ))}
               </select>
@@ -355,8 +360,8 @@ export default function UrlaubTab({ drivers: driversFromProps }) {
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {urlaubList.map((u) => {
-                  const driverInfo = DRIVERS.find(d => d.id === u.driver);
-                  const targetInfo = DRIVERS.find(d => d.id === u.target_driver);
+                  const driverInfo = driversList.find(d => d.id === u.driver);
+                  const targetInfo = driversList.find(d => d.id === u.target_driver);
                   return (
                     <div
                       key={u.id}

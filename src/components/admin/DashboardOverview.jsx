@@ -430,17 +430,26 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
 
   // ------ Izračun ciljeva / uspješnosti za prikaz ------
 
-  const dnevniCilj = 300;
+  const activeDrivers = Array.isArray(drivers)
+    ? drivers.filter(d => d && d.aktivan)
+    : [];
+
+  const targetPerDayTotal = activeDrivers.reduce((sum, d) => {
+    const n = parseInt(d?.target_per_day ?? 0, 10);
+    return sum + (Number.isFinite(n) ? n : 0);
+  }, 0);
+
+  const dnevniCilj = targetPerDayTotal;
   const faliDoCilja = dnevniCilj - dailyStops;
   const procenatRealizacije =
     dnevniCilj > 0 ? ((dailyStops / dnevniCilj) * 100).toFixed(2) : '0.00';
 
-  const monthlyGoal = monthlyWorkDays * 300;
+  const monthlyGoal = monthlyWorkDays * targetPerDayTotal;
   const monthlyMissing = monthlyGoal - monthlyStops;
   const monthlySuccess =
     monthlyGoal > 0 ? ((monthlyStops / monthlyGoal) * 100).toFixed(2) : '0.00';
 
-  const yearlyGoal = yearlyWorkDays * 300;
+  const yearlyGoal = yearlyWorkDays * targetPerDayTotal;
   const yearlyMissing = yearlyGoal - yearlyStops;
   const yearlySuccess =
     yearlyGoal > 0 ? ((yearlyStops / yearlyGoal) * 100).toFixed(2) : '0.00';
@@ -707,11 +716,13 @@ const DashboardOverview = ({ data, drivers, loading, error, onRefresh }) => {
               <div className="text-right flex-shrink-0">
                 <p className="text-xs text-gray-500">
                   {timeRange === 'today'
-                    ? 'Cilj za 4 ture'
-                    : `${timeRange === 'month' ? monthlyWorkDays : yearlyWorkDays} dana`}
+                    ? `je ${dnevniCilj}`
+                    : `× ${targetPerDayTotal}`}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {timeRange === 'today' ? 'je 300' : '× 300'}
+                  {timeRange === 'today'
+                    ? 'Cilj za 4 ture'
+                    : `${timeRange === 'month' ? monthlyWorkDays : yearlyWorkDays} dana`}
                 </p>
               </div>
             </div>
