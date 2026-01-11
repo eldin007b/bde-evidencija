@@ -1,19 +1,13 @@
 import React, { useMemo, useRef } from "react";
-import { Download, Printer } from "lucide-react";
-import html2pdf from "html2pdf.js";
+import { Printer } from "lucide-react";
 
-/**
- * OČEKUJEŠ DA deliveries već postoje u aplikaciji
- * Format (po danu):
- * {
- *   date: "2025-12-01",
- *   value: number | "Urlaub" | "-"
- * }
- *
- * value > 0  => RAD
- * value === "Urlaub" => URLAUB
- * value === "-" ili null => —
- */
+/*
+  ❗ NEMA html2pdf
+  ❗ NEMA tesseract
+  ✔ 100% build-safe
+
+  PDF = window.print() → Save as PDF
+*/
 
 const WORK_START = "05:30";
 const WORK_END = "14:00";
@@ -25,10 +19,9 @@ export default function WorktimeTab({
   driverName = "Arnes",
   month = 12,
   year = 2025,
-  deliveries = [] // ⬅ OBAVEZNO: iste deliveries koje koristi Pregled Dostava
+  deliveries = [] // ISTI PODACI kao Pregled Dostava
 }) {
   const printRef = useRef(null);
-
   const daysInMonth = new Date(year, month, 0).getDate();
 
   const rows = useMemo(() => {
@@ -47,7 +40,7 @@ export default function WorktimeTab({
           day,
           status: "URLAUB",
           start: "-",
-          break: "-",
+          pause: "-",
           end: "-",
           hours: "-",
           ladezeit: "-"
@@ -59,7 +52,7 @@ export default function WorktimeTab({
           day,
           status: "RAD",
           start: WORK_START,
-          break: BREAK_TIME,
+          pause: BREAK_TIME,
           end: WORK_END,
           hours: WORK_HOURS,
           ladezeit: LADEZEIT
@@ -70,26 +63,13 @@ export default function WorktimeTab({
         day,
         status: "—",
         start: "-",
-        break: "-",
+        pause: "-",
         end: "-",
         hours: "-",
         ladezeit: "-"
       };
     });
   }, [deliveries, daysInMonth]);
-
-  const exportPDF = () => {
-    html2pdf()
-      .set({
-        margin: 10,
-        filename: `Arbeitszeit_${driverName}_${month}_${year}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: "#ffffff" },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      })
-      .from(printRef.current)
-      .save();
-  };
 
   const totalHours = rows.reduce(
     (sum, r) => (r.hours === 8 ? sum + 8 : sum),
@@ -98,33 +78,27 @@ export default function WorktimeTab({
 
   return (
     <div className="space-y-6">
-      {/* ACTIONS */}
-      <div className="flex gap-3">
-        <button
-          onClick={exportPDF}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700"
-        >
-          <Download size={18} /> Export PDF
-        </button>
-
+      {/* ACTION BAR */}
+      <div className="flex justify-end">
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-700 text-white font-semibold hover:bg-gray-800"
+          className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700"
         >
-          <Printer size={18} /> Print
+          <Printer size={18} />
+          Print / Save PDF
         </button>
       </div>
 
       {/* PRINT AREA */}
       <div
         ref={printRef}
-        className="bg-white text-black p-6 rounded-xl shadow"
+        className="bg-white text-black p-6 rounded-xl shadow print:shadow-none print:p-0"
       >
         <h1 className="text-xl font-bold mb-2">
           Arbeitszeitaufzeichnung
         </h1>
 
-        <p className="mb-4">
+        <p className="mb-4 text-sm">
           <strong>Mitarbeiter:</strong> {driverName}<br />
           <strong>Monat:</strong> {String(month).padStart(2, "0")}/{year}
         </p>
@@ -147,7 +121,7 @@ export default function WorktimeTab({
                 <td className="border p-2 text-center">{r.day}</td>
                 <td className="border p-2 text-center">{r.status}</td>
                 <td className="border p-2 text-center">{r.start}</td>
-                <td className="border p-2 text-center">{r.break}</td>
+                <td className="border p-2 text-center">{r.pause}</td>
                 <td className="border p-2 text-center">{r.end}</td>
                 <td className="border p-2 text-center">{r.hours}</td>
                 <td className="border p-2 text-center">{r.ladezeit}</td>
@@ -157,10 +131,10 @@ export default function WorktimeTab({
         </table>
 
         <div className="mt-4 font-semibold">
-          Ukupno radnih sati: {totalHours}
+          Gesamtarbeitszeit: {totalHours} Stunden
         </div>
 
-        <div className="mt-8 flex justify-between">
+        <div className="mt-10 flex justify-between text-sm">
           <div>
             ___________________________<br />
             Unterschrift Mitarbeiter
