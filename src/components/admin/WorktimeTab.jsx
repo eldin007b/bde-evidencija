@@ -1,21 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Printer, User, Loader2 } from "lucide-react";
 
-// OVO JE KLJUČNO: Putanja do tvog supabase klijenta
-// Vraća se dva foldera nazad (../../) u src, pa ulazi u db
+// Import tvojih funkcija (Pazi da je putanja tačna)
 import { 
   supabase, 
   getAllDriversCloud, 
   getDeliveriesByDriverCloud 
 } from "../../db/supabaseClient"; 
-
-/* IMENA VOZAČA ZA PRIKAZ */
-const PREFERRED_NAMES = {
-  8640: "Arnes Hokić",
-  8620: "Denis Frelih",
-  8610: "Eldin Begić",
-  8630: "Nina Begić"
-};
 
 /* KONFIGURACIJA PDF-a */
 const WORK_START = "05:30";
@@ -25,11 +16,10 @@ const WORK_HOURS = 8;
 const NOTE_WORK = "Ladezeit 3 Std./Tag";
 const NOTE_VACATION = "URLAUB";
 
-// OVO JE EXPORT DEFAULT KOJI JE NEDOSTAJAO
 export default function WorktimeTab() {
   // --- STATE ---
   const [drivers, setDrivers] = useState([]); 
-  const [selectedDriverTura, setSelectedDriverTura] = useState("8640"); // Default Arnes
+  const [selectedDriverTura, setSelectedDriverTura] = useState("8640"); 
   
   const [month, setMonth] = useState(12);
   const [year, setYear] = useState(2025);
@@ -38,14 +28,17 @@ export default function WorktimeTab() {
   const [urlaubData, setUrlaubData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const printRef = useRef(null);
-
-  // 1. UČITAJ VOZAČE
+  // 1. UČITAJ VOZAČE (da dobijemo ispravna imena iz baze)
   useEffect(() => {
     async function loadDrivers() {
       try {
         const driversList = await getAllDriversCloud();
         setDrivers(driversList);
+        // Ako je lista puna, selektuj prvog, ili ostavi 8640 kao fallback
+        if (driversList.length > 0) {
+           // Ovdje možeš staviti logiku da selektuješ specifičnog ako želiš
+           // setSelectedDriverTura(driversList[0].tura);
+        }
       } catch (error) {
         console.error("Greška pri učitavanju vozača:", error);
       }
@@ -53,31 +46,29 @@ export default function WorktimeTab() {
     loadDrivers();
   }, []);
 
-  // 2. UČITAJ PODATKE KAD SE PROMIJENI ODABIR
+  // 2. UČITAJ PODATKE (Dostave + Urlaub)
   useEffect(() => {
     if (!selectedDriverTura) return;
 
     async function loadWorkData() {
       setLoading(true);
       try {
-        // A) Dostave (koristi tvoju postojeću funkciju)
-        // Pazi: getDeliveriesByDriverCloud očekuje mjesec 0-11, a state je 1-12
+        // A) DOSTAVE - preko tvoje funkcije
         const deliveries = await getDeliveriesByDriverCloud(selectedDriverTura, year, month - 1);
         setWorkData(deliveries);
 
-        // B) Godišnji odmori (direktan upit jer nemaš funkciju za ovo)
-        // Računamo prvi i zadnji dan mjeseca za filter
+        // B) GODIŠNJI ODMORI - Direktno iz tabele 'urlaub_marks' koju si poslao
         const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
 
         const { data: urlaubs, error } = await supabase
-          .from('urlaub_marks_rows')
+          .from('urlaub_marks') // <--- TVOJA NOVA TABELA
           .select('date')
-          .eq('driver', selectedDriverTura)
+          .eq('driver', selectedDriverTura) // driver kolona je text (tura)
           .gte('date', startDate)
           .lte('date', endDate)
-          .eq('is_active', true);
+          .eq('is_active', true); // Samo aktivni
 
         if (error) throw error;
         setUrlaubData(urlaubs || []);
@@ -92,7 +83,7 @@ export default function WorktimeTab() {
     loadWorkData();
   }, [selectedDriverTura, month, year]);
 
-  // --- LOGIKA TABELE ---
+  // --- LOGIKA SPAJANJA PODATAKA ---
   const { rows, totalHours } = useMemo(() => {
     const daysInMonth = new Date(year, month, 0).getDate();
     let sumHours = 0;
@@ -101,13 +92,12 @@ export default function WorktimeTab() {
       const day = i + 1;
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-      // Provjeri da li je godišnji
+      // 1. Provjera Urlaub
       const isUrlaub = urlaubData.some(u => u.date === dateStr);
 
-      // Provjeri da li ima paketa (radni dan)
+      // 2. Provjera Paketa
       const delivery = workData.find(d => d.date === dateStr);
-      // Gledamo da li je broj paketa veći od 0
-      const hasPackages = delivery && delivery.paketi > 0;
+      const hasPackages = delivery && Number(delivery.paketi) > 0;
 
       let row = {
         day,
@@ -135,14 +125,18 @@ export default function WorktimeTab() {
     return { rows: calculatedRows, totalHours: sumHours };
   }, [workData, urlaubData, month, year]);
 
-  // Dobijanje imena za prikaz (koristimo tvoja prilagođena imena)
-  const currentDriverName = PREFERRED_NAMES[selectedDriverTura] || "Nepoznat Vozač";
+  // Ime vozača za prikaz
+  const currentDriverObj = drivers.find(d => d.tura == selectedDriverTura);
+  const currentDriverName = currentDriverObj 
+    ? (currentDriverObj.ime || currentDriverObj.name) 
+    : selectedDriverTura; // Fallback na turu (npr 8640) ako ime nije učitano
 
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- KONTROLNA PLOČA (NE PRINTA SE) --- */}
-      <div className="w-full max-w-[210mm] bg-white p-5 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-6 items-center justify-between no-print">
+      {/* --- KONTROLNA PLOČA (Gornji dio sa opcijama) --- */}
+      {/* Klasa 'no-print-section' označava da se ovo NEĆE printati */}
+      <div className="w-full max-w-[210mm] bg-white p-5 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-6 items-center justify-between no-print-section">
         
         <div className="flex gap-4 items-center flex-wrap">
           {/* Odabir Vozača */}
@@ -155,10 +149,10 @@ export default function WorktimeTab() {
                 onChange={(e) => setSelectedDriverTura(e.target.value)}
                 className="pl-9 pr-8 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 cursor-pointer font-medium min-w-[200px]"
               >
-                {/* Prikazujemo samo ova 4 vozača jer si tako tražio, ili listu iz baze */}
-                {Object.entries(PREFERRED_NAMES).map(([id, name]) => (
-                  <option key={id} value={id}>
-                    {name}
+                {drivers.length === 0 && <option value="8640">Učitavam...</option>}
+                {drivers.map((d) => (
+                  <option key={d.id} value={d.tura}>
+                    {d.ime || d.name} ({d.tura})
                   </option>
                 ))}
               </select>
@@ -182,7 +176,6 @@ export default function WorktimeTab() {
             </div>
           </div>
 
-          {/* Loading indikator */}
           {loading && (
             <div className="flex items-center text-blue-600 text-sm font-semibold animate-pulse ml-2">
                 <Loader2 size={18} className="animate-spin mr-2"/>
@@ -199,9 +192,9 @@ export default function WorktimeTab() {
         </button>
       </div>
 
-      {/* --- DIO KOJI SE PRINTA (A4 FORMAT) --- */}
+      {/* --- DIO ZA PRINTANJE (ID: print-section) --- */}
       <div
-        ref={printRef}
+        id="print-section" 
         className="bg-white text-black p-10 w-full max-w-[210mm] shadow-2xl print:shadow-none print:p-0 print:m-0 print:w-full"
         style={{ minHeight: "297mm", fontFamily: "Arial, sans-serif" }}
       >
@@ -263,12 +256,36 @@ export default function WorktimeTab() {
         </div>
       </div>
 
+      {/* --- AGRESIVNI CSS ZA PRINTANJE --- */}
       <style>{`
         @media print {
-          @page { size: A4; margin: 10mm; }
-          body { background: white; }
-          .no-print { display: none !important; }
-          .shadow-2xl { box-shadow: none !important; }
+          /* 1. Sakrij SVE u body-ju */
+          body * {
+            visibility: hidden;
+          }
+          
+          /* 2. Pokaži samo naš print kontejner i njegov sadržaj */
+          #print-section, #print-section * {
+            visibility: visible;
+          }
+
+          /* 3. Pozicioniraj print sekciju na vrh stranice */
+          #print-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background: white;
+            box-shadow: none !important;
+          }
+          
+          /* 4. Sakrij header/footer od browsera ako je moguće */
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
         }
       `}</style>
     </div>
