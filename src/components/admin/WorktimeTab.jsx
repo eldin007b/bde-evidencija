@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Printer, Loader2 } from "lucide-react";
-import { jsPDF } from "jspdf";
 import {
   supabase,
   getAllDriversCloud,
   getDeliveriesByDriverCloud
 } from "../../db/supabaseClient";
 
-/* IMENA VOZAČA – ORIGINAL */
+/* ORIGINALNA IMENA VOZAČA */
 const PREFERRED_NAMES = {
   8640: "Arnes Hokic",
   8620: "Denis Frelih",
@@ -29,35 +27,57 @@ export default function WorktimeTab() {
   const [workData, setWorkData] = useState([]);
   const [urlaubData, setUrlaubData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fatalError, setFatalError] = useState(null);
 
   /* LOAD DRIVERS */
   useEffect(() => {
-    getAllDriversCloud().then(setDrivers);
+    (async () => {
+      try {
+        const data = await getAllDriversCloud();
+        setDrivers(data || []);
+      } catch (e) {
+        console.error(e);
+        setDrivers([]);
+      }
+    })();
   }, []);
 
   /* LOAD DATA */
   useEffect(() => {
-    async function load() {
-      setLoading(true);
+    (async () => {
+      try {
+        setLoading(true);
 
-      const deliveries = await getDeliveriesByDriverCloud(driver, year, month - 1);
-      setWorkData(deliveries || []);
+        const deliveries = await getDeliveriesByDriverCloud(
+          driver,
+          year,
+          month - 1
+        );
+        setWorkData(deliveries || []);
 
-      const start = `${year}-${String(month).padStart(2, "0")}-01`;
-      const end = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
+        const start = `${year}-${String(month).padStart(2, "0")}-01`;
+        const end = `${year}-${String(month).padStart(2, "0")}-${new Date(
+          year,
+          month,
+          0
+        ).getDate()}`;
 
-      const { data: urlaub } = await supabase
-        .from("urlaub_marks")
-        .select("date")
-        .eq("driver", driver)
-        .gte("date", start)
-        .lte("date", end)
-        .eq("is_active", true);
+        const { data: urlaub } = await supabase
+          .from("urlaub_marks")
+          .select("date")
+          .eq("driver", driver)
+          .gte("date", start)
+          .lte("date", end)
+          .eq("is_active", true);
 
-      setUrlaubData(urlaub || []);
-      setLoading(false);
-    }
-    load();
+        setUrlaubData(urlaub || []);
+      } catch (e) {
+        console.error(e);
+        setFatalError("Greška pri učitavanju podataka");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [driver, month, year]);
 
   const currentDriverName =
@@ -73,7 +93,9 @@ export default function WorktimeTab() {
 
     const result = Array.from({ length: days }, (_, i) => {
       const day = i + 1;
-      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(
+        day
+      ).padStart(2, "0")}`;
 
       const isUrlaub = urlaubData.some(u => u.date === dateStr);
       const delivery = workData.find(d => d.date === dateStr);
@@ -117,101 +139,129 @@ export default function WorktimeTab() {
     return { rows: result, totalHours: sum };
   }, [workData, urlaubData, month, year]);
 
-  /* PDF */
-  const generatePDF = () => {
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    doc.setFont("helvetica");
+  /* PDF – LAZY IMPORT (PWA SAFE) */
+  const generatePDF = async () => {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-    doc.setFontSize(14).setFont("helvetica", "bold");
-    doc.text("Arbeitszeitaufzeichnungen", 105, 20, { align: "center" });
+      doc.setFont("helvetica");
 
-    doc.setFontSize(10).setFont("helvetica", "normal");
-    doc.text("Nachname und Vorname:", 14, 30);
-    doc.setFont("helvetica", "bold");
-    doc.text(currentDriverName, 60, 30);
+      doc.setFontSize(14).setFont("helvetica", "bold");
+      doc.text("Arbeitszeitaufzeichnungen", 105, 20, { align: "center" });
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Monat und Jahr:", 135, 30);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${String(month).padStart(2, "0")}/${year}`, 170, 30);
+      doc.setFontSize(10).setFont("helvetica", "normal");
+      doc.text("Nachname und Vorname:", 14, 30);
+      doc.setFont("helvetica", "bold");
+      doc.text(currentDriverName, 60, 30);
 
-    const headers = [
-      "Tag",
-      "Arbeitsbeginn",
-      "Arbeitsende",
-      "Pause (von - bis)",
-      "Tagesarbeitszeit",
-      "Notizen"
-    ];
-    const widths = [10, 28, 28, 38, 26, 52];
-    const startY = 36;
-    const rowH = 6.8;
+      doc.setFont("helvetica", "normal");
+      doc.text("Monat und Jahr:", 135, 30);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${String(month).padStart(2, "0")}/${year}`, 170, 30);
 
-    let x = 14;
-    headers.forEach((h, i) => {
-      doc.rect(x, startY, widths[i], rowH);
-      doc.text(h, x + widths[i] / 2, startY + 4.5, { align: "center" });
-      x += widths[i];
-    });
+      const headers = [
+        "Tag",
+        "Arbeitsbeginn",
+        "Arbeitsende",
+        "Pause (von - bis)",
+        "Tagesarbeitszeit",
+        "Notizen"
+      ];
+      const widths = [10, 28, 28, 38, 26, 52];
+      const startY = 36;
+      const rowH = 6.8;
 
-    let y = startY + rowH;
-
-    rows.forEach(r => {
-      let cx = 14;
-      const values = [r.day, r.start, r.end, r.pause, r.hours, r.note];
-
-      values.forEach((val, i) => {
-        doc.rect(cx, y, widths[i], rowH);
-
-        if (r.isUrlaub && i === 5) {
-          doc.setTextColor(200, 0, 0); // crveno samo URLAUB
-        } else {
-          doc.setTextColor(0, 0, 0);
-        }
-
-        doc.text(
-          String(val),
-          i === 0 ? cx + 2 : cx + widths[i] / 2,
-          y + 4.5,
-          { align: i === 0 ? "left" : "center" }
-        );
-        cx += widths[i];
+      let x = 14;
+      headers.forEach((h, i) => {
+        doc.rect(x, startY, widths[i], rowH);
+        doc.text(h, x + widths[i] / 2, startY + 4.5, { align: "center" });
+        x += widths[i];
       });
 
-      y += rowH;
-    });
+      let y = startY + rowH;
 
-    doc.setTextColor(0);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Gesamtarbeitszeit: ${totalHours} Stunden`, 14, y + 8);
+      rows.forEach(r => {
+        let cx = 14;
+        const values = [r.day, r.start, r.end, r.pause, r.hours, r.note];
 
-    const signY = y + 30;
-    doc.line(20, signY, 85, signY);
-    doc.text("Unterschrift Fahrer", 52, signY + 6, { align: "center" });
-    doc.line(120, signY, 185, signY);
-    doc.text("Unterschrift Firma", 152, signY + 6, { align: "center" });
+        values.forEach((val, i) => {
+          doc.rect(cx, y, widths[i], rowH);
 
-    doc.save(`Arbeitszeit_${currentDriverName.replace(/ /g, "_")}_${month}_${year}.pdf`);
+          if (r.isUrlaub && i === 5) {
+            doc.setTextColor(200, 0, 0);
+          } else {
+            doc.setTextColor(0, 0, 0);
+          }
+
+          doc.text(
+            String(val),
+            i === 0 ? cx + 2 : cx + widths[i] / 2,
+            y + 4.5,
+            { align: i === 0 ? "left" : "center" }
+          );
+          cx += widths[i];
+        });
+
+        y += rowH;
+      });
+
+      doc.setTextColor(0);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Gesamtarbeitszeit: ${totalHours} Stunden`, 14, y + 8);
+
+      doc.save(
+        `Arbeitszeit_${currentDriverName.replace(/ /g, "_")}_${month}_${year}.pdf`
+      );
+    } catch (e) {
+      console.error(e);
+      alert("PDF greška (PWA safe)");
+    }
   };
+
+  /* FATAL FALLBACK */
+  if (fatalError) {
+    return <div className="p-6 text-red-600">{fatalError}</div>;
+  }
 
   /* UI */
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex gap-4 mb-4 items-end">
-        <select value={driver} onChange={e => setDriver(e.target.value)} className="border p-2 rounded">
+      <div className="flex gap-3 mb-4 items-end">
+        <select
+          value={driver}
+          onChange={e => setDriver(e.target.value)}
+          className="border p-2 rounded"
+        >
           {Object.entries(PREFERRED_NAMES).map(([id, name]) => (
-            <option key={id} value={id}>{name}</option>
+            <option key={id} value={id}>
+              {name}
+            </option>
           ))}
         </select>
 
-        <input type="number" value={month} onChange={e => setMonth(+e.target.value)} className="border p-2 w-20 rounded" />
-        <input type="number" value={year} onChange={e => setYear(+e.target.value)} className="border p-2 w-24 rounded" />
+        <input
+          type="number"
+          value={month}
+          onChange={e => setMonth(+e.target.value)}
+          className="border p-2 w-20 rounded"
+        />
+        <input
+          type="number"
+          value={year}
+          onChange={e => setYear(+e.target.value)}
+          className="border p-2 w-24 rounded"
+        />
 
-        {loading && <Loader2 className="animate-spin" />}
-        <button onClick={generatePDF} className="ml-auto bg-blue-600 text-white px-6 py-2 rounded flex gap-2">
-          <Printer /> Download PDF
+        <button
+          onClick={generatePDF}
+          className="ml-auto bg-blue-600 text-white px-6 py-2 rounded"
+        >
+          Download PDF
         </button>
       </div>
+
+      {loading && <div>Učitavanje…</div>}
 
       {/* PREVIEW */}
       <div
@@ -244,4 +294,4 @@ export default function WorktimeTab() {
       </div>
     </div>
   );
-}w
+}
