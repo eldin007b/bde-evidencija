@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import Tesseract from "tesseract.js";
-import { Upload, Printer, Calendar } from "lucide-react";
+import { Upload, Printer, Calendar, Loader2 } from "lucide-react";
 
 const WORKDAY = {
   beginn: "05:30",
-  ende: "14:00",
   pause: "11:30–12:00",
+  ende: "14:00",
   hours: "8",
   ladezeit: "3"
 };
@@ -13,53 +12,97 @@ const WORKDAY = {
 export default function WorktimeTab() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [error, setError] = useState(null);
 
+  /**
+   * OCR + parsing deliveries screenshot
+   */
   const processImage = async (file) => {
     setLoading(true);
-    const url = URL.createObjectURL(file);
-    setImage(url);
+    setError(null);
+    setRows([]);
+    setImagePreview(URL.createObjectURL(file));
 
-    const { data } = await Tesseract.recognize(file, "deu+eng");
+    try {
+      // ✅ LAZY LOAD – FIX za Vite + PWA
+      const { default: Tesseract } = await import("tesseract.js");
 
-    const lines = data.text.split("\n");
+      const result = await Tesseract.recognize(
+        file,
+        "deu+eng",
+        {
+          logger: () => {} // možeš uključiti console.log ako hoćeš
+        }
+      );
 
-    const days = [];
+      const text = result.data.text;
+      const lines = text.split("\n");
 
-    lines.forEach(line => {
-      const match = line.match(/^(\d{1,2})\.\s+(Urlaub|–|\d+)/i);
-      if (!match) return;
+      /**
+       * Očekivani redovi iz deliveries:
+       * 01.12.   94
+       * 24.12.   Urlaub
+       * 19.12.   –
+       */
+      const parsed = [];
 
-      const day = Number(match[1]);
-      const value = match[2];
+      lines.forEach((line) => {
+        const clean = line.replace(/\s+/g, " ").trim();
 
-      if (value.toLowerCase().includes("urlaub")) {
-        days.push({ day, type: "URLAUB" });
-      } else if (value === "–") {
-        days.push({ day, type: "OFF" });
-      } else {
-        days.push({ day, type: "RAD" });
-      }
-    });
+        // hvata: 1.12., 01.12., 1. 12.
+        const match = clean.match(/^(\d{1,2})\.\s*(Urlaub|urlaub|–|-|\d+)/);
+        if (!match) return;
 
-    setRows(days);
-    setLoading(false);
+        const day = Number(match[1]);
+        const value = match[2].toLowerCase();
+
+        if (value.includes("urlaub")) {
+          parsed.push({ day, type: "URLAUB" });
+        } else if (value === "–" || value === "-") {
+          parsed.push({ day, type: "OFF" });
+        } else {
+          parsed.push({ day, type: "RAD" });
+        }
+      });
+
+      // sortiraj po danima
+      parsed.sort((a, b) => a.day - b.day);
+      setRows(parsed);
+
+    } catch (e) {
+      console.error(e);
+      setError("Greška pri OCR obradi slike");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
     <div className="space-y-6">
 
-      <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700">
-        <div className="flex items-center gap-3 mb-4">
-          <Calendar className="text-cyan-400" />
+      {/* HEADER */}
+      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
+        <div className="flex items-center gap-3">
+          <Calendar className="w-6 h-6 text-cyan-400" />
           <h2 className="text-xl font-bold text-white">
             Evidencija rada (Screenshot → PDF)
           </h2>
         </div>
+        <p className="text-gray-400 text-sm mt-1">
+          Automatski generiše Arbeitszeitaufzeichnung 1:1 iz deliveries screenshota
+        </p>
+      </div>
 
+      {/* UPLOAD */}
+      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
         <label className="flex items-center gap-3 cursor-pointer text-gray-300">
-          <Upload />
-          Upload Screenshot (Deliveries)
+          <Upload className="w-5 h-5" />
+          Upload deliveries screenshot
           <input
             type="file"
             accept="image/*"
@@ -68,16 +111,35 @@ export default function WorktimeTab() {
           />
         </label>
 
-        {loading && <p className="text-yellow-400 mt-3">⏳ OCR obrada…</p>}
-        {image && <img src={image} className="mt-4 rounded-xl border border-gray-700 max-h-64" />}
+        {loading && (
+          <div className="flex items-center gap-2 mt-4 text-yellow-400">
+            <Loader2 className="animate-spin" />
+            OCR obrada u toku…
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 text-red-400">
+            {error}
+          </div>
+        )}
+
+        {imagePreview && (
+          <img
+            src={imagePreview}
+            alt="Screenshot preview"
+            className="mt-4 rounded-xl border border-gray-700 max-h-64"
+          />
+        )}
       </div>
 
+      {/* TABLE */}
       {rows.length > 0 && (
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700">
-          <table className="w-full text-white text-sm">
+        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700 overflow-x-auto">
+          <table className="w-full text-sm text-white border-collapse">
             <thead>
-              <tr className="text-gray-400 border-b border-gray-700">
-                <th>Tag</th>
+              <tr className="bg-gray-800 text-gray-300">
+                <th className="p-2">Tag</th>
                 <th>Status</th>
                 <th>Beginn</th>
                 <th>Pause</th>
@@ -87,33 +149,34 @@ export default function WorktimeTab() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(r => (
-                <tr key={r.day} className="border-b border-gray-800">
-                  <td className="text-center">{r.day}</td>
+              {rows.map((row) => (
+                <tr key={row.day} className="border-b border-gray-700">
+                  <td className="text-center p-2">{row.day}</td>
 
-                  {r.type === "RAD" && (
+                  {row.type === "RAD" && (
                     <>
-                      <td>RAD</td>
-                      <td>{WORKDAY.beginn}</td>
-                      <td>{WORKDAY.pause}</td>
-                      <td>{WORKDAY.ende}</td>
-                      <td>{WORKDAY.hours}</td>
-                      <td>{WORKDAY.ladezeit}</td>
+                      <td className="text-center">RAD</td>
+                      <td className="text-center">{WORKDAY.beginn}</td>
+                      <td className="text-center">{WORKDAY.pause}</td>
+                      <td className="text-center">{WORKDAY.ende}</td>
+                      <td className="text-center">{WORKDAY.hours}</td>
+                      <td className="text-center">{WORKDAY.ladezeit}</td>
                     </>
                   )}
 
-                  {r.type === "URLAUB" && (
+                  {row.type === "URLAUB" && (
                     <>
-                      <td colSpan="5">URLAUB</td>
-                      <td>0</td>
-                      <td>—</td>
+                      <td className="text-center font-bold">URLAUB</td>
+                      <td colSpan="4" className="text-center">—</td>
+                      <td className="text-center">0</td>
+                      <td className="text-center">—</td>
                     </>
                   )}
 
-                  {r.type === "OFF" && (
+                  {row.type === "OFF" && (
                     <>
-                      <td colSpan="6">—</td>
-                      <td>—</td>
+                      <td colSpan="6" className="text-center">—</td>
+                      <td className="text-center">—</td>
                     </>
                   )}
                 </tr>
@@ -121,15 +184,34 @@ export default function WorktimeTab() {
             </tbody>
           </table>
 
-          <button
-            onClick={() => window.print()}
-            className="mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 rounded-xl font-bold"
-          >
-            <Printer className="inline mr-2" />
-            Print / Save PDF
-          </button>
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 rounded-xl font-bold text-white"
+            >
+              <Printer className="w-5 h-5" />
+              Print / Save PDF
+            </button>
+          </div>
         </div>
       )}
+
+      {/* SIGNATURE */}
+      {rows.length > 0 && (
+        <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-white">
+            <div>
+              <p className="mb-2">Unterschrift Mitarbeiter:</p>
+              <div className="border-b border-gray-500 h-8" />
+            </div>
+            <div>
+              <p className="mb-2">Unterschrift Firma:</p>
+              <div className="border-b border-gray-500 h-8" />
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
