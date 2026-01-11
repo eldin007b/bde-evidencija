@@ -1,192 +1,176 @@
-import React, { useState } from "react";
-import { Upload, Printer, Calendar, Loader2 } from "lucide-react";
+import React, { useMemo, useRef } from "react";
+import { Download, Printer } from "lucide-react";
+import html2pdf from "html2pdf.js";
 
 /**
- * FIX:
- * Tesseract se učitava PREKO CDN-a
- * (Vite + PWA build SAFE)
+ * OČEKUJEŠ DA deliveries već postoje u aplikaciji
+ * Format (po danu):
+ * {
+ *   date: "2025-12-01",
+ *   value: number | "Urlaub" | "-"
+ * }
+ *
+ * value > 0  => RAD
+ * value === "Urlaub" => URLAUB
+ * value === "-" ili null => —
  */
-function loadTesseract() {
-  return new Promise((resolve, reject) => {
-    if (window.Tesseract) {
-      resolve(window.Tesseract);
-      return;
-    }
 
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/tesseract.js@5.0.4/dist/tesseract.min.js";
-    script.async = true;
+const WORK_START = "05:30";
+const WORK_END = "14:00";
+const BREAK_TIME = "11:30–12:00";
+const WORK_HOURS = 8;
+const LADEZEIT = 3;
 
-    script.onload = () => {
-      if (window.Tesseract) resolve(window.Tesseract);
-      else reject(new Error("Tesseract not available"));
-    };
+export default function WorktimeTab({
+  driverName = "Arnes",
+  month = 12,
+  year = 2025,
+  deliveries = [] // ⬅ OBAVEZNO: iste deliveries koje koristi Pregled Dostava
+}) {
+  const printRef = useRef(null);
 
-    script.onerror = () => reject(new Error("Failed to load Tesseract"));
-    document.body.appendChild(script);
-  });
-}
+  const daysInMonth = new Date(year, month, 0).getDate();
 
-const WORKDAY = {
-  beginn: "05:30",
-  pause: "11:30–12:00",
-  ende: "14:00",
-  hours: "8",
-  ladezeit: "3"
-};
+  const rows = useMemo(() => {
+    const map = {};
+    deliveries.forEach(d => {
+      const day = Number(d.date.split("-")[2]);
+      map[day] = d.value;
+    });
 
-export default function WorktimeTab() {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [error, setError] = useState(null);
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const value = map[day];
 
-  const processImage = async (file) => {
-    setLoading(true);
-    setError(null);
-    setRows([]);
-    setImagePreview(URL.createObjectURL(file));
+      if (value === "Urlaub") {
+        return {
+          day,
+          status: "URLAUB",
+          start: "-",
+          break: "-",
+          end: "-",
+          hours: "-",
+          ladezeit: "-"
+        };
+      }
 
-    try {
-      const Tesseract = await loadTesseract();
+      if (typeof value === "number" && value > 0) {
+        return {
+          day,
+          status: "RAD",
+          start: WORK_START,
+          break: BREAK_TIME,
+          end: WORK_END,
+          hours: WORK_HOURS,
+          ladezeit: LADEZEIT
+        };
+      }
 
-      const { data } = await Tesseract.recognize(file, "deu+eng");
-      const lines = data.text.split("\n");
+      return {
+        day,
+        status: "—",
+        start: "-",
+        break: "-",
+        end: "-",
+        hours: "-",
+        ladezeit: "-"
+      };
+    });
+  }, [deliveries, daysInMonth]);
 
-      const parsed = [];
-
-      lines.forEach((line) => {
-        const clean = line.replace(/\s+/g, " ").trim();
-        const match = clean.match(/^(\d{1,2})\.\s*(Urlaub|urlaub|–|-|\d+)/);
-        if (!match) return;
-
-        const day = Number(match[1]);
-        const value = match[2].toLowerCase();
-
-        if (value.includes("urlaub")) {
-          parsed.push({ day, type: "URLAUB" });
-        } else if (value === "-" || value === "–") {
-          parsed.push({ day, type: "OFF" });
-        } else {
-          parsed.push({ day, type: "RAD" });
-        }
-      });
-
-      parsed.sort((a, b) => a.day - b.day);
-      setRows(parsed);
-    } catch (e) {
-      console.error(e);
-      setError("OCR greška – provjeri screenshot");
-    } finally {
-      setLoading(false);
-    }
+  const exportPDF = () => {
+    html2pdf()
+      .set({
+        margin: 10,
+        filename: `Arbeitszeit_${driverName}_${month}_${year}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      })
+      .from(printRef.current)
+      .save();
   };
+
+  const totalHours = rows.reduce(
+    (sum, r) => (r.hours === 8 ? sum + 8 : sum),
+    0
+  );
 
   return (
     <div className="space-y-6">
+      {/* ACTIONS */}
+      <div className="flex gap-3">
+        <button
+          onClick={exportPDF}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700"
+        >
+          <Download size={18} /> Export PDF
+        </button>
 
-      {/* HEADER */}
-      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
-        <div className="flex items-center gap-3">
-          <Calendar className="w-6 h-6 text-cyan-400" />
-          <h2 className="text-xl font-bold text-white">
-            Evidencija rada (Screenshot → PDF)
-          </h2>
-        </div>
-        <p className="text-gray-400 text-sm mt-1">
-          Automatski Arbeitszeitaufzeichnung – 1:1 kao službeni PDF
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-700 text-white font-semibold hover:bg-gray-800"
+        >
+          <Printer size={18} /> Print
+        </button>
+      </div>
+
+      {/* PRINT AREA */}
+      <div
+        ref={printRef}
+        className="bg-white text-black p-6 rounded-xl shadow"
+      >
+        <h1 className="text-xl font-bold mb-2">
+          Arbeitszeitaufzeichnung
+        </h1>
+
+        <p className="mb-4">
+          <strong>Mitarbeiter:</strong> {driverName}<br />
+          <strong>Monat:</strong> {String(month).padStart(2, "0")}/{year}
         </p>
-      </div>
 
-      {/* UPLOAD */}
-      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
-        <label className="flex items-center gap-3 cursor-pointer text-gray-300">
-          <Upload className="w-5 h-5" />
-          Upload deliveries screenshot
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => processImage(e.target.files[0])}
-          />
-        </label>
-
-        {loading && (
-          <div className="flex items-center gap-2 mt-4 text-yellow-400">
-            <Loader2 className="animate-spin" />
-            OCR obrada…
-          </div>
-        )}
-
-        {error && <div className="mt-4 text-red-400">{error}</div>}
-
-        {imagePreview && (
-          <img
-            src={imagePreview}
-            className="mt-4 rounded-xl border border-gray-700 max-h-64"
-          />
-        )}
-      </div>
-
-      {/* TABLE */}
-      {rows.length > 0 && (
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700 overflow-x-auto">
-          <table className="w-full text-sm text-white">
-            <thead className="bg-gray-800">
-              <tr>
-                <th className="p-2">Dan</th>
-                <th>Status</th>
-                <th>Početak</th>
-                <th>Pauza</th>
-                <th>Kraj</th>
-                <th>Sati</th>
-                <th>Ladezeit</th>
+        <table className="w-full border border-black border-collapse text-sm">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border p-2">Tag</th>
+              <th className="border p-2">Status</th>
+              <th className="border p-2">Beginn</th>
+              <th className="border p-2">Pause</th>
+              <th className="border p-2">Ende</th>
+              <th className="border p-2">Stunden</th>
+              <th className="border p-2">Ladezeit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.day}>
+                <td className="border p-2 text-center">{r.day}</td>
+                <td className="border p-2 text-center">{r.status}</td>
+                <td className="border p-2 text-center">{r.start}</td>
+                <td className="border p-2 text-center">{r.break}</td>
+                <td className="border p-2 text-center">{r.end}</td>
+                <td className="border p-2 text-center">{r.hours}</td>
+                <td className="border p-2 text-center">{r.ladezeit}</td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.day} className="border-b border-gray-700">
-                  <td className="text-center p-2">{r.day}</td>
+            ))}
+          </tbody>
+        </table>
 
-                  {r.type === "RAD" ? (
-                    <>
-                      <td className="text-center">RAD</td>
-                      <td className="text-center">{WORKDAY.beginn}</td>
-                      <td className="text-center">{WORKDAY.pause}</td>
-                      <td className="text-center">{WORKDAY.ende}</td>
-                      <td className="text-center">{WORKDAY.hours}</td>
-                      <td className="text-center">{WORKDAY.ladezeit}</td>
-                    </>
-                  ) : r.type === "URLAUB" ? (
-                    <>
-                      <td className="text-center font-bold">URLAUB</td>
-                      <td colSpan="4" className="text-center">—</td>
-                      <td className="text-center">0</td>
-                      <td className="text-center">—</td>
-                    </>
-                  ) : (
-                    <>
-                      <td colSpan="6" className="text-center">—</td>
-                      <td className="text-center">—</td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-4 font-semibold">
+          Ukupno radnih sati: {totalHours}
+        </div>
 
-          <div className="flex justify-end mt-6">
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 rounded-xl font-bold"
-            >
-              <Printer className="w-5 h-5" />
-              Print / Save PDF
-            </button>
+        <div className="mt-8 flex justify-between">
+          <div>
+            ___________________________<br />
+            Unterschrift Mitarbeiter
+          </div>
+          <div>
+            ___________________________<br />
+            Unterschrift Firma
           </div>
         </div>
-      )}
-
+      </div>
     </div>
   );
 }
