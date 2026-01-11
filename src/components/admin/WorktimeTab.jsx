@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Printer, User, Loader2 } from "lucide-react";
-
-// UKLONIO SAM html2pdf IMPORT JER TI NE TREBA
-// OVO KORISTI SAMO TVOJE POSTOJEĆE FAJLOVE
+import { Printer, User, Loader2, Download } from "lucide-react";
+// Import biblioteka za generisanje PDF-a (Ista tehnologija kao InvoicesTab)
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import { 
   supabase, 
@@ -81,7 +81,7 @@ export default function WorktimeTab() {
     loadWorkData();
   }, [selectedDriverTura, month, year]);
 
-  // 3. Logika tabele
+  // 3. Priprema podataka (Rows)
   const { rows, totalHours } = useMemo(() => {
     const daysInMonth = new Date(year, month, 0).getDate();
     let sumHours = 0;
@@ -101,7 +101,6 @@ export default function WorktimeTab() {
         pause: "—",
         hours: "—",
         note: "", 
-        isWork: false,
         isUrlaub: false
       };
 
@@ -117,9 +116,7 @@ export default function WorktimeTab() {
         row.pause = BREAK_TIME;
         row.hours = WORK_HOURS;
         row.note = NOTE_WORK;
-        row.isWork = true;
       }
-      
       return row;
     });
 
@@ -129,13 +126,105 @@ export default function WorktimeTab() {
   const dbDriver = drivers.find(d => d.tura == selectedDriverTura);
   const currentDriverName = PREFERRED_NAMES[selectedDriverTura] || (dbDriver ? (dbDriver.ime || dbDriver.name) : selectedDriverTura);
 
+  // --- GLAVNA FUNKCIJA: GENERISANJE PDF-a (jsPDF) ---
+  const generatePDF = () => {
+    const doc = new jsPDF();
+
+    // 1. Zaglavlje
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Arbeitszeitaufzeichnungen", 105, 15, { align: "center" });
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    // Lijevo: Ime
+    doc.text(`Nachname und Vorname: ${currentDriverName}`, 14, 30);
+    // Desno: Datum
+    doc.text(`Monat und Jahr: ${String(month).padStart(2, "0")}/${year}`, 196, 30, { align: "right" });
+
+    // 2. Tabela (koristeći autoTable)
+    const tableBody = rows.map(r => [
+      r.day,
+      r.start,
+      r.end,
+      r.pause,
+      r.hours,
+      r.note
+    ]);
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Tag', 'Arbeitsbeginn', 'Arbeitsende', 'Pause (von - bis)', 'Tagesarb.', 'Notizen']],
+      body: tableBody,
+      theme: 'grid', // Izgled mreže
+      styles: {
+        fontSize: 10,
+        cellPadding: 1, // Usko da stane
+        halign: 'center', // Centriran tekst svuda
+        valign: 'middle',
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0] // Crne linije
+      },
+      headStyles: {
+        fillColor: [240, 240, 240], // Svijetlo sivo zaglavlje
+        textColor: [0, 0, 0], // Crni tekst
+        fontStyle: 'bold',
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0]
+      },
+      columnStyles: {
+        0: { cellWidth: 10 }, // Tag
+        1: { cellWidth: 30 }, // Start
+        2: { cellWidth: 30 }, // End
+        3: { cellWidth: 35 }, // Pause
+        4: { cellWidth: 25 }, // Sati
+        5: { cellWidth: 'auto' } // Notizen (ostatak)
+      },
+      // Kuka za bojenje teksta u crveno ako je URLAUB
+      didParseCell: function (data) {
+        if (data.section === 'body') {
+           // Ako red ima notu "URLAUB", oboji tekst u crveno
+           const currentRow = rows[data.row.index];
+           if (currentRow && currentRow.isUrlaub) {
+             data.cell.styles.textColor = [220, 0, 0]; // Crvena boja
+             data.cell.styles.fontStyle = 'bold';
+           }
+        }
+      }
+    });
+
+    // 3. Footer (Ukupno sati i Potpisi)
+    const finalY = doc.lastAutoTable.finalY + 10; // Pozicija ispod tabele
+    
+    doc.setFont("helvetica", "bold");
+    doc.text(`Gesamtarbeitszeit: ${totalHours} Stunden`, 14, finalY);
+
+    // Linije za potpis
+    const signY = finalY + 25;
+    doc.setLineWidth(0.5);
+    
+    // Lijeva linija
+    doc.line(14, signY, 80, signY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Unterschrift Fahrer", 47, signY + 5, { align: "center" });
+
+    // Desna linija
+    doc.line(130, signY, 196, signY);
+    doc.text("Unterschrift Firma", 163, signY + 5, { align: "center" });
+
+    // 4. Otvori PDF (Save ili Open u novom tabu)
+    // Ovo otvara PDF direktno korisniku, identično kao Print preview
+    doc.save(`Arbeitszeit_${currentDriverName}_${month}_${year}.pdf`);
+  };
+
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- MENU (Sakriveno na printu) --- */}
-      <div className="w-full max-w-[210mm] bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-4 items-center justify-between no-print">
+      {/* --- MENU --- */}
+      <div className="w-full max-w-4xl bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-4 items-center flex-wrap">
-          {/* Odabir Vozača */}
           <div className="flex flex-col">
             <label className="text-xs font-bold text-gray-500 uppercase mb-1">Vozač</label>
             <select 
@@ -153,7 +242,6 @@ export default function WorktimeTab() {
               ))}
             </select>
           </div>
-          {/* Odabir Datuma */}
           <div className="flex flex-col">
             <label className="text-xs font-bold text-gray-500 uppercase mb-1">Period</label>
             <div className="flex gap-2 items-center">
@@ -165,124 +253,54 @@ export default function WorktimeTab() {
           {loading && <Loader2 size={18} className="animate-spin text-blue-600 ml-2"/>}
         </div>
 
-        {/* --- DUGME ZA PRINT / PDF --- */}
+        {/* --- DUGME ZA GENERISANJE PDF-a --- */}
         <button 
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition-all active:scale-95"
+            onClick={generatePDF}
+            className="flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg transition-all active:scale-95"
         >
-            <Printer size={18} />
-            Print / Save PDF
+            <Printer size={20} />
+            Print / Download PDF
         </button>
       </div>
 
-      {/* --- SECTION ZA PRINT (VIDLJIV NA EKRANU I PAPIRU) --- */}
-      <div 
-        id="print-section" 
-        className="bg-white text-black w-full max-w-[210mm] shadow-2xl p-8 mx-auto print:shadow-none print:p-0 print:m-0"
-      >
+      {/* --- PREVIEW NA EKRANU (Samo za gledanje, nije za printanje) --- */}
+      <div className="bg-white text-black w-full max-w-[210mm] shadow-2xl p-8 mx-auto hidden md:block">
+        <div className="opacity-50 text-center mb-4 text-xs uppercase tracking-widest text-gray-400">Preview (Klikni dugme iznad za PDF)</div>
         
-        {/* HEADER */}
-        <h1 className="text-xl font-bold mb-4 text-center uppercase tracking-wide border-b-0 pt-2" style={{ fontFamily: "Arial, sans-serif" }}>
+        <h1 className="text-xl font-bold mb-4 text-center uppercase border-b-0 pt-2">
           Arbeitszeitaufzeichnungen
         </h1>
 
-        <div className="flex justify-between items-end mb-4 px-1 text-base" style={{ fontFamily: "Arial, sans-serif" }}>
-            <div>
-                <strong>Nachname und Vorname:</strong> <span className="ml-2 text-lg">{currentDriverName}</span>
-            </div>
-            <div>
-                <strong>Monat und Jahr:</strong> <span className="ml-2 text-lg">{String(month).padStart(2, "0")}/{year}</span>
-            </div>
+        <div className="flex justify-between items-end mb-4 px-1 text-sm">
+            <div><strong>Nachname und Vorname:</strong> {currentDriverName}</div>
+            <div><strong>Monat und Jahr:</strong> {String(month).padStart(2, "0")}/{year}</div>
         </div>
 
-        {/* TABELA */}
-        <table className="w-full border-collapse border border-black text-center table-fixed" style={{ fontSize: "11px", fontFamily: "Arial, sans-serif", tableLayout: "fixed" }}>
-            <thead>
-                <tr className="bg-gray-200 print:bg-gray-200">
-                    <th className="border border-black p-1 w-[6%]">Tag</th>
-                    <th className="border border-black p-1 w-[16%]">Arbeitsbeginn</th>
-                    <th className="border border-black p-1 w-[16%]">Arbeitsende</th>
-                    <th className="border border-black p-1 w-[22%]">Pause (von - bis)</th>
-                    <th className="border border-black p-1 w-[14%]">Tagesarbeitszeit</th>
-                    <th className="border border-black p-1 w-[26%]">Notizen</th>
+        <table className="w-full border-collapse border border-gray-300 text-center text-xs">
+            <thead className="bg-gray-100">
+                <tr>
+                    <th className="border p-1">Tag</th>
+                    <th className="border p-1">Arbeitsbeginn</th>
+                    <th className="border p-1">Arbeitsende</th>
+                    <th className="border p-1">Pause</th>
+                    <th className="border p-1">Tagesarb.</th>
+                    <th className="border p-1">Notizen</th>
                 </tr>
             </thead>
             <tbody>
-                {rows.map((r) => {
-                    const rowColorClass = r.isUrlaub ? 'text-red-600 font-bold print:text-red-600' : 'text-black';
-                    
-                    return (
-                        <tr key={r.day} style={{ height: "24px" }} className={rowColorClass}>
-                            <td className="border border-black p-0 text-black">{r.day}</td>
-                            <td className="border border-black p-0">{r.start}</td>
-                            <td className="border border-black p-0">{r.end}</td>
-                            <td className="border border-black p-0">{r.pause}</td>
-                            <td className="border border-black p-0 font-medium text-black">{r.hours}</td>
-                            <td className="border border-black p-0 text-center">
-                                {r.note}
-                            </td>
-                        </tr>
-                    );
-                })}
+                {rows.map((r) => (
+                    <tr key={r.day} className={r.isUrlaub ? 'text-red-600 font-bold' : ''}>
+                        <td className="border p-1 text-black">{r.day}</td>
+                        <td className="border p-1">{r.start}</td>
+                        <td className="border p-1">{r.end}</td>
+                        <td className="border p-1">{r.pause}</td>
+                        <td className="border p-1 text-black">{r.hours}</td>
+                        <td className="border p-1">{r.note}</td>
+                    </tr>
+                ))}
             </tbody>
         </table>
-
-        {/* FOOTER */}
-        <div className="mt-4 font-bold text-base px-1" style={{ fontFamily: "Arial, sans-serif" }}>
-          Gesamtarbeitszeit: {totalHours} Stunden
-        </div>
-
-        <div className="mt-14 flex justify-between text-base pr-10 pl-1" style={{ fontFamily: "Arial, sans-serif" }}>
-          <div className="text-center">
-            <div className="border-t border-black w-64 pt-2"></div>
-            Unterschrift Fahrer
-          </div>
-          <div className="text-center">
-            <div className="border-t border-black w-64 pt-2"></div>
-            Unterschrift Firma
-          </div>
-        </div>
       </div>
-
-      {/* --- CSS KOJI POPRAVLJA PRAZAN PAPIR --- */}
-      <style>{`
-        @media print {
-            /* 1. Sakrij sve u body-ju */
-            body {
-                visibility: hidden;
-            }
-            /* 2. Isključi kontrolnu ploču */
-            .no-print {
-                display: none !important;
-            }
-            /* 3. PRIKAŽI SAMO PRINT SECTION I FIKSIRAJ GA NA VRH */
-            /* Ovo rješava problem kada aplikacija ima scroll ili sidebar */
-            #print-section {
-                visibility: visible;
-                position: fixed; /* Ključno: Lepi ga na vrh papira */
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                background: white; 
-                z-index: 9999;
-            }
-            #print-section * {
-                visibility: visible;
-            }
-            /* Forsiranje boja */
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            @page {
-                size: A4;
-                margin: 10mm;
-            }
-        }
-      `}</style>
     </div>
   );
 }
