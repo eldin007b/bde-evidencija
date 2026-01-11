@@ -1,169 +1,135 @@
 import React, { useState } from "react";
-import { Calendar, Upload, Printer, FileText } from "lucide-react";
+import Tesseract from "tesseract.js";
+import { Upload, Printer, Calendar } from "lucide-react";
 
-const DEFAULT_DAY = {
-  status: "RAD",
+const WORKDAY = {
   beginn: "05:30",
-  pause: "11:30–12:00",
   ende: "14:00",
-  stunden: "8",
+  pause: "11:30–12:00",
+  hours: "8",
   ladezeit: "3"
 };
 
-const DAYS_IN_MONTH = (month, year) =>
-  new Date(year, month, 0).getDate();
-
 export default function WorktimeTab() {
-  const [employee, setEmployee] = useState("Arnes Hokic");
-  const [month, setMonth] = useState("12");
-  const [year, setYear] = useState("2025");
-  const [urlaub, setUrlaub] = useState([24, 29, 31]);
-  const [screenshot, setScreenshot] = useState(null);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
 
-  const days = DAYS_IN_MONTH(Number(month), Number(year));
+  const processImage = async (file) => {
+    setLoading(true);
+    const url = URL.createObjectURL(file);
+    setImage(url);
 
-  const toggleUrlaub = (day) => {
-    setUrlaub((prev) =>
-      prev.includes(day)
-        ? prev.filter((d) => d !== day)
-        : [...prev, day]
-    );
-  };
+    const { data } = await Tesseract.recognize(file, "deu+eng");
 
-  const printPDF = () => {
-    window.print();
+    const lines = data.text.split("\n");
+
+    const days = [];
+
+    lines.forEach(line => {
+      const match = line.match(/^(\d{1,2})\.\s+(Urlaub|–|\d+)/i);
+      if (!match) return;
+
+      const day = Number(match[1]);
+      const value = match[2];
+
+      if (value.toLowerCase().includes("urlaub")) {
+        days.push({ day, type: "URLAUB" });
+      } else if (value === "–") {
+        days.push({ day, type: "OFF" });
+      } else {
+        days.push({ day, type: "RAD" });
+      }
+    });
+
+    setRows(days);
+    setLoading(false);
   };
 
   return (
     <div className="space-y-6">
 
-      {/* HEADER */}
-      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
+      <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700">
         <div className="flex items-center gap-3 mb-4">
-          <Calendar className="w-6 h-6 text-cyan-400" />
+          <Calendar className="text-cyan-400" />
           <h2 className="text-xl font-bold text-white">
-            Arbeitszeitaufzeichnung
+            Evidencija rada (Screenshot → PDF)
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input
-            value={employee}
-            onChange={(e) => setEmployee(e.target.value)}
-            className="rounded-xl bg-gray-900 text-white px-4 py-3 border border-gray-700"
-            placeholder="Mitarbeiter"
-          />
-
-          <input
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="rounded-xl bg-gray-900 text-white px-4 py-3 border border-gray-700"
-            placeholder="MM"
-          />
-
-          <input
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            className="rounded-xl bg-gray-900 text-white px-4 py-3 border border-gray-700"
-            placeholder="YYYY"
-          />
-
-          <button
-            onClick={printPDF}
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold"
-          >
-            <Printer className="w-5 h-5" />
-            Print / PDF
-          </button>
-        </div>
-      </div>
-
-      {/* UPLOAD */}
-      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
         <label className="flex items-center gap-3 cursor-pointer text-gray-300">
-          <Upload className="w-5 h-5" />
-          Upload Screenshot (Nachweis)
+          <Upload />
+          Upload Screenshot (Deliveries)
           <input
             type="file"
             accept="image/*"
             hidden
-            onChange={(e) => setScreenshot(URL.createObjectURL(e.target.files[0]))}
+            onChange={(e) => processImage(e.target.files[0])}
           />
         </label>
 
-        {screenshot && (
-          <img
-            src={screenshot}
-            alt="Screenshot"
-            className="mt-4 rounded-xl border border-gray-700 max-h-64"
-          />
-        )}
+        {loading && <p className="text-yellow-400 mt-3">⏳ OCR obrada…</p>}
+        {image && <img src={image} className="mt-4 rounded-xl border border-gray-700 max-h-64" />}
       </div>
 
-      {/* TABLE */}
-      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700 overflow-x-auto">
-        <table className="w-full text-sm text-white border-collapse">
-          <thead>
-            <tr className="bg-gray-800 text-gray-300">
-              <th className="p-2">Tag</th>
-              <th>Status</th>
-              <th>Beginn</th>
-              <th>Pause</th>
-              <th>Ende</th>
-              <th>Stunden</th>
-              <th>Ladezeit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: days }).map((_, i) => {
-              const day = i + 1;
-              const isUrlaub = urlaub.includes(day);
+      {rows.length > 0 && (
+        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700">
+          <table className="w-full text-white text-sm">
+            <thead>
+              <tr className="text-gray-400 border-b border-gray-700">
+                <th>Tag</th>
+                <th>Status</th>
+                <th>Beginn</th>
+                <th>Pause</th>
+                <th>Ende</th>
+                <th>Std</th>
+                <th>Ladezeit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r => (
+                <tr key={r.day} className="border-b border-gray-800">
+                  <td className="text-center">{r.day}</td>
 
-              return (
-                <tr
-                  key={day}
-                  onClick={() => toggleUrlaub(day)}
-                  className={`cursor-pointer border-b border-gray-700 ${
-                    isUrlaub ? "bg-amber-500/20" : ""
-                  }`}
-                >
-                  <td className="p-2 text-center">{day}</td>
-                  {isUrlaub ? (
+                  {r.type === "RAD" && (
                     <>
-                      <td className="text-center font-bold">URLAUB</td>
-                      <td colSpan="5" className="text-center">—</td>
+                      <td>RAD</td>
+                      <td>{WORKDAY.beginn}</td>
+                      <td>{WORKDAY.pause}</td>
+                      <td>{WORKDAY.ende}</td>
+                      <td>{WORKDAY.hours}</td>
+                      <td>{WORKDAY.ladezeit}</td>
                     </>
-                  ) : (
+                  )}
+
+                  {r.type === "URLAUB" && (
                     <>
-                      <td className="text-center">RAD</td>
-                      <td className="text-center">{DEFAULT_DAY.beginn}</td>
-                      <td className="text-center">{DEFAULT_DAY.pause}</td>
-                      <td className="text-center">{DEFAULT_DAY.ende}</td>
-                      <td className="text-center">{DEFAULT_DAY.stunden}</td>
-                      <td className="text-center">{DEFAULT_DAY.ladezeit}</td>
+                      <td colSpan="5">URLAUB</td>
+                      <td>0</td>
+                      <td>—</td>
+                    </>
+                  )}
+
+                  {r.type === "OFF" && (
+                    <>
+                      <td colSpan="6">—</td>
+                      <td>—</td>
                     </>
                   )}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
 
-      {/* SIGNATURE */}
-      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-white">
-          <div>
-            <p className="mb-2">Unterschrift Mitarbeiter:</p>
-            <div className="border-b border-gray-500 h-8" />
-          </div>
-          <div>
-            <p className="mb-2">Unterschrift Firma:</p>
-            <div className="border-b border-gray-500 h-8" />
-          </div>
+          <button
+            onClick={() => window.print()}
+            className="mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 rounded-xl font-bold"
+          >
+            <Printer className="inline mr-2" />
+            Print / Save PDF
+          </button>
         </div>
-      </div>
-
+      )}
     </div>
   );
 }
