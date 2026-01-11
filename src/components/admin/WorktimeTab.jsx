@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Printer, Download, User, Loader2 } from "lucide-react";
-// Import biblioteke za PDF export
-import html2pdf from 'html2pdf.js';
+import { Printer, User, Loader2 } from "lucide-react";
+
+// UKLONIO SAM html2pdf IMPORT JER TI NE TREBA
+// OVO KORISTI SAMO TVOJE POSTOJEĆE FAJLOVE
 
 import { 
   supabase, 
@@ -128,31 +129,10 @@ export default function WorktimeTab() {
   const dbDriver = drivers.find(d => d.tura == selectedDriverTura);
   const currentDriverName = PREFERRED_NAMES[selectedDriverTura] || (dbDriver ? (dbDriver.ime || dbDriver.name) : selectedDriverTura);
 
-  // --- FUNKCIJA ZA EXPORT PDF-a ---
-  const handleDownloadPDF = () => {
-    const element = document.getElementById('print-section');
-    const opt = {
-      margin: 10, // mm
-      filename: `Arbeitszeit_${currentDriverName}_${month}_${year}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 }, // Veća kvaliteta
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Privremeno učinimo element vidljivim za html2pdf ako je skriven
-    const originalPosition = element.style.position;
-    element.style.position = 'relative'; 
-    
-    html2pdf().set(opt).from(element).save().then(() => {
-        // Vrati na staro (iako CSS media print to ionako kontroliše)
-        element.style.position = originalPosition;
-    });
-  };
-
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- MENU --- */}
+      {/* --- MENU (Sakriveno na printu) --- */}
       <div className="w-full max-w-[210mm] bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-4 items-center justify-between no-print">
         <div className="flex gap-4 items-center flex-wrap">
           {/* Odabir Vozača */}
@@ -185,32 +165,20 @@ export default function WorktimeTab() {
           {loading && <Loader2 size={18} className="animate-spin text-blue-600 ml-2"/>}
         </div>
 
-        {/* --- DUGMAD --- */}
-        <div className="flex gap-3">
-            <button 
-                onClick={handleDownloadPDF}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 shadow-md transition-all active:scale-95"
-            >
-                <Download size={18} />
-                Download PDF
-            </button>
-            
-            <button 
-                onClick={() => window.print()}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition-all active:scale-95"
-            >
-                <Printer size={18} />
-                Print
-            </button>
-        </div>
+        {/* --- DUGME ZA PRINT / PDF --- */}
+        <button 
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition-all active:scale-95"
+        >
+            <Printer size={18} />
+            Print / Save PDF
+        </button>
       </div>
 
-      {/* --- SECTION ZA PRINT/EXPORT --- */}
-      {/* Vidljiv na ekranu ali stiliziran kao A4 list */}
+      {/* --- SECTION ZA PRINT (VIDLJIV NA EKRANU I PAPIRU) --- */}
       <div 
         id="print-section" 
         className="bg-white text-black w-full max-w-[210mm] shadow-2xl p-8 mx-auto print:shadow-none print:p-0 print:m-0"
-        style={{ minHeight: "297mm" }}
       >
         
         {/* HEADER */}
@@ -276,19 +244,22 @@ export default function WorktimeTab() {
         </div>
       </div>
 
-      {/* --- CSS --- */}
+      {/* --- CSS KOJI POPRAVLJA PRAZAN PAPIR --- */}
       <style>{`
-        /* CSS ZA PRINT (Kada se klikne Print dugme) */
         @media print {
+            /* 1. Sakrij sve u body-ju */
             body {
                 visibility: hidden;
             }
+            /* 2. Isključi kontrolnu ploču */
             .no-print {
                 display: none !important;
             }
+            /* 3. PRIKAŽI SAMO PRINT SECTION I FIKSIRAJ GA NA VRH */
+            /* Ovo rješava problem kada aplikacija ima scroll ili sidebar */
             #print-section {
                 visibility: visible;
-                position: fixed; 
+                position: fixed; /* Ključno: Lepi ga na vrh papira */
                 top: 0;
                 left: 0;
                 width: 100%;
@@ -296,12 +267,12 @@ export default function WorktimeTab() {
                 margin: 0;
                 padding: 0;
                 background: white; 
-                z-index: 9999; 
-                box-shadow: none !important;
+                z-index: 9999;
             }
             #print-section * {
                 visibility: visible;
             }
+            /* Forsiranje boja */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
