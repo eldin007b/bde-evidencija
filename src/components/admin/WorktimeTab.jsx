@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Printer, User, Loader2 } from "lucide-react";
 
-// Tvoje funkcije za bazu
 import { 
   supabase, 
   getAllDriversCloud, 
@@ -105,9 +104,10 @@ export default function WorktimeTab() {
       };
 
       if (isUrlaub) {
-        row.hours = "0";
+        row.hours = "0"; // I dalje nula sati, ali crtice u kolonama ostaju
         row.note = NOTE_VACATION;
-        row.isUrlaub = true;
+        row.isUrlaub = true; 
+        // Start/End/Pause su "—"
       } 
       else if (hasPackages) {
         sumHours += WORK_HOURS;
@@ -131,7 +131,7 @@ export default function WorktimeTab() {
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- CONTROL BAR (Sakriveno na printu) --- */}
+      {/* --- MENU (Sakriveno na printu) --- */}
       <div className="w-full max-w-[210mm] bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-6 items-center justify-between no-print">
         <div className="flex gap-4 items-center flex-wrap">
           <div className="flex flex-col">
@@ -170,108 +170,107 @@ export default function WorktimeTab() {
       </div>
 
       {/* --- PRINT SECTION --- */}
-      {/* Važno: Koristimo ref ili ID za CSS targetiranje */}
       <div id="print-section" className="bg-white text-black w-full">
         
         {/* HEADER */}
-        <h1 className="text-xl font-bold mb-6 text-center uppercase tracking-wide border-b-0 pt-4" style={{ fontFamily: "Arial, sans-serif" }}>
+        <h1 className="text-2xl font-bold mb-8 text-center uppercase tracking-wide border-b-0 pt-4" style={{ fontFamily: "Arial, sans-serif" }}>
           Arbeitszeitaufzeichnungen
         </h1>
 
-        <div className="flex justify-between items-end mb-4 px-2 text-sm" style={{ fontFamily: "Arial, sans-serif" }}>
+        <div className="flex justify-between items-end mb-6 px-2 text-base" style={{ fontFamily: "Arial, sans-serif" }}>
             <div>
-                <strong>Nachname und Vorname:</strong> <span className="ml-2 text-base">{currentDriverName}</span>
+                <strong>Nachname und Vorname:</strong> <span className="ml-2 text-lg">{currentDriverName}</span>
             </div>
             <div>
-                <strong>Monat und Jahr:</strong> <span className="ml-2 text-base">{String(month).padStart(2, "0")}/{year}</span>
+                <strong>Monat und Jahr:</strong> <span className="ml-2 text-lg">{String(month).padStart(2, "0")}/{year}</span>
             </div>
         </div>
 
-        {/* TABELA */}
-        <table className="w-full border-collapse border border-black text-center" style={{ fontSize: "11px", fontFamily: "Arial, sans-serif" }}>
+        {/* TABELA - VEĆI FONT (12px) I VEĆI REDOVI */}
+        <table className="w-full border-collapse border border-black text-center" style={{ fontSize: "12px", fontFamily: "Arial, sans-serif" }}>
             <thead>
                 <tr className="bg-gray-200 print:bg-gray-200">
-                    <th className="border border-black p-1 w-10">Tag</th>
-                    <th className="border border-black p-1 w-24">Arbeitsbeginn</th>
-                    <th className="border border-black p-1 w-24">Arbeitsende</th>
-                    <th className="border border-black p-1 w-32">Pause (von - bis)</th>
-                    <th className="border border-black p-1 w-24">Tagesarbeitszeit</th>
-                    <th className="border border-black p-1 text-left px-2">Notizen</th>
+                    <th className="border border-black p-1 w-[5%]">Tag</th>
+                    <th className="border border-black p-1 w-[13%]">Arbeitsbeginn</th>
+                    <th className="border border-black p-1 w-[13%]">Arbeitsende</th>
+                    <th className="border border-black p-1 w-[18%]">Pause (von - bis)</th>
+                    <th className="border border-black p-1 w-[13%]">Tagesarbeitszeit</th>
+                    <th className="border border-black p-1 text-left px-2 w-auto">Notizen</th>
                 </tr>
             </thead>
             <tbody>
-                {rows.map((r) => (
-                <tr key={r.day} style={{ height: "20px" }}>
-                    <td className="border border-black p-0">{r.day}</td>
-                    <td className="border border-black p-0">{r.start}</td>
-                    <td className="border border-black p-0">{r.end}</td>
-                    <td className="border border-black p-0">{r.pause}</td>
-                    <td className="border border-black p-0 font-medium">{r.hours}</td>
-                    <td className={`border border-black text-left px-2 ${r.isUrlaub ? 'text-red-600 font-bold print:text-red-600' : 'text-black'}`}>
-                        {r.note}
-                    </td>
-                </tr>
-                ))}
+                {rows.map((r) => {
+                    // Određujemo boju teksta za cijeli red
+                    const rowColorClass = r.isUrlaub ? 'text-red-600 font-bold print:text-red-600' : 'text-black';
+                    
+                    return (
+                        // Povećana visina reda na 28px da popuni stranicu
+                        <tr key={r.day} style={{ height: "28px" }} className={rowColorClass}>
+                            <td className="border border-black p-0 text-black">{r.day}</td> {/* Dan ostaje crn */}
+                            
+                            {/* Crtice postaju crvene ako je Urlaub */}
+                            <td className="border border-black p-0">{r.start}</td>
+                            <td className="border border-black p-0">{r.end}</td>
+                            <td className="border border-black p-0">{r.pause}</td>
+                            
+                            <td className="border border-black p-0 font-medium text-black">{r.hours}</td> {/* Sati ostaju crni (0) */}
+                            
+                            <td className="border border-black text-left px-2">
+                                {r.note}
+                            </td>
+                        </tr>
+                    );
+                })}
             </tbody>
         </table>
 
         {/* FOOTER */}
-        <div className="mt-4 font-bold text-sm px-2" style={{ fontFamily: "Arial, sans-serif" }}>
+        <div className="mt-6 font-bold text-base px-2" style={{ fontFamily: "Arial, sans-serif" }}>
           Gesamtarbeitszeit: {totalHours} Stunden
         </div>
 
-        <div className="mt-12 flex justify-between text-sm pr-10 pl-2" style={{ fontFamily: "Arial, sans-serif" }}>
+        <div className="mt-20 flex justify-between text-base pr-10 pl-2" style={{ fontFamily: "Arial, sans-serif" }}>
           <div className="text-center">
-            <div className="border-t border-black w-56 pt-2"></div>
+            <div className="border-t border-black w-64 pt-2"></div>
             Unterschrift Fahrer
           </div>
           <div className="text-center">
-            <div className="border-t border-black w-56 pt-2"></div>
+            <div className="border-t border-black w-64 pt-2"></div>
             Unterschrift Firma
           </div>
         </div>
       </div>
 
-      {/* --- OVO JE KLJUČNO ZA POPRAVAK PRINTANJA --- */}
+      {/* --- STYLES --- */}
       <style>{`
         @media print {
-            /* 1. Sakrij SVE u browseru */
             body {
                 visibility: hidden;
-                overflow: hidden; /* Spriječi skrolanje */
+                overflow: hidden; 
             }
-
-            /* 2. Isključi kontrolnu ploču */
             .no-print {
                 display: none !important;
             }
-
-            /* 3. Prikaži i FIKSIRAJ print sekciju na vrh */
             #print-section {
                 visibility: visible;
-                position: fixed; /* OVO JE FIX: Fiksira na vrh papira bez obzira na skrol */
+                position: fixed; 
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
                 margin: 0;
                 padding: 0;
-                background: white; /* Bijela pozadina prekriva sve ostalo */
-                z-index: 9999; /* Iznad svega */
+                background: white; 
+                z-index: 9999; 
             }
-
-            /* Osiguraj da se djeca vide */
             #print-section * {
                 visibility: visible;
             }
-
-            /* Boje */
+            /* Ovo osigurava da crvena boja bude isprintana */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-
-            /* A4 Margine */
             @page {
                 size: A4;
                 margin: 10mm;
