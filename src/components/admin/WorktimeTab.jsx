@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from '../../screens/AdminPanelScreen.module.css';
+import { CalendarDays } from 'lucide-react';
 import useDrivers from '../../hooks/useDrivers';
 
 export default function WorktimeTab() {
@@ -9,25 +9,19 @@ export default function WorktimeTab() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  const generateWorktime = () => {
-    if (!driverId) {
-      alert('Izaberi vozača');
-      return;
-    }
-
-    setLoading(true);
+  const generate = () => {
+    if (!driverId) return alert('Izaberi vozača');
 
     const daysInMonth = new Date(year, month, 0).getDate();
     const data = [];
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateObj = new Date(year, month - 1, day);
-      const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month - 1, d);
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
       data.push({
-        day,
+        day: d,
         status: isWeekend ? '—' : 'RAD',
         start: isWeekend ? '-' : '05:30',
         pause: isWeekend ? '-' : '11:30–12:00',
@@ -38,60 +32,60 @@ export default function WorktimeTab() {
     }
 
     setRows(data);
-    setLoading(false);
   };
 
   return (
-    <div className={styles.card}>
-      <h2>🕒 Evidencija rada vozača</h2>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <CalendarDays className="w-6 h-6 text-blue-400" />
+        <h2 className="text-xl font-bold text-white">Evidencija rada</h2>
+      </div>
 
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <select value={driverId} onChange={e => setDriverId(e.target.value)}>
+      <div className="flex gap-3 flex-wrap">
+        <select className="px-3 py-2 rounded-lg bg-gray-800 text-white" value={driverId} onChange={e => setDriverId(e.target.value)}>
           <option value="">— Vozač —</option>
           {drivers.map(d => (
-            <option key={d.id} value={d.id}>
-              {d.ime}
-            </option>
+            <option key={d.id} value={d.id}>{d.ime}</option>
           ))}
         </select>
 
-        <input type="number" min="1" max="12" value={month} onChange={e => setMonth(Number(e.target.value))} />
-        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} />
+        <input type="number" className="px-3 py-2 rounded-lg bg-gray-800 text-white w-24" value={month} min="1" max="12" onChange={e => setMonth(+e.target.value)} />
+        <input type="number" className="px-3 py-2 rounded-lg bg-gray-800 text-white w-28" value={year} onChange={e => setYear(+e.target.value)} />
 
-        <button onClick={generateWorktime}>
-          ⚙️ Generiši evidenciju
+        <button onClick={generate} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+          Generiši
         </button>
       </div>
 
-      {loading && <div>⏳ Generišem...</div>}
-
-      {!loading && rows.length > 0 && (
-        <table className="modern-table">
-          <thead>
-            <tr>
-              <th>Dan</th>
-              <th>Status</th>
-              <th>Početak</th>
-              <th>Pauza</th>
-              <th>Kraj</th>
-              <th>Sati</th>
-              <th>Ladezeit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(r => (
-              <tr key={r.day}>
-                <td>{r.day}</td>
-                <td>{r.status}</td>
-                <td>{r.start}</td>
-                <td>{r.pause}</td>
-                <td>{r.end}</td>
-                <td>{r.hours}</td>
-                <td>{r.ladezeit}</td>
+      {rows.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm text-white">
+            <thead className="bg-gray-800">
+              <tr>
+                <th className="px-3 py-2">Dan</th>
+                <th>Status</th>
+                <th>Početak</th>
+                <th>Pauza</th>
+                <th>Kraj</th>
+                <th>Sati</th>
+                <th>Ladezeit</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map(r => (
+                <tr key={r.day} className="border-b border-gray-700">
+                  <td className="px-3 py-2">{r.day}</td>
+                  <td>{r.status}</td>
+                  <td>{r.start}</td>
+                  <td>{r.pause}</td>
+                  <td>{r.end}</td>
+                  <td>{r.hours}</td>
+                  <td>{r.ladezeit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
