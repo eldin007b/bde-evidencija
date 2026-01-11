@@ -1,22 +1,23 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { Printer, User, RefreshCw, Loader2 } from "lucide-react";
+import { Printer, User, Loader2, Calendar } from "lucide-react";
 
-// --- KONFIGURACIJA SUPABASE ---
-const SUPABASE_URL = "https://dsltpiupbfopyvuiqffg.supabase.co";
-const SUPABASE_ANON_KEY = "OVDJE_ZALIJEPI_TVOJ_ANON_KEY_IZ_SUPABASE_DASHBOARDA";
+// UVOZIMO TVOJ POSTOJEĆI SERVIS
+// (Ovo automatski koristi tvoj API Key iz .env fajla, ne moraš ga ovdje kucati)
+import { 
+  supabase, 
+  getAllDriversCloud, 
+  getDeliveriesByDriverCloud 
+} from "./supabaseService"; 
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// --- IMENA VOZAČA ---
-const DRIVER_MAPPING = {
-  8640: "Arnes Hokić",
+/* TVOJA SPECIFIČNA IMENA (Mapiranje ID -> Ime koje želiš na PDF-u) */
+const PREFERRED_NAMES = {
+  8640: "Arnes Hokic",
   8620: "Denis Frelih",
   8610: "Eldin Begić",
-  8630: "Katarina Begić"
+  8630: "Nina Begić"
 };
 
-// --- POSTAVKE PDF-a ---
+/* KONFIGURACIJA PDF-a */
 const WORK_START = "05:30";
 const WORK_END = "14:00";
 const BREAK_TIME = "11:30-12:00";
@@ -25,76 +26,87 @@ const NOTE_WORK = "Ladezeit 3 Std./Tag";
 const NOTE_VACATION = "URLAUB";
 
 export default function WorktimeTab() {
-  // State
-  const [selectedDriverId, setSelectedDriverId] = useState("8640");
+  // --- STATE ---
+  const [drivers, setDrivers] = useState([]); 
+  const [selectedDriverTura, setSelectedDriverTura] = useState("8640"); // Default Arnes
+  
   const [month, setMonth] = useState(12);
   const [year, setYear] = useState(2025);
   
-  // Podaci iz baze
-  const [deliveries, setDeliveries] = useState([]);
-  const [urlaubs, setUrlaubs] = useState([]);
+  const [workData, setWorkData] = useState([]);
+  const [urlaubData, setUrlaubData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const printRef = useRef(null);
 
-  // --- FETCH DATA (Dohvatanje iz Supabase) ---
+  // 1. UČITAJ VOZAČE
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      
-      // Kreiramo datumski opseg za filter (od 1. do zadnjeg u mjesecu)
-      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-      const lastDay = new Date(year, month, 0).getDate();
-      const endDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
-
+    async function loadDrivers() {
       try {
-        // 1. Dohvati Dostave (Provjeri da li se tabela zove 'deliveries_rows' ili samo 'deliveries')
-        const { data: delData, error: delError } = await supabase
-          .from('deliveries_rows') 
-          .select('date, driver, zustellung_paketi')
-          .eq('driver', selectedDriverId)
-          .gte('date', startDate)
-          .lte('date', endDate);
+        const driversList = await getAllDriversCloud();
+        setDrivers(driversList);
+      } catch (error) {
+        console.error("Greška pri učitavanju vozača:", error);
+      }
+    }
+    loadDrivers();
+  }, []);
 
-        if (delError) console.error("Greška deliveries:", delError);
+  // 2. UČITAJ PODATKE KAD SE PROMIJENI ODABIR
+  useEffect(() => {
+    if (!selectedDriverTura) return;
 
-        // 2. Dohvati Godišnje (Provjeri ime tabele 'urlaub_marks_rows')
-        const { data: urlData, error: urlError } = await supabase
+    async function loadWorkData() {
+      setLoading(true);
+      try {
+        // A) Dostave (koristi tvoju postojeću funkciju)
+        // Pazi: getDeliveriesByDriverCloud očekuje mjesec 0-11, a state je 1-12
+        const deliveries = await getDeliveriesByDriverCloud(selectedDriverTura, year, month - 1);
+        setWorkData(deliveries);
+
+        // B) Godišnji odmori (direktan upit jer nemaš funkciju za ovo)
+        // Računamo prvi i zadnji dan mjeseca za filter
+        const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const endDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
+
+        const { data: urlaubs, error } = await supabase
           .from('urlaub_marks_rows')
-          .select('date, driver, is_active')
-          .eq('driver', selectedDriverId)
+          .select('date')
+          .eq('driver', selectedDriverTura)
           .gte('date', startDate)
           .lte('date', endDate)
-          .is('is_active', true); // Filtriraj samo aktivne
+          .eq('is_active', true);
 
-        if (urlError) console.error("Greška urlaub:", urlError);
+        if (error) throw error;
+        setUrlaubData(urlaubs || []);
 
-        setDeliveries(delData || []);
-        setUrlaubs(urlData || []);
-
-      } catch (err) {
-        console.error("Neočekivana greška:", err);
+      } catch (error) {
+        console.error("Greška pri učitavanju podataka:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchData();
-  }, [selectedDriverId, month, year]); // Ponovi kad se promijeni vozač ili datum
+    loadWorkData();
+  }, [selectedDriverTura, month, year]);
 
-  // --- OBRADA PODATAKA ZA TABELU ---
-  const rows = useMemo(() => {
+  // --- LOGIKA TABELE ---
+  const { rows, totalHours } = useMemo(() => {
     const daysInMonth = new Date(year, month, 0).getDate();
-    const targetMonthStr = `${year}-${String(month).padStart(2, "0")}`;
+    let sumHours = 0;
 
-    return Array.from({ length: daysInMonth }, (_, i) => {
+    const calculatedRows = Array.from({ length: daysInMonth }, (_, i) => {
       const day = i + 1;
-      const dateStr = `${targetMonthStr}-${String(day).padStart(2, "0")}`;
+      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-      // Provjera podataka iz baze
-      const isUrlaub = urlaubs.some(u => u.date === dateStr);
-      const delivery = deliveries.find(d => d.date === dateStr);
-      const packageCount = delivery ? Number(delivery.zustellung_paketi) : 0;
+      // Provjeri da li je godišnji
+      const isUrlaub = urlaubData.some(u => u.date === dateStr);
+
+      // Provjeri da li ima paketa (radni dan)
+      const delivery = workData.find(d => d.date === dateStr);
+      // Gledamo da li je broj paketa veći od 0
+      const hasPackages = delivery && delivery.paketi > 0;
 
       let row = {
         day,
@@ -106,7 +118,8 @@ export default function WorktimeTab() {
         row.hours = "0";
         row.note = NOTE_VACATION;
       } 
-      else if (packageCount > 0) {
+      else if (hasPackages) {
+        sumHours += WORK_HOURS;
         row.start = WORK_START;
         row.end = WORK_END;
         row.pause = BREAK_TIME;
@@ -117,16 +130,18 @@ export default function WorktimeTab() {
 
       return row;
     });
-  }, [deliveries, urlaubs, month, year]);
 
-  const totalHours = rows.reduce((sum, r) => (r.isWork ? sum + 8 : sum), 0);
-  const driverName = DRIVER_MAPPING[selectedDriverId] || selectedDriverId;
+    return { rows: calculatedRows, totalHours: sumHours };
+  }, [workData, urlaubData, month, year]);
+
+  // Dobijanje imena za prikaz (koristimo tvoja prilagođena imena)
+  const currentDriverName = PREFERRED_NAMES[selectedDriverTura] || "Nepoznat Vozač";
 
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- MENU BAR --- */}
-      <div className="w-full max-w-[210mm] bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-4 items-center justify-between no-print">
+      {/* --- KONTROLNA PLOČA (NE PRINTA SE) --- */}
+      <div className="w-full max-w-[210mm] bg-white p-5 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-6 items-center justify-between no-print">
         
         <div className="flex gap-4 items-center flex-wrap">
           {/* Odabir Vozača */}
@@ -135,12 +150,15 @@ export default function WorktimeTab() {
             <div className="relative">
               <User size={16} className="absolute left-3 top-3 text-gray-400" />
               <select 
-                value={selectedDriverId}
-                onChange={(e) => setSelectedDriverId(e.target.value)}
-                className="pl-9 pr-8 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 cursor-pointer font-medium min-w-[180px]"
+                value={selectedDriverTura}
+                onChange={(e) => setSelectedDriverTura(e.target.value)}
+                className="pl-9 pr-8 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 cursor-pointer font-medium min-w-[200px]"
               >
-                {Object.entries(DRIVER_MAPPING).map(([id, name]) => (
-                  <option key={id} value={id}>{name}</option>
+                {/* Prikazujemo samo ova 4 vozača jer si tako tražio, ili listu iz baze */}
+                {Object.entries(PREFERRED_NAMES).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -162,26 +180,25 @@ export default function WorktimeTab() {
               />
             </div>
           </div>
-          
-          {/* Status Loading */}
+
+          {/* Loading indikator */}
           {loading && (
-            <div className="flex items-center text-blue-600 text-sm font-semibold animate-pulse">
-                <Loader2 size={18} className="animate-spin mr-2"/> Učitavam...
+            <div className="flex items-center text-blue-600 text-sm font-semibold animate-pulse ml-2">
+                <Loader2 size={18} className="animate-spin mr-2"/>
             </div>
           )}
         </div>
 
         <button
           onClick={() => window.print()}
-          disabled={loading}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg transition-all active:scale-95"
         >
           <Printer size={20} />
           Printaj PDF
         </button>
       </div>
 
-      {/* --- PDF PREVIEW --- */}
+      {/* --- DIO KOJI SE PRINTA (A4 FORMAT) --- */}
       <div
         ref={printRef}
         className="bg-white text-black p-10 w-full max-w-[210mm] shadow-2xl print:shadow-none print:p-0 print:m-0 print:w-full"
@@ -193,7 +210,7 @@ export default function WorktimeTab() {
 
         <div className="mb-8 text-sm leading-relaxed">
           <p className="mb-1">
-            <strong>Nachname und Vorname:</strong> {driverName}
+            <strong>Nachname und Vorname:</strong> {currentDriverName}
           </p>
           <p>
             <strong>Monat und Jahr:</strong> {String(month).padStart(2, "0")}/{year}
