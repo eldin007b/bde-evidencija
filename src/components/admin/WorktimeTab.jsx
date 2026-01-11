@@ -7,6 +7,14 @@ import {
   getDeliveriesByDriverCloud
 } from "../../db/supabaseClient";
 
+/* IMENA VOZAČA – ORIGINAL */
+const PREFERRED_NAMES = {
+  8640: "Arnes Hokic",
+  8620: "Denis Frelih",
+  8610: "Eldin Begić",
+  8630: "Katarina Begić"
+};
+
 /* KONFIG */
 const WORK_START = "05:30";
 const WORK_END = "14:00";
@@ -20,17 +28,18 @@ export default function WorktimeTab() {
   const [year, setYear] = useState(2025);
   const [workData, setWorkData] = useState([]);
   const [urlaubData, setUrlaubData] = useState([]);
-  const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /* LOAD */
+  /* LOAD DRIVERS */
   useEffect(() => {
     getAllDriversCloud().then(setDrivers);
   }, []);
 
+  /* LOAD DATA */
   useEffect(() => {
     async function load() {
       setLoading(true);
+
       const deliveries = await getDeliveriesByDriverCloud(driver, year, month - 1);
       setWorkData(deliveries || []);
 
@@ -45,18 +54,17 @@ export default function WorktimeTab() {
         .lte("date", end)
         .eq("is_active", true);
 
-      const { data: feiertage } = await supabase
-        .from("holidays")
-        .select("date")
-        .gte("date", start)
-        .lte("date", end);
-
       setUrlaubData(urlaub || []);
-      setHolidays(feiertage?.map(h => h.date) || []);
       setLoading(false);
     }
     load();
   }, [driver, month, year]);
+
+  const currentDriverName =
+    PREFERRED_NAMES[driver] ||
+    drivers.find(d => d.tura == driver)?.ime ||
+    drivers.find(d => d.tura == driver)?.name ||
+    driver;
 
   /* ROWS */
   const { rows, totalHours } = useMemo(() => {
@@ -65,11 +73,8 @@ export default function WorktimeTab() {
 
     const result = Array.from({ length: days }, (_, i) => {
       const day = i + 1;
-      const date = new Date(year, month - 1, day);
-      const dateStr = date.toISOString().slice(0, 10);
+      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-      const isHoliday = holidays.includes(dateStr);
       const isUrlaub = urlaubData.some(u => u.date === dateStr);
       const delivery = workData.find(d => d.date === dateStr);
 
@@ -81,19 +86,7 @@ export default function WorktimeTab() {
           pause: "-",
           hours: "0",
           note: "URLAUB",
-          color: "blue"
-        };
-      }
-
-      if (isWeekend || isHoliday) {
-        return {
-          day,
-          start: "-",
-          end: "-",
-          pause: "-",
-          hours: "-",
-          note: isHoliday ? "FEIERTAG" : "-",
-          color: "red"
+          isUrlaub: true
         };
       }
 
@@ -106,7 +99,7 @@ export default function WorktimeTab() {
           pause: BREAK_TIME,
           hours: WORK_HOURS,
           note: "Ladezeit 3 Std./Tag",
-          color: "black"
+          isUrlaub: false
         };
       }
 
@@ -117,12 +110,12 @@ export default function WorktimeTab() {
         pause: "-",
         hours: "-",
         note: "-",
-        color: "black"
+        isUrlaub: false
       };
     });
 
     return { rows: result, totalHours: sum };
-  }, [workData, urlaubData, holidays, month, year]);
+  }, [workData, urlaubData, month, year]);
 
   /* PDF */
   const generatePDF = () => {
@@ -135,14 +128,21 @@ export default function WorktimeTab() {
     doc.setFontSize(10).setFont("helvetica", "normal");
     doc.text("Nachname und Vorname:", 14, 30);
     doc.setFont("helvetica", "bold");
-    doc.text("Arnes Hokic", 60, 30);
+    doc.text(currentDriverName, 60, 30);
 
     doc.setFont("helvetica", "normal");
     doc.text("Monat und Jahr:", 135, 30);
     doc.setFont("helvetica", "bold");
     doc.text(`${String(month).padStart(2, "0")}/${year}`, 170, 30);
 
-    const headers = ["Tag", "Arbeitsbeginn", "Arbeitsende", "Pause (von - bis)", "Tagesarbeitszeit", "Notizen"];
+    const headers = [
+      "Tag",
+      "Arbeitsbeginn",
+      "Arbeitsende",
+      "Pause (von - bis)",
+      "Tagesarbeitszeit",
+      "Notizen"
+    ];
     const widths = [10, 28, 28, 38, 26, 52];
     const startY = 36;
     const rowH = 6.8;
@@ -158,21 +158,26 @@ export default function WorktimeTab() {
 
     rows.forEach(r => {
       let cx = 14;
-      rows && headers.forEach((_, i) => {
-        doc.rect(cx, y, widths[i], rowH);
-        if (r.color === "blue") doc.setTextColor(0, 80, 200);
-        else if (r.color === "red") doc.setTextColor(200, 0, 0);
-        else doc.setTextColor(0, 0, 0);
+      const values = [r.day, r.start, r.end, r.pause, r.hours, r.note];
 
-        const values = [r.day, r.start, r.end, r.pause, r.hours, r.note];
+      values.forEach((val, i) => {
+        doc.rect(cx, y, widths[i], rowH);
+
+        if (r.isUrlaub && i === 5) {
+          doc.setTextColor(200, 0, 0); // crveno samo URLAUB
+        } else {
+          doc.setTextColor(0, 0, 0);
+        }
+
         doc.text(
-          String(values[i]),
+          String(val),
           i === 0 ? cx + 2 : cx + widths[i] / 2,
           y + 4.5,
           { align: i === 0 ? "left" : "center" }
         );
         cx += widths[i];
       });
+
       y += rowH;
     });
 
@@ -186,7 +191,7 @@ export default function WorktimeTab() {
     doc.line(120, signY, 185, signY);
     doc.text("Unterschrift Firma", 152, signY + 6, { align: "center" });
 
-    doc.save(`Arbeitszeit_${month}_${year}.pdf`);
+    doc.save(`Arbeitszeit_${currentDriverName.replace(/ /g, "_")}_${month}_${year}.pdf`);
   };
 
   /* UI */
@@ -194,8 +199,8 @@ export default function WorktimeTab() {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex gap-4 mb-4 items-end">
         <select value={driver} onChange={e => setDriver(e.target.value)} className="border p-2 rounded">
-          {drivers.map(d => (
-            <option key={d.tura} value={d.tura}>{d.ime || d.name}</option>
+          {Object.entries(PREFERRED_NAMES).map(([id, name]) => (
+            <option key={id} value={id}>{name}</option>
           ))}
         </select>
 
@@ -209,8 +214,10 @@ export default function WorktimeTab() {
       </div>
 
       {/* PREVIEW */}
-      <div className="bg-white max-w-[210mm] mx-auto p-[14mm] shadow"
-        style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "9px" }}>
+      <div
+        className="bg-white max-w-[210mm] mx-auto p-[14mm] shadow"
+        style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "9px" }}
+      >
         <table className="w-full border-collapse border text-xs">
           <thead>
             <tr>
@@ -221,16 +228,15 @@ export default function WorktimeTab() {
           </thead>
           <tbody>
             {rows.map(r=>(
-              <tr key={r.day} className={
-                r.color==="blue"?"text-blue-600":
-                r.color==="red"?"text-red-600":""
-              }>
+              <tr key={r.day}>
                 <td className="border px-1 text-left">{r.day}</td>
                 <td className="border text-center">{r.start}</td>
                 <td className="border text-center">{r.end}</td>
                 <td className="border text-center">{r.pause}</td>
                 <td className="border text-center">{r.hours}</td>
-                <td className="border text-center">{r.note}</td>
+                <td className={`border text-center ${r.isUrlaub ? "text-red-600 font-bold" : ""}`}>
+                  {r.note}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -238,4 +244,4 @@ export default function WorktimeTab() {
       </div>
     </div>
   );
-}
+}w
