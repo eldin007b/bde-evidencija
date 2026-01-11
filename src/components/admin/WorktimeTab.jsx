@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Printer, User, Loader2 } from "lucide-react";
 
-// Tvoje funkcije iz baze
 import { 
   supabase, 
   getAllDriversCloud, 
@@ -79,7 +78,7 @@ export default function WorktimeTab() {
     loadWorkData();
   }, [selectedDriverTura, month, year]);
 
-  // 3. Logika tabele
+  // 3. Logika tabele (Crtice umjesto praznine)
   const { rows, totalHours } = useMemo(() => {
     const daysInMonth = new Date(year, month, 0).getDate();
     let sumHours = 0;
@@ -92,12 +91,13 @@ export default function WorktimeTab() {
       const delivery = workData.find(d => d.date === dateStr);
       const hasPackages = delivery && Number(delivery.paketi) > 0;
 
+      // DEFAULT: Crtice (precrtano)
       let row = {
         day,
-        start: "—",  // Default: Crtica (Precrtano)
-        end: "—",    // Default: Crtica
-        pause: "—",  // Default: Crtica
-        hours: "—",  // Default: Crtica
+        start: "—",
+        end: "—",
+        pause: "—",
+        hours: "—",
         note: "", 
         isWork: false,
         isUrlaub: false
@@ -107,7 +107,7 @@ export default function WorktimeTab() {
         row.hours = "0";
         row.note = NOTE_VACATION;
         row.isUrlaub = true;
-        // Ostavljamo start/end kao crtice jer ne radi
+        // Start/End ostaju crtice "—"
       } 
       else if (hasPackages) {
         sumHours += WORK_HOURS;
@@ -118,7 +118,6 @@ export default function WorktimeTab() {
         row.note = NOTE_WORK;
         row.isWork = true;
       }
-      // Ako nije ni jedno ni drugo, ostaju crtice (—) definisane u let row
       
       return row;
     });
@@ -126,15 +125,14 @@ export default function WorktimeTab() {
     return { rows: calculatedRows, totalHours: sumHours };
   }, [workData, urlaubData, month, year]);
 
-  // Ime
   const dbDriver = drivers.find(d => d.tura == selectedDriverTura);
   const currentDriverName = PREFERRED_NAMES[selectedDriverTura] || (dbDriver ? (dbDriver.ime || dbDriver.name) : selectedDriverTura);
 
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- MENU (Ne printa se) --- */}
-      <div className="w-full max-w-[210mm] bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-6 items-center justify-between no-print-section">
+      {/* --- MENU (Ovo će biti sakriveno na printu klasom 'no-print') --- */}
+      <div className="w-full max-w-[210mm] bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-6 items-center justify-between no-print">
         <div className="flex gap-4 items-center flex-wrap">
           <div className="flex flex-col">
             <label className="text-xs font-bold text-gray-500 uppercase mb-1">Vozač</label>
@@ -171,16 +169,16 @@ export default function WorktimeTab() {
         </button>
       </div>
 
-      {/* --- PDF DIO --- */}
+      {/* --- PDF DIO (Ovo se vidi na printu) --- */}
       <div id="print-section" className="bg-white text-black w-full">
         
         {/* HEADER: Centriran Naslov */}
-        <h1 className="text-xl font-bold mb-8 text-center uppercase tracking-wide" style={{ fontFamily: "Arial, sans-serif" }}>
+        <h1 className="text-xl font-bold mb-6 text-center uppercase tracking-wide border-b-0" style={{ fontFamily: "Arial, sans-serif" }}>
           Arbeitszeitaufzeichnungen
         </h1>
 
-        {/* HEADER: Ime lijevo, Datum desno */}
-        <div className="flex justify-between items-end mb-6 px-2 text-sm" style={{ fontFamily: "Arial, sans-serif" }}>
+        {/* HEADER: Ime lijevo, Datum desno (Flexbox) */}
+        <div className="flex justify-between items-end mb-4 px-2 text-sm" style={{ fontFamily: "Arial, sans-serif" }}>
             <div>
                 <strong>Nachname und Vorname:</strong> <span className="ml-2 text-base">{currentDriverName}</span>
             </div>
@@ -234,52 +232,58 @@ export default function WorktimeTab() {
         </div>
       </div>
 
-      {/* --- CSS: 1 LIST, CENTRIRANJE, SKRIVANJE OSTALOG --- */}
+      {/* --- POPRAVLJENI CSS (BEZ height: 0 trikova) --- */}
       <style>{`
         @media print {
-          /* Prisilno koristi boje (za crveni Urlaub) */
+          /* 1. Sakrij sve elemente koji imaju klasu "no-print" */
+          .no-print {
+            display: none !important;
+          }
+
+          /* 2. Sakrij sve ostalo što nije dio našeg dokumenta (header aplikacije, sidebar itd.) */
+          /* OVO JE KLJUČNO: Sakrivamo body children, ali ne print-section */
+          body > *:not(#print-section) {
+            display: none !important;
+          }
+
+          /* 3. Ako je aplikacija kompleksna (React root), sakrijemo UI unutar roota, ali ostavimo print-section */
+          /* Resetujemo visibility na body */
           body {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          /* Sakrij SVE */
-          body * {
             visibility: hidden;
-            height: 0; /* Bitno za uklanjanje praznog prostora */
-            overflow: hidden;
-          }
-          
-          /* Pokaži samo print sekciju */
-          #print-section, #print-section * {
-            visibility: visible;
-            height: auto;
-            overflow: visible;
+            background: white;
           }
 
-          /* Postavi print sekciju na apsolutni vrh */
+          /* 4. Prikaži SAMO naš print section */
           #print-section {
+            visibility: visible;
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
             margin: 0;
             padding: 0;
-          }
-
-          /* A4 Format bez margina browsera */
-          @page {
-            size: A4;
-            margin: 10mm; /* Dovoljno malo da stane na 1 list, dovoljno veliko za printer */
+            background: white;
+            z-index: 9999; /* Osiguraj da je iznad svega */
           }
           
-          /* Sakrij headere i footere browsera (datum, url...) */
-          html, body {
-            margin: 0;
-            padding: 0;
+          /* Dozvoli prikaz djece unutar print-sectiona */
+          #print-section * {
+            visibility: visible;
+          }
+
+          /* Boje za Urlaub */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          @page {
+            size: A4;
+            margin: 10mm;
           }
         }
       `}</style>
     </div>
   );
 }
+s
