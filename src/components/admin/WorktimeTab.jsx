@@ -1,262 +1,169 @@
-import React, { useState } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import React, { useState } from "react";
+import { Calendar, Upload, Printer, FileText } from "lucide-react";
 
-/**
- * Vrlo jednostavno upravljanje: ti unosiš status po danu.
- * PDF generiše tabelu u obliku službenog obrasca.
- *
- * Kasnije se može dodati automatsko popunjavanje iz baze,
- * ali ovako dobiješ 100% kontrolu i 1:1 identičnost.
- */
+const DEFAULT_DAY = {
+  status: "RAD",
+  beginn: "05:30",
+  pause: "11:30–12:00",
+  ende: "14:00",
+  stunden: "8",
+  ladezeit: "3"
+};
 
-const DEFAULT_DRIVER = 'Arnes Hokic'; // može i Denis
-const DEFAULT_MONTH = '12';
-const DEFAULT_YEAR = '2025';
-
-// statusi koji se ubacuju u tabelu
-const STATUS_OPTIONS = ['RAD', 'URLAUB', '—'];
+const DAYS_IN_MONTH = (month, year) =>
+  new Date(year, month, 0).getDate();
 
 export default function WorktimeTab() {
-  const [image, setImage] = useState(null);
-  const [driver, setDriver] = useState(DEFAULT_DRIVER);
-  const [month, setMonth] = useState(DEFAULT_MONTH);
-  const [year, setYear] = useState(DEFAULT_YEAR);
+  const [employee, setEmployee] = useState("Arnes Hokic");
+  const [month, setMonth] = useState("12");
+  const [year, setYear] = useState("2025");
+  const [urlaub, setUrlaub] = useState([24, 29, 31]);
+  const [screenshot, setScreenshot] = useState(null);
 
-  // radna tabela po danima (1-based)
-  const daysInMonth = new Date(Number(year), Number(month), 0).getDate();
-  // inicijalno popuni sa —
-  const [rows, setRows] = useState(
-    Array.from({ length: daysInMonth }, (_, i) => ({
-      day: i + 1,
-      status: '—'
-    }))
-  );
+  const days = DAYS_IN_MONTH(Number(month), Number(year));
 
-  // kad promijeniš mjesec ili godinu, resetuje table ili možeš zadržati
-  const handleMonthChange = (m) => {
-    setMonth(m);
-    const newDays = new Date(Number(year), Number(m), 0).getDate();
-    setRows((prev) => {
-      // ako se broj dana promijeni, resetujemo ili skratimo / produžimo
-      if (newDays === prev.length) return prev;
-      const arr = [];
-      for (let i = 0; i < newDays; i++) {
-        arr.push(prev[i] || { day: i + 1, status: '—' });
-      }
-      return arr;
-    });
-  };
-
-  const handleYearChange = (y) => {
-    setYear(y);
-    const newDays = new Date(Number(y), Number(month), 0).getDate();
-    setRows((prev) => {
-      if (newDays === prev.length) return prev;
-      const arr = [];
-      for (let i = 0; i < newDays; i++) {
-        arr.push(prev[i] || { day: i + 1, status: '—' });
-      }
-      return arr;
-    });
-  };
-
-  const handleStatusChange = (index, value) => {
-    setRows((prev) =>
-      prev.map((r, idx) =>
-        idx === index
-          ? {
-              ...r,
-              status: value
-            }
-          : r
-      )
+  const toggleUrlaub = (day) => {
+    setUrlaub((prev) =>
+      prev.includes(day)
+        ? prev.filter((d) => d !== day)
+        : [...prev, day]
     );
   };
 
-  // generiše grupu za PDF; vrijedi pravilo:
-  // RAD → 05:30–14:00, 8h, Ladezeit 3h
-  // URLAUB → sve —
-  // — → sve —
-  const getRowData = (status, day) => {
-    if (status === 'RAD') {
-      return [
-        day,
-        'RAD',
-        '05:30',
-        '11:30–12:00',
-        '14:00',
-        '8',
-        '3'
-      ];
-    }
-    // za URLAUB i —
-    return [day, status, '—', '—', '—', '—', '—'];
-  };
-
-  const generatePDF = () => {
-    const pdf = new jsPDF('p', 'mm', 'a4');
-
-    // Naslov
-    pdf.setFontSize(14);
-    pdf.text('Arbeitszeitaufzeichnungen', 105, 15, { align: 'center' });
-
-    // Info vozač i mjesec
-    pdf.setFontSize(10);
-    pdf.text(`Nachname und Vorname: ${driver}`, 14, 25);
-    pdf.text(`Monat / Jahr: ${month}.${year}`, 14, 31);
-
-    // Tabela
-    const tableRows = rows.map(r => getRowData(r.status, r.day));
-
-    autoTable(pdf, {
-      startY: 38,
-      head: [
-        [
-          'Tag',
-          'Status',
-          'Arbeitsbeginn',
-          'Pause',
-          'Arbeitsende',
-          'Stunden',
-          'Ladezeit'
-        ]
-      ],
-      body: tableRows,
-      styles: {
-        fontSize: 9,
-        halign: 'center'
-      },
-      headStyles: {
-        fillColor: [30, 64, 175] // tamnoplava glava (možeš prilagoditi)
-      }
-    });
-
-    // prostor za ukupno sate? može se dodat ovdje ako želiš
-    // ili ako ţeliš Summit ukupno, možeš izračunati sumu sati RAD
-    // npr:
-    // const totalHours = rows.reduce((sum, r) => (r.status === 'RAD' ? sum + 8 : sum), 0);
-
-    // Potpisi
-    let finalY = pdf.lastAutoTable.finalY + 10;
-    pdf.text('__________________________', 14, finalY);
-    pdf.text('Unterschrift Fahrer', 14, finalY + 6);
-    pdf.text('__________________________', 14, finalY + 16);
-    pdf.text('Unterschrift Firma', 14, finalY + 22);
-
-    // Ako je uploadana slika, stavi je na novu stranicu kao dokaz
-    if (image) {
-      pdf.addPage();
-      pdf.setFontSize(12);
-      pdf.text('Screenshot – Lieferübersicht (Nachweis)', 14, 15);
-      // Širina slike 190mm, visinu auto. Ovdje možeš prilagoditi
-      pdf.addImage(image, 'JPEG', 10, 25, 190, 0);
-    }
-
-    // Spremi
-    const safeName = driver.replace(/[^a-zA-Z0-9_-]/g, '_');
-    pdf.save(`Arbeitszeit_${safeName}_${month}_${year}.pdf`);
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setImage(reader.result);
-    reader.readAsDataURL(file);
+  const printPDF = () => {
+    window.print();
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1000 }}>
-      <h2 style={{ marginBottom: 12 }}>🕒 Evidencija rada – upload screenshot + PDF</h2>
+    <div className="space-y-6">
 
-      {/* 1) Izbor vozača, mjeseca, godine */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-        <select value={driver} onChange={e => setDriver(e.target.value)} style={{ padding: '6px 10px' }}>
-          <option>Arnes Hokic</option>
-          <option>Denis Frelih</option>
-        </select>
-
-        <input
-          type="number"
-          value={month}
-          onChange={e => handleMonthChange(e.target.value)}
-          placeholder="MM"
-          style={{ width: 60, padding: '6px 10px' }}
-        />
-
-        <input
-          type="number"
-          value={year}
-          onChange={e => handleYearChange(e.target.value)}
-          placeholder="YYYY"
-          style={{ width: 80, padding: '6px 10px' }}
-        />
-      </div>
-
-      {/* 2) Upload screenshot */}
-      <div style={{ marginBottom: 16 }}>
-        <input type="file" accept="image/*" onChange={handleImageUpload} />
-      </div>
-
-      {/* 3) Preview screenshot */}
-      {image && (
-        <div style={{ marginBottom: 20 }}>
-          <img
-            src={image}
-            alt="Preview"
-            style={{ maxWidth: '100%', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
-          />
+      {/* HEADER */}
+      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
+        <div className="flex items-center gap-3 mb-4">
+          <Calendar className="w-6 h-6 text-cyan-400" />
+          <h2 className="text-xl font-bold text-white">
+            Arbeitszeitaufzeichnung
+          </h2>
         </div>
-      )}
 
-      {/* 4) Tabela za ručno popunjavanje statusa */}
-      <div style={{ overflowX: 'auto', marginBottom: 20 }}>
-        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input
+            value={employee}
+            onChange={(e) => setEmployee(e.target.value)}
+            className="rounded-xl bg-gray-900 text-white px-4 py-3 border border-gray-700"
+            placeholder="Mitarbeiter"
+          />
+
+          <input
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="rounded-xl bg-gray-900 text-white px-4 py-3 border border-gray-700"
+            placeholder="MM"
+          />
+
+          <input
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="rounded-xl bg-gray-900 text-white px-4 py-3 border border-gray-700"
+            placeholder="YYYY"
+          />
+
+          <button
+            onClick={printPDF}
+            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold"
+          >
+            <Printer className="w-5 h-5" />
+            Print / PDF
+          </button>
+        </div>
+      </div>
+
+      {/* UPLOAD */}
+      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
+        <label className="flex items-center gap-3 cursor-pointer text-gray-300">
+          <Upload className="w-5 h-5" />
+          Upload Screenshot (Nachweis)
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => setScreenshot(URL.createObjectURL(e.target.files[0]))}
+          />
+        </label>
+
+        {screenshot && (
+          <img
+            src={screenshot}
+            alt="Screenshot"
+            className="mt-4 rounded-xl border border-gray-700 max-h-64"
+          />
+        )}
+      </div>
+
+      {/* TABLE */}
+      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-700 overflow-x-auto">
+        <table className="w-full text-sm text-white border-collapse">
           <thead>
-            <tr>
-              <th style={{ border: '1px solid #ccc', padding: 6, background: '#f3f3f3' }}>Dan</th>
-              <th style={{ border: '1px solid #ccc', padding: 6, background: '#f3f3f3' }}>Status</th>
+            <tr className="bg-gray-800 text-gray-300">
+              <th className="p-2">Tag</th>
+              <th>Status</th>
+              <th>Beginn</th>
+              <th>Pause</th>
+              <th>Ende</th>
+              <th>Stunden</th>
+              <th>Ladezeit</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, idx) => (
-              <tr key={r.day}>
-                <td style={{ border: '1px solid #ccc', padding: 6, textAlign: 'center' }}>{r.day}</td>
-                <td style={{ border: '1px solid #ccc', padding: 6 }}>
-                  <select
-                    value={r.status}
-                    onChange={e => handleStatusChange(idx, e.target.value)}
-                    style={{ padding: '4px 8px' }}
-                  >
-                    {STATUS_OPTIONS.map(opt => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
+            {Array.from({ length: days }).map((_, i) => {
+              const day = i + 1;
+              const isUrlaub = urlaub.includes(day);
+
+              return (
+                <tr
+                  key={day}
+                  onClick={() => toggleUrlaub(day)}
+                  className={`cursor-pointer border-b border-gray-700 ${
+                    isUrlaub ? "bg-amber-500/20" : ""
+                  }`}
+                >
+                  <td className="p-2 text-center">{day}</td>
+                  {isUrlaub ? (
+                    <>
+                      <td className="text-center font-bold">URLAUB</td>
+                      <td colSpan="5" className="text-center">—</td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="text-center">RAD</td>
+                      <td className="text-center">{DEFAULT_DAY.beginn}</td>
+                      <td className="text-center">{DEFAULT_DAY.pause}</td>
+                      <td className="text-center">{DEFAULT_DAY.ende}</td>
+                      <td className="text-center">{DEFAULT_DAY.stunden}</td>
+                      <td className="text-center">{DEFAULT_DAY.ladezeit}</td>
+                    </>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* 5) Dugme za PDF */}
-      <button
-        onClick={generatePDF}
-        style={{
-          padding: '10px 18px',
-          background: '#2563eb',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 6,
-          fontWeight: 'bold',
-          cursor: 'pointer'
-        }}
-      >
-        📄 Generiši PDF i preuzmi
-      </button>
+      {/* SIGNATURE */}
+      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-white">
+          <div>
+            <p className="mb-2">Unterschrift Mitarbeiter:</p>
+            <div className="border-b border-gray-500 h-8" />
+          </div>
+          <div>
+            <p className="mb-2">Unterschrift Firma:</p>
+            <div className="border-b border-gray-500 h-8" />
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
