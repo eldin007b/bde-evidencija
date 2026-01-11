@@ -1,165 +1,137 @@
-import React, { useMemo, useState } from 'react';
-import { Printer } from 'lucide-react';
+import React, { useState } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
-/**
- * OČEKIVANI FORMAT deliveries:
- * [
- *   { date: '2025-12-01', arnes: 94, denis: 93, ... },
- *   { date: '2025-12-24', arnes: 'Urlaub', ... },
- *   { date: '2025-12-19', arnes: '-', ... }
- * ]
- */
+export default function WorktimeTab() {
+  const [image, setImage] = useState(null);
+  const [driver, setDriver] = useState('Arnes Hokic');
+  const [month, setMonth] = useState('12');
+  const [year, setYear] = useState('2025');
 
-function mapDeliveryToWorkday(value) {
-  if (value === 'Urlaub') {
-    return {
-      status: 'URLAUB',
-      start: '—',
-      pause: '—',
-      end: '—',
-      hours: '—',
-      ladezeit: '—'
-    };
-  }
-
-  if (typeof value === 'number') {
-    return {
-      status: 'RAD',
-      start: '05:30',
-      pause: '11:30–12:00',
-      end: '14:00',
-      hours: 8,
-      ladezeit: 3
-    };
-  }
-
-  return {
-    status: '—',
-    start: '—',
-    pause: '—',
-    end: '—',
-    hours: '—',
-    ladezeit: '—'
+  // RUČNO – 100% KONTROLA (isti model kao PDF)
+  // ovo kasnije možeš puniti iz baze ako želiš
+  const STATUS_BY_DAY = {
+    24: 'URLAUB',
+    29: 'URLAUB',
+    31: 'URLAUB'
   };
-}
 
-export default function WorktimeTab({ deliveries }) {
-  const [driver, setDriver] = useState('arnes');
-  const [month, setMonth] = useState(12);
-  const [year, setYear] = useState(2025);
+  const DAYS_IN_MONTH = new Date(year, month, 0).getDate();
 
-  const filteredDays = useMemo(() => {
-    return deliveries
-      .filter(row => {
-        const d = new Date(row.date);
-        return d.getMonth() + 1 === Number(month) && d.getFullYear() === Number(year);
-      })
-      .map(row => {
-        const day = new Date(row.date).getDate();
-        const value = row[driver];
-        return {
-          day,
-          ...mapDeliveryToWorkday(value)
-        };
-      });
-  }, [deliveries, driver, month, year]);
+  const getRowForDay = (day) => {
+    const status = STATUS_BY_DAY[day] || 'RAD';
 
-  const totalHours = filteredDays.reduce(
-    (sum, d) => sum + (typeof d.hours === 'number' ? d.hours : 0),
-    0
-  );
+    if (status === 'URLAUB') {
+      return [day, 'URLAUB', '—', '—', '—', '—', '—'];
+    }
 
-  const printPdf = () => {
-    window.print();
+    return [
+      day,
+      'RAD',
+      '05:30',
+      '11:30–12:00',
+      '14:00',
+      '8',
+      '3'
+    ];
+  };
+
+  const generatePDF = () => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    pdf.setFontSize(14);
+    pdf.text('Arbeitszeitaufzeichnung', 105, 15, { align: 'center' });
+
+    pdf.setFontSize(10);
+    pdf.text(`Mitarbeiter: ${driver}`, 14, 25);
+    pdf.text(`Monat / Jahr: ${month}.${year}`, 14, 31);
+
+    const tableRows = [];
+    for (let d = 1; d <= DAYS_IN_MONTH; d++) {
+      tableRows.push(getRowForDay(d));
+    }
+
+    autoTable(pdf, {
+      startY: 38,
+      head: [[
+        'Tag',
+        'Status',
+        'Beginn',
+        'Pause',
+        'Ende',
+        'Stunden',
+        'Ladezeit'
+      ]],
+      body: tableRows,
+      styles: {
+        fontSize: 9,
+        halign: 'center'
+      },
+      headStyles: {
+        fillColor: [30, 64, 175]
+      }
+    });
+
+    let finalY = pdf.lastAutoTable.finalY + 10;
+
+    pdf.text('Unterschrift Mitarbeiter: _______________________', 14, finalY);
+    pdf.text('Unterschrift Firma: ___________________________', 14, finalY + 10);
+
+    if (image) {
+      pdf.addPage();
+      pdf.setFontSize(12);
+      pdf.text('Screenshot – Lieferübersicht (Nachweis)', 14, 15);
+      pdf.addImage(image, 'JPEG', 10, 25, 190, 0);
+    }
+
+    pdf.save(`Arbeitszeit_${driver.replaceAll(' ', '_')}_${month}_${year}.pdf`);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => setImage(reader.result);
+    reader.readAsDataURL(file);
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 print:p-0 print:rounded-none">
-      <style>{`
-        @media print {
-          body {
-            background: white;
-          }
-          button, select {
-            display: none !important;
-          }
-        }
-      `}</style>
+    <div style={{ padding: 20 }}>
+      <h2>🕒 Evidencija rada (PDF)</h2>
 
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold">Arbeitszeitaufzeichnungen</h2>
-        <button
-          onClick={printPdf}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white"
-        >
-          <Printer size={18} />
-          Print / PDF
-        </button>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 15 }}>
+        <select value={driver} onChange={e => setDriver(e.target.value)}>
+          <option>Arnes Hokic</option>
+          <option>Denis Frelih</option>
+        </select>
+
+        <input value={month} onChange={e => setMonth(e.target.value)} placeholder="MM" />
+        <input value={year} onChange={e => setYear(e.target.value)} placeholder="YYYY" />
       </div>
 
-      <div className="flex gap-3 mb-4">
-        <select value={driver} onChange={e => setDriver(e.target.value)} className="border rounded px-3 py-2">
-          <option value="arnes">Arnes</option>
-          <option value="denis">Denis</option>
-        </select>
+      <input type="file" accept="image/*" onChange={handleImageUpload} />
 
-        <select value={month} onChange={e => setMonth(e.target.value)} className="border rounded px-3 py-2">
-          {[...Array(12)].map((_, i) => (
-            <option key={i + 1} value={i + 1}>{String(i + 1).padStart(2, '0')}</option>
-          ))}
-        </select>
-
-        <select value={year} onChange={e => setYear(e.target.value)} className="border rounded px-3 py-2">
-          {[2024, 2025, 2026].map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-      </div>
-
-      <table className="w-full border border-collapse text-sm">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">Tag</th>
-            <th className="border p-2">Status</th>
-            <th className="border p-2">Arbeitsbeginn</th>
-            <th className="border p-2">Pause</th>
-            <th className="border p-2">Arbeitsende</th>
-            <th className="border p-2">Stunden</th>
-            <th className="border p-2">Ladezeit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredDays.map(d => (
-            <tr key={d.day}>
-              <td className="border p-2 text-center">{d.day}</td>
-              <td className="border p-2">{d.status}</td>
-              <td className="border p-2">{d.start}</td>
-              <td className="border p-2">{d.pause}</td>
-              <td className="border p-2">{d.end}</td>
-              <td className="border p-2 text-center">{d.hours}</td>
-              <td className="border p-2 text-center">{d.ladezeit}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="font-bold">
-            <td colSpan={5} className="border p-2 text-right">Gesamtstunden</td>
-            <td className="border p-2 text-center">{totalHours}</td>
-            <td className="border p-2"></td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <div className="mt-10 flex justify-between text-sm">
-        <div>
-          <div>__________________________</div>
-          <div>Unterschrift Fahrer</div>
+      {image && (
+        <div style={{ marginTop: 15 }}>
+          <img src={image} alt="preview" style={{ maxWidth: '100%', borderRadius: 8 }} />
         </div>
-        <div>
-          <div>__________________________</div>
-          <div>Unterschrift Firma</div>
-        </div>
-      </div>
+      )}
+
+      <button
+        onClick={generatePDF}
+        style={{
+          marginTop: 20,
+          padding: '10px 20px',
+          background: '#2563eb',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 8,
+          fontWeight: 'bold'
+        }}
+      >
+        📄 Generiši PDF
+      </button>
     </div>
   );
 }
