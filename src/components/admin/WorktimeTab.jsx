@@ -104,10 +104,9 @@ export default function WorktimeTab() {
       };
 
       if (isUrlaub) {
-        row.hours = "0"; // I dalje nula sati, ali crtice u kolonama ostaju
+        row.hours = "0";
         row.note = NOTE_VACATION;
-        row.isUrlaub = true; 
-        // Start/End/Pause su "—"
+        row.isUrlaub = true;
       } 
       else if (hasPackages) {
         sumHours += WORK_HOURS;
@@ -173,11 +172,11 @@ export default function WorktimeTab() {
       <div id="print-section" className="bg-white text-black w-full">
         
         {/* HEADER */}
-        <h1 className="text-2xl font-bold mb-8 text-center uppercase tracking-wide border-b-0 pt-4" style={{ fontFamily: "Arial, sans-serif" }}>
+        <h1 className="text-xl font-bold mb-4 text-center uppercase tracking-wide border-b-0 pt-4" style={{ fontFamily: "Arial, sans-serif" }}>
           Arbeitszeitaufzeichnungen
         </h1>
 
-        <div className="flex justify-between items-end mb-6 px-2 text-base" style={{ fontFamily: "Arial, sans-serif" }}>
+        <div className="flex justify-between items-end mb-4 px-2 text-base" style={{ fontFamily: "Arial, sans-serif" }}>
             <div>
                 <strong>Nachname und Vorname:</strong> <span className="ml-2 text-lg">{currentDriverName}</span>
             </div>
@@ -186,36 +185,37 @@ export default function WorktimeTab() {
             </div>
         </div>
 
-        {/* TABELA - VEĆI FONT (12px) I VEĆI REDOVI */}
-        <table className="w-full border-collapse border border-black text-center" style={{ fontSize: "12px", fontFamily: "Arial, sans-serif" }}>
+        {/* TABELA - FIKSNA ŠIRINA (table-layout: fixed) */}
+        <table className="w-full border-collapse border border-black text-center table-fixed" style={{ fontSize: "11px", fontFamily: "Arial, sans-serif", tableLayout: "fixed" }}>
             <thead>
                 <tr className="bg-gray-200 print:bg-gray-200">
-                    <th className="border border-black p-1 w-[5%]">Tag</th>
-                    <th className="border border-black p-1 w-[13%]">Arbeitsbeginn</th>
-                    <th className="border border-black p-1 w-[13%]">Arbeitsende</th>
-                    <th className="border border-black p-1 w-[18%]">Pause (von - bis)</th>
-                    <th className="border border-black p-1 w-[13%]">Tagesarbeitszeit</th>
-                    <th className="border border-black p-1 text-left px-2 w-auto">Notizen</th>
+                    {/* DEFINISANJE ŠIRINA KOLONA (Ukupno 100%) */}
+                    <th className="border border-black p-1 w-[6%]">Tag</th>
+                    <th className="border border-black p-1 w-[16%]">Arbeitsbeginn</th>
+                    <th className="border border-black p-1 w-[16%]">Arbeitsende</th>
+                    <th className="border border-black p-1 w-[22%]">Pause (von - bis)</th>
+                    <th className="border border-black p-1 w-[14%]">Tagesarbeitszeit</th>
+                    {/* Notizen suženo na 26%, ostalo raspoređeno lijevo */}
+                    <th className="border border-black p-1 w-[26%]">Notizen</th>
                 </tr>
             </thead>
             <tbody>
                 {rows.map((r) => {
-                    // Određujemo boju teksta za cijeli red
                     const rowColorClass = r.isUrlaub ? 'text-red-600 font-bold print:text-red-600' : 'text-black';
                     
                     return (
-                        // Povećana visina reda na 28px da popuni stranicu
-                        <tr key={r.day} style={{ height: "28px" }} className={rowColorClass}>
-                            <td className="border border-black p-0 text-black">{r.day}</td> {/* Dan ostaje crn */}
+                        // Visina reda 24px je idealna da stane 31 dan + footer na 1 list
+                        <tr key={r.day} style={{ height: "24px" }} className={rowColorClass}>
+                            <td className="border border-black p-0 text-black">{r.day}</td>
                             
-                            {/* Crtice postaju crvene ako je Urlaub */}
                             <td className="border border-black p-0">{r.start}</td>
                             <td className="border border-black p-0">{r.end}</td>
                             <td className="border border-black p-0">{r.pause}</td>
                             
-                            <td className="border border-black p-0 font-medium text-black">{r.hours}</td> {/* Sati ostaju crni (0) */}
+                            <td className="border border-black p-0 font-medium text-black">{r.hours}</td>
                             
-                            <td className="border border-black text-left px-2">
+                            {/* CENTRIRAN TEKST U NOTIZEN */}
+                            <td className="border border-black p-0 text-center">
                                 {r.note}
                             </td>
                         </tr>
@@ -225,11 +225,12 @@ export default function WorktimeTab() {
         </table>
 
         {/* FOOTER */}
-        <div className="mt-6 font-bold text-base px-2" style={{ fontFamily: "Arial, sans-serif" }}>
+        <div className="mt-4 font-bold text-base px-2" style={{ fontFamily: "Arial, sans-serif" }}>
           Gesamtarbeitszeit: {totalHours} Stunden
         </div>
 
-        <div className="mt-20 flex justify-between text-base pr-10 pl-2" style={{ fontFamily: "Arial, sans-serif" }}>
+        {/* POTPISI - Pomereni malo gore da sigurno stanu */}
+        <div className="mt-14 flex justify-between text-base pr-10 pl-2" style={{ fontFamily: "Arial, sans-serif" }}>
           <div className="text-center">
             <div className="border-t border-black w-64 pt-2"></div>
             Unterschrift Fahrer
@@ -266,14 +267,14 @@ export default function WorktimeTab() {
             #print-section * {
                 visibility: visible;
             }
-            /* Ovo osigurava da crvena boja bude isprintana */
+            /* Boje */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
             @page {
                 size: A4;
-                margin: 10mm;
+                margin: 10mm; /* Standardna A4 margina */
             }
         }
       `}</style>
