@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Printer, User, Loader2 } from "lucide-react";
 
-// Import tvojih funkcija (Pazi da je putanja tačna)
+// Import tvojih funkcija
 import { 
   supabase, 
   getAllDriversCloud, 
   getDeliveriesByDriverCloud 
 } from "../../db/supabaseClient"; 
+
+/* --- 1. TVOJA FIKSNA IMENA --- */
+const PREFERRED_NAMES = {
+  8640: "Arnes Hokić",
+  8620: "Denis Frelih",
+  8610: "Eldin Begić",
+  8630: "Katarina Begić"
+};
 
 /* KONFIGURACIJA PDF-a */
 const WORK_START = "05:30";
@@ -17,7 +25,6 @@ const NOTE_WORK = "Ladezeit 3 Std./Tag";
 const NOTE_VACATION = "URLAUB";
 
 export default function WorktimeTab() {
-  // --- STATE ---
   const [drivers, setDrivers] = useState([]); 
   const [selectedDriverTura, setSelectedDriverTura] = useState("8640"); 
   
@@ -28,17 +35,12 @@ export default function WorktimeTab() {
   const [urlaubData, setUrlaubData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 1. UČITAJ VOZAČE (da dobijemo ispravna imena iz baze)
+  // Učitaj vozače
   useEffect(() => {
     async function loadDrivers() {
       try {
         const driversList = await getAllDriversCloud();
         setDrivers(driversList);
-        // Ako je lista puna, selektuj prvog, ili ostavi 8640 kao fallback
-        if (driversList.length > 0) {
-           // Ovdje možeš staviti logiku da selektuješ specifičnog ako želiš
-           // setSelectedDriverTura(driversList[0].tura);
-        }
       } catch (error) {
         console.error("Greška pri učitavanju vozača:", error);
       }
@@ -46,29 +48,29 @@ export default function WorktimeTab() {
     loadDrivers();
   }, []);
 
-  // 2. UČITAJ PODATKE (Dostave + Urlaub)
+  // Učitaj podatke
   useEffect(() => {
     if (!selectedDriverTura) return;
 
     async function loadWorkData() {
       setLoading(true);
       try {
-        // A) DOSTAVE - preko tvoje funkcije
+        // Dostave
         const deliveries = await getDeliveriesByDriverCloud(selectedDriverTura, year, month - 1);
         setWorkData(deliveries);
 
-        // B) GODIŠNJI ODMORI - Direktno iz tabele 'urlaub_marks' koju si poslao
+        // Godišnji
         const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
 
         const { data: urlaubs, error } = await supabase
-          .from('urlaub_marks') // <--- TVOJA NOVA TABELA
+          .from('urlaub_marks')
           .select('date')
-          .eq('driver', selectedDriverTura) // driver kolona je text (tura)
+          .eq('driver', selectedDriverTura)
           .gte('date', startDate)
           .lte('date', endDate)
-          .eq('is_active', true); // Samo aktivni
+          .eq('is_active', true);
 
         if (error) throw error;
         setUrlaubData(urlaubs || []);
@@ -83,7 +85,7 @@ export default function WorktimeTab() {
     loadWorkData();
   }, [selectedDriverTura, month, year]);
 
-  // --- LOGIKA SPAJANJA PODATAKA ---
+  // Logika tabele
   const { rows, totalHours } = useMemo(() => {
     const daysInMonth = new Date(year, month, 0).getDate();
     let sumHours = 0;
@@ -92,10 +94,7 @@ export default function WorktimeTab() {
       const day = i + 1;
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-      // 1. Provjera Urlaub
       const isUrlaub = urlaubData.some(u => u.date === dateStr);
-
-      // 2. Provjera Paketa
       const delivery = workData.find(d => d.date === dateStr);
       const hasPackages = delivery && Number(delivery.paketi) > 0;
 
@@ -118,28 +117,23 @@ export default function WorktimeTab() {
         row.note = NOTE_WORK;
         row.isWork = true;
       }
-
       return row;
     });
 
     return { rows: calculatedRows, totalHours: sumHours };
   }, [workData, urlaubData, month, year]);
 
-  // Ime vozača za prikaz
-  const currentDriverObj = drivers.find(d => d.tura == selectedDriverTura);
-  const currentDriverName = currentDriverObj 
-    ? (currentDriverObj.ime || currentDriverObj.name) 
-    : selectedDriverTura; // Fallback na turu (npr 8640) ako ime nije učitano
+  // --- ODREĐIVANJE IMENA ---
+  // Prioritet: Tvoja fiksna lista -> Ime iz baze -> Tura
+  const dbDriver = drivers.find(d => d.tura == selectedDriverTura);
+  const currentDriverName = PREFERRED_NAMES[selectedDriverTura] || (dbDriver ? (dbDriver.ime || dbDriver.name) : selectedDriverTura);
 
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- KONTROLNA PLOČA (Gornji dio sa opcijama) --- */}
-      {/* Klasa 'no-print-section' označava da se ovo NEĆE printati */}
+      {/* --- KONTROLNA PLOČA (Ne printa se) --- */}
       <div className="w-full max-w-[210mm] bg-white p-5 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-6 items-center justify-between no-print-section">
-        
         <div className="flex gap-4 items-center flex-wrap">
-          {/* Odabir Vozača */}
           <div className="flex flex-col">
             <label className="text-xs font-bold text-gray-500 uppercase mb-1">Vozač</label>
             <div className="relative">
@@ -149,8 +143,12 @@ export default function WorktimeTab() {
                 onChange={(e) => setSelectedDriverTura(e.target.value)}
                 className="pl-9 pr-8 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 cursor-pointer font-medium min-w-[200px]"
               >
-                {drivers.length === 0 && <option value="8640">Učitavam...</option>}
-                {drivers.map((d) => (
+                {/* Prvo prikaži tvoja preferirana imena */}
+                {Object.entries(PREFERRED_NAMES).map(([id, name]) => (
+                  <option key={id} value={id}>{name}</option>
+                ))}
+                {/* Zatim ostale iz baze koji nisu na listi */}
+                {drivers.filter(d => !PREFERRED_NAMES[d.tura]).map((d) => (
                   <option key={d.id} value={d.tura}>
                     {d.ime || d.name} ({d.tura})
                   </option>
@@ -159,7 +157,6 @@ export default function WorktimeTab() {
             </div>
           </div>
 
-          {/* Odabir Datuma */}
           <div className="flex flex-col">
             <label className="text-xs font-bold text-gray-500 uppercase mb-1">Period</label>
             <div className="flex gap-2 items-center">
@@ -175,12 +172,7 @@ export default function WorktimeTab() {
               />
             </div>
           </div>
-
-          {loading && (
-            <div className="flex items-center text-blue-600 text-sm font-semibold animate-pulse ml-2">
-                <Loader2 size={18} className="animate-spin mr-2"/>
-            </div>
-          )}
+          {loading && <Loader2 size={18} className="animate-spin text-blue-600 ml-2"/>}
         </div>
 
         <button
@@ -192,17 +184,17 @@ export default function WorktimeTab() {
         </button>
       </div>
 
-      {/* --- DIO ZA PRINTANJE (ID: print-section) --- */}
+      {/* --- DIO ZA PRINTANJE (A4) --- */}
       <div
         id="print-section" 
-        className="bg-white text-black p-10 w-full max-w-[210mm] shadow-2xl print:shadow-none print:p-0 print:m-0 print:w-full"
-        style={{ minHeight: "297mm", fontFamily: "Arial, sans-serif" }}
+        className="bg-white text-black p-0 m-0 w-full"
+        style={{ fontFamily: "Arial, sans-serif" }}
       >
-        <h1 className="text-xl font-bold mb-6 text-left" style={{ fontSize: "22px" }}>
+        <h1 className="text-lg font-bold mb-4 text-left border-none pt-4 pl-4" style={{ fontSize: "18px" }}>
           Arbeitszeitaufzeichnungen
         </h1>
 
-        <div className="mb-8 text-sm leading-relaxed">
+        <div className="mb-4 text-sm leading-snug pl-4">
           <p className="mb-1">
             <strong>Nachname und Vorname:</strong> {currentDriverName}
           </p>
@@ -211,80 +203,84 @@ export default function WorktimeTab() {
           </p>
         </div>
 
-        <table className="w-full border-collapse text-xs border border-black" style={{ fontSize: "11px" }}>
-          <thead>
-            <tr className="bg-gray-100 print:bg-gray-100">
-              <th className="border border-black p-1 text-center w-8">Tag</th>
-              <th className="border border-black p-1 text-center w-24">Arbeitsbeginn</th>
-              <th className="border border-black p-1 text-center w-24">Arbeitsende</th>
-              <th className="border border-black p-1 text-center w-28">Pause (von - bis)</th>
-              <th className="border border-black p-1 text-center w-24">Tagesarbeitszeit</th>
-              <th className="border border-black p-1 text-left px-2">Notizen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.day} style={{ height: "24px" }}>
-                <td className="border border-black p-1 text-center">{r.day}</td>
-                <td className="border border-black p-1 text-center">{r.start}</td>
-                <td className="border border-black p-1 text-center">{r.end}</td>
-                <td className="border border-black p-1 text-center">{r.pause}</td>
-                <td className="border border-black p-1 text-center font-semibold">
-                  {r.hours}
-                </td>
-                <td className="border border-black p-1 text-left px-2 text-gray-800">
-                  {r.note}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Tabela sa manjim fontom i manjim paddingom da sve stane */}
+        <div className="px-4">
+            <table className="w-full border-collapse border border-black" style={{ fontSize: "10px" }}>
+            <thead>
+                <tr className="bg-gray-100 print:bg-gray-100">
+                <th className="border border-black p-1 text-center w-8">Tag</th>
+                <th className="border border-black p-1 text-center w-20">Arbeitsbeginn</th>
+                <th className="border border-black p-1 text-center w-20">Arbeitsende</th>
+                <th className="border border-black p-1 text-center w-24">Pause (von - bis)</th>
+                <th className="border border-black p-1 text-center w-24">Tagesarbeitszeit</th>
+                <th className="border border-black p-1 text-left px-2">Notizen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows.map((r) => (
+                <tr key={r.day} style={{ height: "20px" }}> 
+                    <td className="border border-black text-center" style={{ padding: "1px" }}>{r.day}</td>
+                    <td className="border border-black text-center" style={{ padding: "1px" }}>{r.start}</td>
+                    <td className="border border-black text-center" style={{ padding: "1px" }}>{r.end}</td>
+                    <td className="border border-black text-center" style={{ padding: "1px" }}>{r.pause}</td>
+                    <td className="border border-black text-center font-semibold" style={{ padding: "1px" }}>
+                    {r.hours}
+                    </td>
+                    <td className="border border-black text-left px-2 text-gray-800" style={{ padding: "1px" }}>
+                    {r.note}
+                    </td>
+                </tr>
+                ))}
+            </tbody>
+            </table>
+        </div>
 
-        <div className="mt-4 font-bold text-sm">
+        <div className="mt-4 pl-4 font-bold text-sm">
           Gesamtarbeitszeit: {totalHours} Stunden
         </div>
 
-        <div className="mt-20 flex justify-between text-sm pr-10">
+        <div className="mt-12 flex justify-between text-sm pr-10 pl-4">
           <div className="text-center">
-            <div className="border-t border-black w-56 pt-2"></div>
+            <div className="border-t border-black w-48 pt-1"></div>
             Unterschrift Fahrer
           </div>
           <div className="text-center">
-            <div className="border-t border-black w-56 pt-2"></div>
+            <div className="border-t border-black w-48 pt-1"></div>
             Unterschrift Firma
           </div>
         </div>
       </div>
 
-      {/* --- AGRESIVNI CSS ZA PRINTANJE --- */}
+      {/* --- CSS ZA PRINT --- */}
       <style>{`
         @media print {
-          /* 1. Sakrij SVE u body-ju */
+          /* Sakrij sve nepotrebno */
           body * {
             visibility: hidden;
           }
-          
-          /* 2. Pokaži samo naš print kontejner i njegov sadržaj */
+          /* Pokaži samo print sekciju */
           #print-section, #print-section * {
             visibility: visible;
           }
-
-          /* 3. Pozicioniraj print sekciju na vrh stranice */
+          /* Pozicioniraj print sekciju na vrh */
           #print-section {
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
             margin: 0;
-            padding: 0;
-            background: white;
-            box-shadow: none !important;
+            padding: 5mm; /* Malo margine za printer */
           }
           
-          /* 4. Sakrij header/footer od browsera ako je moguće */
+          /* Osiguraj da stane na jednu stranu */
           @page {
             size: A4;
-            margin: 10mm;
+            margin: 5mm; /* Male margine na papiru */
+          }
+          
+          /* Ukloni sjenke i pozadine */
+          .shadow-sm, .shadow-2xl {
+            box-shadow: none !important;
           }
         }
       `}</style>
