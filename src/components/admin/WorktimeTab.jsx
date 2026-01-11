@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Printer, User, Loader2 } from "lucide-react";
-// KORISTIMO ONAJ KOJI VEĆ IMAŠ (bez autotable dodatka)
-import { jsPDF } from "jspdf";
+import { jsPDF } from "jspdf"; // Koristimo tvoju postojeću biblioteku
 
 import { 
   supabase, 
@@ -125,44 +124,54 @@ export default function WorktimeTab() {
   const dbDriver = drivers.find(d => d.tura == selectedDriverTura);
   const currentDriverName = PREFERRED_NAMES[selectedDriverTura] || (dbDriver ? (dbDriver.ime || dbDriver.name) : selectedDriverTura);
 
-  // --- RUČNO GENERISANJE TABELE (BEZ autotable DODATKA) ---
+  // --- PDF GENERATOR (FIKSNE KOORDINATE) ---
   const generatePDF = () => {
-    // Kreiramo dokument
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
       format: "a4"
     });
 
-    // Postavke fonta
+    // Fontovi
     doc.setFont("helvetica", "normal");
     
-    // --- 1. ZAGLAVLJE ---
+    // 1. NASLOV (Centriran na 105mm - sredina A4)
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("Arbeitszeitaufzeichnungen", 105, 15, { align: "center" });
 
+    // 2. PODACI (Lijevo i Desno fiksno)
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     
-    // Podaci o vozaču i datumu
+    // Ime vozača
     doc.text("Nachname und Vorname:", 14, 25);
     doc.setFont("helvetica", "bold");
     doc.text(currentDriverName, 55, 25);
     
+    // Datum
     doc.setFont("helvetica", "normal");
     doc.text("Monat und Jahr:", 150, 25);
     doc.setFont("helvetica", "bold");
     doc.text(`${String(month).padStart(2, "0")}/${year}`, 180, 25);
 
-    // --- 2. CRTANJE TABELE RUČNO ---
+    // 3. TABELA (FIKSNA MREŽA)
     let startY = 32;
-    const rowHeight = 7; // Visina reda u mm
-    // Definicija širina kolona (ukupno ~182mm)
-    const colWidths = [10, 28, 28, 32, 24, 60]; 
+    const rowHeight = 7.5; // Malo veći redovi da popune stranicu ljepše
+    
+    // DEFINICIJA ŠIRINA (Mora biti ukupno oko 182mm)
+    // Ovo garantuje da je tabela ista za sve!
+    const colWidths = [
+      12, // Tag
+      30, // Beginn
+      30, // Ende
+      35, // Pause
+      25, // Std.
+      50  // Notizen
+    ]; 
     const colHeaders = ['Tag', 'Beginn', 'Ende', 'Pause', 'Std.', 'Notizen'];
     
-    // X pozicije za svaku kolonu (kumulativno)
+    // Izračunaj X pozicije
     let currentX = 14;
     const colX = colWidths.map(w => {
       const x = currentX;
@@ -170,27 +179,25 @@ export default function WorktimeTab() {
       return x;
     });
 
-    // Crtanje ZAGLAVLJA TABELE
-    doc.setFillColor(230, 230, 230); // Siva pozadina
-    doc.rect(14, startY, 182, rowHeight, 'F'); // Oboji pravougaonik
+    // ZAGLAVLJE TABELE (Siva pozadina)
+    doc.setFillColor(230, 230, 230);
+    doc.rect(14, startY, 182, rowHeight, 'F'); 
     
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setLineWidth(0.1);
+    doc.setDrawColor(0); // Crna linija
 
     colHeaders.forEach((header, i) => {
-      // Okvir ćelije
       doc.rect(colX[i], startY, colWidths[i], rowHeight);
-      // Tekst centriran
-      doc.text(header, colX[i] + (colWidths[i] / 2), startY + 4.5, { align: "center" });
+      doc.text(header, colX[i] + (colWidths[i] / 2), startY + 5, { align: "center" });
     });
 
-    // Crtanje REDOVA
+    // REDOVI TABELE
     doc.setFont("helvetica", "normal");
     let currentY = startY + rowHeight;
 
     rows.forEach((r) => {
-      // Podaci za ovaj red
       const rowData = [
         String(r.day),
         r.start,
@@ -200,36 +207,36 @@ export default function WorktimeTab() {
         r.note
       ];
 
-      // Ako je URLAUB, postavi crvenu boju
+      // Provjera za boju (Ako je Urlaub -> Crveno)
       if (r.isUrlaub) {
-        doc.setTextColor(200, 0, 0);
+        doc.setTextColor(200, 0, 0); // Crvena
         doc.setFont("helvetica", "bold");
       } else {
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(0, 0, 0); // Crna
         doc.setFont("helvetica", "normal");
       }
 
       rowData.forEach((text, i) => {
-        // Okvir ćelije
-        doc.setDrawColor(0); // Crni okvir
+        // Crtaj okvir (uvijek crn)
+        doc.setDrawColor(0); 
         doc.rect(colX[i], currentY, colWidths[i], rowHeight);
         
-        // Tekst centriran
-        doc.text(String(text), colX[i] + (colWidths[i] / 2), currentY + 4.5, { align: "center" });
+        // Crtaj tekst (centriran)
+        doc.text(String(text), colX[i] + (colWidths[i] / 2), currentY + 5, { align: "center" });
       });
 
       currentY += rowHeight;
     });
 
-    // --- 3. FOOTER ---
-    const footerY = currentY + 8;
+    // 4. FOOTER (Ispod tabele)
+    const footerY = currentY + 10;
     
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
     doc.text(`Gesamtarbeitszeit: ${totalHours} Stunden`, 14, footerY);
 
     // Linije za potpis
-    const signY = footerY + 20;
+    const signY = footerY + 25;
     doc.setLineWidth(0.2);
     
     // Potpis lijevo
@@ -239,17 +246,17 @@ export default function WorktimeTab() {
     doc.text("Unterschrift Fahrer", 47, signY + 5, { align: "center" });
 
     // Potpis desno
-    doc.line(116, signY, 196, signY); // Pomjereno udesno
-    doc.text("Unterschrift Firma", 156, signY + 5, { align: "center" });
+    doc.line(130, signY, 196, signY);
+    doc.text("Unterschrift Firma", 163, signY + 5, { align: "center" });
 
-    // --- 4. SAČUVAJ FAJL ---
-    doc.save(`Arbeitszeit_${currentDriverName.replace(" ", "_")}_${month}_${year}.pdf`);
+    // 5. OTVORI PDF
+    doc.save(`Arbeitszeit_${currentDriverName.replace(/ /g, "_")}_${month}_${year}.pdf`);
   };
 
   return (
     <div className="flex flex-col items-center bg-gray-50 min-h-screen p-4 font-sans">
       
-      {/* --- MENU --- */}
+      {/* MENU */}
       <div className="w-full max-w-4xl bg-white p-4 rounded-xl shadow-sm mb-6 border border-blue-100 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-4 items-center flex-wrap">
           <div className="flex flex-col">
@@ -280,7 +287,6 @@ export default function WorktimeTab() {
           {loading && <Loader2 size={18} className="animate-spin text-blue-600 ml-2"/>}
         </div>
 
-        {/* --- DUGME --- */}
         <button 
             onClick={generatePDF}
             className="flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg transition-all active:scale-95"
@@ -290,9 +296,9 @@ export default function WorktimeTab() {
         </button>
       </div>
 
-      {/* --- PREVIEW NA EKRANU (Ovo se ne printa, služi samo za vizuelni uvid) --- */}
+      {/* PREVIEW (Samo za informaciju korisniku) */}
       <div className="bg-white text-black w-full max-w-[210mm] shadow-2xl p-8 mx-auto hidden md:block">
-        <div className="opacity-50 text-center mb-4 text-xs uppercase tracking-widest text-gray-400">Preview (Klikni dugme iznad za PDF)</div>
+        <div className="opacity-50 text-center mb-4 text-xs uppercase tracking-widest text-gray-400">Preview (Klikni Download za pravi PDF)</div>
         
         <h1 className="text-xl font-bold mb-4 text-center uppercase border-b-0 pt-2">
           Arbeitszeitaufzeichnungen
@@ -330,4 +336,4 @@ export default function WorktimeTab() {
       </div>
     </div>
   );
-}
+    }
