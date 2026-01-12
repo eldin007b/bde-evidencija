@@ -18,7 +18,7 @@ const MONTHS = [
   "Juli","Avgust","Septembar","Oktobar","Novembar","Decembar"
 ];
 
-const YEARS = [2025, 2026, 2027, 2028y];
+const YEARS = [2025, 2026, 2027, 2028];
 
 const WORK_START = "05:30";
 const WORK_END = "14:00";
