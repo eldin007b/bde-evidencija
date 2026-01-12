@@ -5,7 +5,7 @@ import {
   getDeliveriesByDriverCloud
 } from "../../db/supabaseClient";
 
-/* ORIGINALNA IMENA VOZAČA */
+/* IMENA VOZAČA – ORIGINAL */
 const PREFERRED_NAMES = {
   8640: "Arnes Hokic",
   8620: "Denis Frelih",
@@ -13,7 +13,13 @@ const PREFERRED_NAMES = {
   8630: "Katarina Begić"
 };
 
-/* KONFIG */
+const MONTHS = [
+  "Januar","Februar","Mart","April","Maj","Juni",
+  "Juli","Avgust","Septembar","Oktobar","Novembar","Decembar"
+];
+
+const YEARS = [2025, 2026, 2027, 2028y];
+
 const WORK_START = "05:30";
 const WORK_END = "14:00";
 const BREAK_TIME = "11:30 - 12:00";
@@ -22,252 +28,163 @@ const WORK_HOURS = 8;
 export default function WorktimeTab() {
   const [drivers, setDrivers] = useState([]);
   const [driver, setDriver] = useState("8640");
-  const [month, setMonth] = useState(12);
-  const [year, setYear] = useState(2025);
+  const [month, setMonth] = useState(0);
+  const [year, setYear] = useState(2026);
   const [workData, setWorkData] = useState([]);
   const [urlaubData, setUrlaubData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fatalError, setFatalError] = useState(null);
 
   /* LOAD DRIVERS */
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await getAllDriversCloud();
-        setDrivers(data || []);
-      } catch (e) {
-        console.error(e);
-        setDrivers([]);
-      }
-    })();
+    getAllDriversCloud().then(setDrivers).catch(() => setDrivers([]));
   }, []);
 
   /* LOAD DATA */
   useEffect(() => {
     (async () => {
-      try {
-        setLoading(true);
+      setLoading(true);
 
-        const deliveries = await getDeliveriesByDriverCloud(
-          driver,
-          year,
-          month - 1
-        );
-        setWorkData(deliveries || []);
+      const deliveries = await getDeliveriesByDriverCloud(driver, year, month);
+      setWorkData(deliveries || []);
 
-        const start = `${year}-${String(month).padStart(2, "0")}-01`;
-        const end = `${year}-${String(month).padStart(2, "0")}-${new Date(
-          year,
-          month,
-          0
-        ).getDate()}`;
+      const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+      const end = `${year}-${String(month + 1).padStart(2, "0")}-${new Date(
+        year,
+        month + 1,
+        0
+      ).getDate()}`;
 
-        const { data: urlaub } = await supabase
-          .from("urlaub_marks")
-          .select("date")
-          .eq("driver", driver)
-          .gte("date", start)
-          .lte("date", end)
-          .eq("is_active", true);
+      const { data: urlaub } = await supabase
+        .from("urlaub_marks")
+        .select("date")
+        .eq("driver", driver)
+        .gte("date", start)
+        .lte("date", end)
+        .eq("is_active", true);
 
-        setUrlaubData(urlaub || []);
-      } catch (e) {
-        console.error(e);
-        setFatalError("Greška pri učitavanju podataka");
-      } finally {
-        setLoading(false);
-      }
+      setUrlaubData(urlaub || []);
+      setLoading(false);
     })();
   }, [driver, month, year]);
 
-  const currentDriverName =
-    PREFERRED_NAMES[driver] ||
-    drivers.find(d => d.tura == driver)?.ime ||
-    drivers.find(d => d.tura == driver)?.name ||
-    driver;
+  const currentDriverName = PREFERRED_NAMES[driver] || driver;
 
   /* ROWS */
   const { rows, totalHours } = useMemo(() => {
     let sum = 0;
-    const days = new Date(year, month, 0).getDate();
+    const days = new Date(year, month + 1, 0).getDate();
 
     const result = Array.from({ length: days }, (_, i) => {
       const day = i + 1;
-      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(
-        day
-      ).padStart(2, "0")}`;
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
       const isUrlaub = urlaubData.some(u => u.date === dateStr);
       const delivery = workData.find(d => d.date === dateStr);
 
       if (isUrlaub) {
-        return {
-          day,
-          start: "-",
-          end: "-",
-          pause: "-",
-          hours: "0",
-          note: "URLAUB",
-          isUrlaub: true
-        };
+        return { day, start:"-", end:"-", pause:"-", hours:"0", note:"URLAUB", isUrlaub:true };
       }
 
       if (delivery && Number(delivery.paketi) > 0) {
         sum += WORK_HOURS;
-        return {
-          day,
-          start: WORK_START,
-          end: WORK_END,
-          pause: BREAK_TIME,
-          hours: WORK_HOURS,
-          note: "Ladezeit 3 Std./Tag",
-          isUrlaub: false
-        };
+        return { day, start:WORK_START, end:WORK_END, pause:BREAK_TIME, hours:WORK_HOURS, note:"Ladezeit 3 Std./Tag", isUrlaub:false };
       }
 
-      return {
-        day,
-        start: "-",
-        end: "-",
-        pause: "-",
-        hours: "-",
-        note: "-",
-        isUrlaub: false
-      };
+      return { day, start:"-", end:"-", pause:"-", hours:"-", note:"-", isUrlaub:false };
     });
 
     return { rows: result, totalHours: sum };
   }, [workData, urlaubData, month, year]);
 
-  /* PDF – LAZY IMPORT (PWA SAFE) */
+  /* PDF */
   const generatePDF = async () => {
-    try {
-      const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-      doc.setFont("helvetica");
+    doc.setFont("helvetica");
+    doc.setFontSize(14).setFont("helvetica","bold");
+    doc.text("Arbeitszeitaufzeichnungen",105,20,{align:"center"});
 
-      doc.setFontSize(14).setFont("helvetica", "bold");
-      doc.text("Arbeitszeitaufzeichnungen", 105, 20, { align: "center" });
+    doc.setFontSize(10).setFont("helvetica","normal");
+    doc.text("Nachname und Vorname:",14,30);
+    doc.setFont("helvetica","bold");
+    doc.text(currentDriverName,60,30);
 
-      doc.setFontSize(10).setFont("helvetica", "normal");
-      doc.text("Nachname und Vorname:", 14, 30);
-      doc.setFont("helvetica", "bold");
-      doc.text(currentDriverName, 60, 30);
+    doc.setFont("helvetica","normal");
+    doc.text("Monat und Jahr:",135,30);
+    doc.setFont("helvetica","bold");
+    doc.text(`${String(month+1).padStart(2,"0")}/${year}`,170,30);
 
-      doc.setFont("helvetica", "normal");
-      doc.text("Monat und Jahr:", 135, 30);
-      doc.setFont("helvetica", "bold");
-      doc.text(`${String(month).padStart(2, "0")}/${year}`, 170, 30);
+    const headers=["Tag","Arbeitsbeginn","Arbeitsende","Pause","Std.","Notizen"];
+    const widths=[10,28,28,38,26,52];
+    let x=14, y=36, h=6.8;
 
-      const headers = [
-        "Tag",
-        "Arbeitsbeginn",
-        "Arbeitsende",
-        "Pause (von - bis)",
-        "Tagesarbeitszeit",
-        "Notizen"
-      ];
-      const widths = [10, 28, 28, 38, 26, 52];
-      const startY = 36;
-      const rowH = 6.8;
+    headers.forEach((t,i)=>{
+      doc.rect(x,y,widths[i],h);
+      doc.text(t,x+widths[i]/2,y+4.5,{align:"center"});
+      x+=widths[i];
+    });
 
-      let x = 14;
-      headers.forEach((h, i) => {
-        doc.rect(x, startY, widths[i], rowH);
-        doc.text(h, x + widths[i] / 2, startY + 4.5, { align: "center" });
-        x += widths[i];
+    y+=h;
+
+    rows.forEach(r=>{
+      let cx=14;
+      const vals=[r.day,r.start,r.end,r.pause,r.hours,r.note];
+      vals.forEach((v,i)=>{
+        doc.rect(cx,y,widths[i],h);
+        if(r.isUrlaub && i===5) doc.setTextColor(200,0,0);
+        else doc.setTextColor(0,0,0);
+        doc.text(String(v), i===0?cx+2:cx+widths[i]/2, y+4.5, {align:i===0?"left":"center"});
+        cx+=widths[i];
       });
+      y+=h;
+    });
 
-      let y = startY + rowH;
+    doc.setTextColor(0);
+    doc.setFont("helvetica","bold");
+    doc.text(`Gesamtarbeitszeit: ${totalHours} Stunden`,14,y+8);
 
-      rows.forEach(r => {
-        let cx = 14;
-        const values = [r.day, r.start, r.end, r.pause, r.hours, r.note];
+    const signY=y+30;
+    doc.line(20,signY,85,signY);
+    doc.text("Unterschrift Fahrer",52,signY+6,{align:"center"});
+    doc.line(120,signY,185,signY);
+    doc.text("Unterschrift Firma",152,signY+6,{align:"center"});
 
-        values.forEach((val, i) => {
-          doc.rect(cx, y, widths[i], rowH);
-
-          if (r.isUrlaub && i === 5) {
-            doc.setTextColor(200, 0, 0);
-          } else {
-            doc.setTextColor(0, 0, 0);
-          }
-
-          doc.text(
-            String(val),
-            i === 0 ? cx + 2 : cx + widths[i] / 2,
-            y + 4.5,
-            { align: i === 0 ? "left" : "center" }
-          );
-          cx += widths[i];
-        });
-
-        y += rowH;
-      });
-
-      doc.setTextColor(0);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Gesamtarbeitszeit: ${totalHours} Stunden`, 14, y + 8);
-
-      doc.save(
-        `Arbeitszeit_${currentDriverName.replace(/ /g, "_")}_${month}_${year}.pdf`
-      );
-    } catch (e) {
-      console.error(e);
-      alert("PDF greška (PWA safe)");
-    }
+    doc.save(`Arbeitszeit_${currentDriverName}_${month+1}_${year}.pdf`);
   };
 
-  /* FATAL FALLBACK */
-  if (fatalError) {
-    return <div className="p-6 text-red-600">{fatalError}</div>;
-  }
-
-  /* UI */
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex gap-3 mb-4 items-end">
-        <select
-          value={driver}
-          onChange={e => setDriver(e.target.value)}
-          className="border p-2 rounded"
-        >
-          {Object.entries(PREFERRED_NAMES).map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
+    <div className="p-6 min-h-screen text-white">
+      {/* TOP PANEL */}
+      <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-4 mb-6 flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <select value={driver} onChange={e=>setDriver(e.target.value)} className="bg-black/40 rounded-xl p-3">
+            {Object.entries(PREFERRED_NAMES).map(([id,name])=>(
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
 
-        <input
-          type="number"
-          value={month}
-          onChange={e => setMonth(+e.target.value)}
-          className="border p-2 w-20 rounded"
-        />
-        <input
-          type="number"
-          value={year}
-          onChange={e => setYear(+e.target.value)}
-          className="border p-2 w-24 rounded"
-        />
+          <select value={month} onChange={e=>setMonth(+e.target.value)} className="bg-black/40 rounded-xl p-3">
+            {MONTHS.map((m,i)=><option key={i} value={i}>{m}</option>)}
+          </select>
 
-        <button
-          onClick={generatePDF}
-          className="ml-auto bg-blue-600 text-white px-6 py-2 rounded"
-        >
-          Download PDF
-        </button>
+          <select value={year} onChange={e=>setYear(+e.target.value)} className="bg-black/40 rounded-xl p-3">
+            {YEARS.map(y=><option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+
+        <div className="flex gap-4">
+          <button onClick={generatePDF} className="flex-1 bg-blue-600 rounded-xl py-3 font-bold">
+            Download PDF
+          </button>
+          <button onClick={()=>window.print()} className="flex-1 bg-gray-700 rounded-xl py-3 font-bold">
+            Print
+          </button>
+        </div>
       </div>
 
-      {loading && <div>Učitavanje…</div>}
-
       {/* PREVIEW */}
-      <div
-        className="bg-white max-w-[210mm] mx-auto p-[14mm] shadow"
-        style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "9px" }}
-      >
+      <div className="bg-white text-black max-w-[210mm] mx-auto p-[14mm] rounded-xl shadow print:block">
         <table className="w-full border-collapse border text-xs">
           <thead>
             <tr>
@@ -279,19 +196,22 @@ export default function WorktimeTab() {
           <tbody>
             {rows.map(r=>(
               <tr key={r.day}>
-                <td className="border px-1 text-left">{r.day}</td>
+                <td className="border px-1">{r.day}</td>
                 <td className="border text-center">{r.start}</td>
                 <td className="border text-center">{r.end}</td>
                 <td className="border text-center">{r.pause}</td>
                 <td className="border text-center">{r.hours}</td>
-                <td className={`border text-center ${r.isUrlaub ? "text-red-600 font-bold" : ""}`}>
-                  {r.note}
-                </td>
+                <td className={`border text-center ${r.isUrlaub?"text-red-600 font-bold":""}`}>{r.note}</td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        <div className="mt-10 flex justify-between text-sm">
+          <div className="w-1/3 text-center border-t pt-2">Unterschrift Fahrer</div>
+          <div className="w-1/3 text-center border-t pt-2">Unterschrift Firma</div>
+        </div>
       </div>
     </div>
   );
-}
+}w
