@@ -24,7 +24,7 @@ const WORK_HOURS = 8;
 export default function WorktimeTab() {
   const [drivers, setDrivers] = useState([]);
   const [driver, setDriver] = useState("8640");
-  const [month, setMonth] = useState(10); // 0-based (UI)
+  const [month, setMonth] = useState(10); // 0-based
   const [year, setYear] = useState(2025);
   const [deliveries, setDeliveries] = useState([]);
   const [urlaub, setUrlaub] = useState([]);
@@ -48,7 +48,6 @@ export default function WorktimeTab() {
           0
         ).getDate()}`;
 
-        // DELIVERIES
         const { data: d } = await supabase
           .from("deliveries")
           .select("date")
@@ -59,7 +58,6 @@ export default function WorktimeTab() {
 
         setDeliveries(d || []);
 
-        // URLAUB
         const { data: u } = await supabase
           .from("urlaub_marks")
           .select("date")
@@ -100,39 +98,15 @@ export default function WorktimeTab() {
       const date = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
       if (urlaubDays.has(date)) {
-        return {
-          day,
-          start: "-",
-          end: "-",
-          pause: "-",
-          hours: "0",
-          note: "URLAUB",
-          isUrlaub: true
-        };
+        return { day, start:"-", end:"-", pause:"-", hours:"0", note:"URLAUB", isUrlaub:true };
       }
 
       if (deliveryDays.has(date)) {
         sum += WORK_HOURS;
-        return {
-          day,
-          start: WORK_START,
-          end: WORK_END,
-          pause: BREAK_TIME,
-          hours: WORK_HOURS,
-          note: "Ladezeit 3 Std./Tag",
-          isUrlaub: false
-        };
+        return { day, start:WORK_START, end:WORK_END, pause:BREAK_TIME, hours:WORK_HOURS, note:"Ladezeit 3 Std./Tag", isUrlaub:false };
       }
 
-      return {
-        day,
-        start: "-",
-        end: "-",
-        pause: "-",
-        hours: "-",
-        note: "-",
-        isUrlaub: false
-      };
+      return { day, start:"-", end:"-", pause:"-", hours:"-", note:"-", isUrlaub:false };
     });
 
     return { rows: r, totalHours: sum };
@@ -140,14 +114,13 @@ export default function WorktimeTab() {
 
   const currentDriverName = PREFERRED_NAMES[driver] || driver;
 
-  /* EXPORT PDF */
-  const exportPDF = async () => {
+  /* EXPORT + SHARE PDF */
+  const sharePDF = async () => {
     try {
       const { jsPDF } = await import("jspdf");
       const doc = new jsPDF({ unit: "mm", format: "a4" });
 
       doc.setFont("helvetica");
-
       doc.setFontSize(14).setFont("helvetica", "bold");
       doc.text("Arbeitszeitaufzeichnungen", 105, 20, { align: "center" });
 
@@ -178,7 +151,6 @@ export default function WorktimeTab() {
       rows.forEach(r => {
         let cx = 14;
         const vals = [r.day, r.start, r.end, r.pause, r.hours, r.note];
-
         vals.forEach((v, i) => {
           doc.rect(cx, y, widths[i], h);
           if (r.isUrlaub && i === 5) doc.setTextColor(200, 0, 0);
@@ -205,24 +177,26 @@ export default function WorktimeTab() {
       doc.line(120, signY, 185, signY);
       doc.text("Unterschrift Firma", 152, signY + 6, { align: "center" });
 
-      doc.save(`Arbeitszeit_${currentDriverName}_${month + 1}_${year}.pdf`);
-    } catch (e) {
-      alert("PDF export nije dostupan");
-      console.error(e);
-    }
-  };
+      const blob = doc.output("blob");
+      const fileName = `Arbeitszeit_${currentDriverName}_${month + 1}_${year}.pdf`;
+      const file = new File([blob], fileName, { type: "application/pdf" });
 
-  const printPage = () => {
-    try {
-      window.print();
-    } catch {
-      alert("Print nije podržan u PWA režimu");
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "Arbeitszeit PDF",
+          files: [file]
+        });
+      } else {
+        doc.save(fileName);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Dijeljenje PDF-a nije dostupno");
     }
   };
 
   return (
     <div className="p-6 bg-[#0f172a] min-h-screen text-white">
-      {/* CONTROL PANEL */}
       <div className="bg-[#111827] rounded-xl p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <select value={driver} onChange={e => setDriver(e.target.value)} className="p-3 rounded bg-[#1f2937]">
@@ -240,19 +214,16 @@ export default function WorktimeTab() {
           </select>
         </div>
 
-        <div className="flex gap-4">
-          <button onClick={exportPDF} className="flex-1 bg-blue-600 rounded-lg py-3 font-bold">
-            Export PDF
-          </button>
-          <button onClick={printPage} className="flex-1 bg-gray-600 rounded-lg py-3 font-bold">
-            Print
-          </button>
-        </div>
+        <button
+          onClick={sharePDF}
+          className="w-full bg-green-600 rounded-lg py-3 font-bold"
+        >
+          Podijeli PDF
+        </button>
       </div>
 
       {loading && <div>Učitavanje…</div>}
 
-      {/* PREVIEW */}
       <div className="bg-white text-black max-w-[800px] mx-auto p-6 rounded-lg shadow">
         <h2 className="text-center font-bold mb-4">
           Arbeitszeitaufzeichnungen – {currentDriverName}
