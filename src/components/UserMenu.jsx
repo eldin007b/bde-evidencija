@@ -35,69 +35,80 @@ export default function UserMenu({
   /* ======================================================
      FETCH PLATA (SORTIRANJE PO GODINI I MJESECU IZ FAJLA)
   ====================================================== */
-  useEffect(() => {
-    const fetchPayrollData = async () => {
-      if (!user || user.role === "admin" || !supabase) return;
+ useEffect(() => {
+  const fetchPayrollData = async () => {
+    if (!user || user.role === "admin" || !supabase) return;
 
-      try {
-        const searchName = (user.username || user.name || "")
-          .toLowerCase()
-          .trim();
+    try {
+      const searchName = (user.username || user.name || "")
+        .toLowerCase()
+        .trim();
 
-        const { data, error } = await supabase
-          .from("payroll_amounts")
-          .select(`
-            file_name,
-            neto,
-            year: substring(file_name from 4 for 4),
-            month: substring(file_name from 1 for 2)
-          `)
-          .eq("driver_name", searchName)
-          .order("year", { ascending: false })
-          .order("month", { ascending: false });
+      const { data, error } = await supabase
+        .from("payroll_amounts")
+        .select("file_name, neto")
+        .eq("driver_name", searchName);
 
-        if (error) {
-          console.error("Greška pri dohvatu plata:", error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          // Ukupna zarada
-          const sum = data.reduce(
-            (acc, curr) => acc + parseFloat(curr.neto || 0),
-            0
-          );
-
-          setTotalEarnings(
-            sum.toLocaleString("de-DE", {
-              minimumFractionDigits: 2,
-            }) + " €"
-          );
-
-          // Najnovija po godini/mjesecu
-          const top = data[0];
-
-          setLatestPayroll({
-            amount:
-              parseFloat(top.neto).toLocaleString("de-DE", {
-                minimumFractionDigits: 2,
-              }) + " €",
-            date: top.file_name
-              .replace(".pdf", "")
-              .replace(".PDF", "")
-              .replace("_", "/"),
-          });
-        } else {
-          setLatestPayroll({ amount: "---", date: "" });
-          setTotalEarnings("0,00 €");
-        }
-      } catch (err) {
-        console.error("Neočekivana greška:", err);
+      if (error) {
+        console.error("Greška pri dohvatu plata:", error);
+        return;
       }
-    };
 
-    fetchPayrollData();
-  }, [user]);
+      if (!data || data.length === 0) {
+        setLatestPayroll({ amount: "---", date: "" });
+        setTotalEarnings("0,00 €");
+        return;
+      }
+
+      // 🔥 SORT PO GODINI I MJESECU
+      const sorted = [...data].sort((a, b) => {
+        const parse = (name) => {
+          const clean = name.replace(".pdf", "").replace(".PDF", "");
+          const [month, year] = clean.split("_");
+          return {
+            y: parseInt(year) || 0,
+            m: parseInt(month) || 0,
+          };
+        };
+
+        const A = parse(a.file_name);
+        const B = parse(b.file_name);
+
+        if (B.y !== A.y) return B.y - A.y;
+        return B.m - A.m;
+      });
+
+      const top = sorted[0];
+
+      // Ukupna zarada
+      const sum = data.reduce(
+        (acc, curr) => acc + parseFloat(curr.neto || 0),
+        0
+      );
+
+      setTotalEarnings(
+        sum.toLocaleString("de-DE", {
+          minimumFractionDigits: 2,
+        }) + " €"
+      );
+
+      setLatestPayroll({
+        amount:
+          parseFloat(top.neto).toLocaleString("de-DE", {
+            minimumFractionDigits: 2,
+          }) + " €",
+        date: top.file_name
+          .replace(".pdf", "")
+          .replace(".PDF", "")
+          .replace("_", "/"),
+      });
+    } catch (err) {
+      console.error("Neočekivana greška:", err);
+    }
+  };
+
+  fetchPayrollData();
+}, [user]);
 
   /* ======================================================
      TEME
