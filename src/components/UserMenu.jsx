@@ -25,39 +25,38 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
 
   useEffect(() => {
     const fetchLatestPayroll = async () => {
-      // Provjera postojanja usera i baze da spriječi bijeli ekran
+      // Sigurnosna provjera da se spriječi bijeli ekran
       if (!user || user.role === "admin" || !supabase) return;
 
       try {
-        // Koristimo toLowerCase() jer su u bazi 'arnes' i 'denis'
         const searchName = (user.username || user.name || "").toLowerCase();
         
+        // TAČAN NAZIV TABELE IZ SQL-a: payroll_amounts
         const { data, error } = await supabase
-          .from('payrolls')
+          .from('payroll_amounts')
           .select('file_name, neto')
           .eq('driver_name', searchName);
 
         if (!error && data && data.length > 0) {
+          // Sortiranje po godini i mjesecu iz file_name (01_2026)
           const sorted = data.sort((a, b) => {
             const parse = (name) => {
               const m = name.match(/(\d{2})_(\d{4})/);
-              if (!m) return { m: 0, y: 0 };
-              return { m: parseInt(m[1]), y: parseInt(m[2]) };
+              return m ? { m: parseInt(m[1]), y: parseInt(m[2]) } : { m: 0, y: 0 };
             };
             const aP = parse(a.file_name);
             const bP = parse(b.file_name);
-            if (bP.y !== aP.y) return bP.y - aP.y;
-            return bP.m - aP.m;
+            return bP.y !== aP.y ? bP.y - aP.y : bP.m - aP.m;
           });
 
-          const top = sorted[0];
+          const latest = sorted[0];
           setLatestPayroll({
-            amount: top.neto ? parseFloat(top.neto).toFixed(2) : "0.00",
-            date: top.file_name.replace('.pdf', '').replace('.PDF', '').replace('_', '/')
+            amount: latest.neto ? parseFloat(latest.neto).toFixed(2) : "0.00",
+            date: latest.file_name.replace('.pdf', '').replace('.PDF', '').replace('_', '/')
           });
         }
       } catch (err) {
-        console.error("Greška pri dohvatu podataka:", err);
+        console.error("Greška pri dohvatu:", err);
       }
     };
 
@@ -72,6 +71,7 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
 
   return (
     <div className="relative inline-block text-left" ref={menuRef} style={{ zIndex: isOpen ? 999999 : 50 }}>
+      {/* Trigger Dugme - ORIGINALNI STIL */}
       <motion.div 
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)} 
@@ -93,43 +93,47 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             className={`absolute right-0 mt-2 w-72 ${currentTheme === 'night' ? 'bg-gray-900/95 border-white/20 text-white' : 'bg-white/95 border-gray-200 text-gray-900'} backdrop-blur-3xl border rounded-2xl p-4 shadow-2xl`}
           >
+            {/* Header sekcija */}
             <div className="flex items-center gap-3 mb-4">
-              <div className={`w-10 h-10 bg-gradient-to-br ${themeConfig[currentTheme]?.accent || 'from-blue-500 to-blue-700'} rounded-full flex items-center justify-center text-white font-bold`}>
+              <div className={`w-10 h-10 bg-gradient-to-br ${themeConfig[currentTheme]?.accent || 'from-blue-500 to-blue-700'} rounded-full flex items-center justify-center text-white font-bold text-lg`}>
                 {(user?.name || "K")[0]}
               </div>
-              <div>
+              <div className="text-left">
                 <h3 className="font-bold text-sm leading-none">{user?.name}</h3>
                 <p className="text-xs opacity-50 mt-1">{user?.username}</p>
               </div>
             </div>
 
+            {/* KARTICE SA PODACIMA - TVOJ ORIGINALNI IZGLED */}
             {user?.role !== "admin" && (
               <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className={`${currentTheme === 'night' ? 'bg-blue-900/20 border-blue-500/30' : 'bg-blue-50 border-blue-100'} border rounded-xl p-2`}>
-                  <div className="text-[10px] font-bold text-blue-500 uppercase">
-                    Plata {latestPayroll.date || ""}
+                <div className={`${currentTheme === 'night' ? 'bg-blue-900/30 border-blue-500/30' : 'bg-blue-50 border-blue-100'} border rounded-xl p-2 text-left`}>
+                  <div className="text-[10px] font-bold text-blue-500 uppercase leading-tight">
+                    Zadnja plata {latestPayroll.date && `(${latestPayroll.date})`}
                   </div>
-                  <div className="font-black text-blue-600 text-sm mt-0.5">
+                  <div className="font-black text-blue-600 text-sm mt-1 leading-none">
                     {latestPayroll.amount ? `${latestPayroll.amount} €` : "---"}
                   </div>
                 </div>
-                <div className={`${currentTheme === 'night' ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-100'} border rounded-xl p-2`}>
-                  <div className="text-[10px] font-bold text-emerald-500 uppercase">Zarada</div>
-                  <div className="font-black text-emerald-600 text-sm mt-0.5">
-                    {user?.ukupnaZarada || "0 €"}
+                
+                <div className={`${currentTheme === 'night' ? 'bg-emerald-900/30 border-emerald-500/30' : 'bg-emerald-50 border-emerald-100'} border rounded-xl p-2 text-left`}>
+                  <div className="text-[10px] font-bold text-emerald-500 uppercase leading-tight">Ukupna zarada</div>
+                  <div className="font-black text-emerald-600 text-sm mt-1 leading-none">
+                    {user?.ukupnaZarada || "0.00 €"}
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Dugmad - Akcije */}
             <div className="space-y-1">
-              <Button variant="ghost" className="w-full justify-start text-emerald-600" onClick={() => navigate("/payroll-list")}>
+              <Button variant="ghost" className="w-full justify-start text-emerald-600 rounded-xl py-2" onClick={() => navigate("/payroll-list")}>
                 <Wallet className="w-4 h-4 mr-2" /> Platne liste
               </Button>
-              <Button variant="ghost" className="w-full justify-start text-amber-600" onClick={onChangePassword}>
-                <KeyRound className="w-4 h-4 mr-2" /> Šifra
+              <Button variant="ghost" className="w-full justify-start text-amber-600 rounded-xl py-2" onClick={onChangePassword}>
+                <KeyRound className="w-4 h-4 mr-2" /> Promijeni šifru
               </Button>
-              <Button variant="ghost" className="w-full justify-start text-rose-600" onClick={onLogout}>
+              <Button variant="ghost" className="w-full justify-start text-rose-600 rounded-xl py-2 hover:bg-rose-50" onClick={onLogout}>
                 <LogOut className="w-4 h-4 mr-2" /> Odjava
               </Button>
             </div>
