@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { supabase } from "../db/supabaseClient"; // Provjeri putanju do supabase klijenta
+import { supabase } from "../db/supabaseClient"; 
 import {
   User,
   ChevronDown,
@@ -19,19 +19,22 @@ import {
 export default function UserMenu({ user, onChangePassword, onLogout, scraperData, currentTheme = 'default', themes }) {
   const [isOpen, setIsOpen] = useState(false);
   const [latestPayroll, setLatestPayroll] = useState({ amount: null, date: null });
+  const [totalEarnings, setTotalEarnings] = useState("0.00 €");
   
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Logika za dobijanje podataka iz payroll_amounts tabele
+  // Glavna funkcija za dohvat podataka iz payroll_amounts tabele
   useEffect(() => {
-    const fetchLatestPayroll = async () => {
+    const fetchPayrollData = async () => {
+      // Sigurnosne provjere: ako nema korisnika, ako je admin ili ako supabase nije učitan, ne radi ništa
       if (!user || user.role === "admin" || !supabase) return;
 
       try {
-        const searchName = (user.username || user.name || "").toLowerCase();
+        // SQL podaci pokazuju driver_name: 'arnes', 'denis' (mala slova)
+        const searchName = (user.username || user.name || "").toLowerCase().trim();
         
         const { data, error } = await supabase
           .from('payroll_amounts')
@@ -39,41 +42,50 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
           .eq('driver_name', searchName);
 
         if (!error && data && data.length > 0) {
+          // 1. Izračunaj ukupnu zaradu (suma svih neto iznosa za tog vozača)
+          const sum = data.reduce((acc, curr) => acc + parseFloat(curr.neto || 0), 0);
+          setTotalEarnings(sum.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €");
+
+          // 2. Pametno sortiranje: 01_2026 mora biti ispred 12_2025
           const sorted = data.sort((a, b) => {
-            const parse = (name) => {
-              const m = name.match(/(\d{2})_(\d{4})/);
-              return m ? { m: parseInt(m[1]), y: parseInt(m[2]) } : { m: 0, y: 0 };
+            const parseDate = (name) => {
+              const match = name.match(/(\d{2})_(\d{4})/);
+              return match ? { m: parseInt(match[1]), y: parseInt(match[2]) } : { m: 0, y: 0 };
             };
-            const aP = parse(a.file_name);
-            const bP = parse(b.file_name);
-            return bP.y !== aP.y ? bP.y - aP.y : bP.m - aP.m;
+            const aD = parseDate(a.file_name);
+            const bD = parseDate(b.file_name);
+            
+            // Prvo poredi godinu, pa mjesec (silazno)
+            if (bD.y !== aD.y) return bD.y - aD.y;
+            return bD.m - aD.m;
           });
 
+          // Uzmi prvi (najnoviji) rezultat
           const top = sorted[0];
           setLatestPayroll({
-            amount: top.neto ? parseFloat(top.neto).toFixed(2) : "0.00",
+            amount: parseFloat(top.neto).toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €",
             date: top.file_name.replace('.pdf', '').replace('.PDF', '').replace('_', '/')
           });
         }
       } catch (err) {
-        console.error("Greška pri dohvatu plate:", err);
+        console.error("Greška pri dohvatu platnih podataka:", err);
       }
     };
 
-    fetchLatestPayroll();
+    fetchPayrollData();
   }, [user]);
 
-  // Default themes if not provided
+  // Teme (originalni stil)
   const defaultThemes = {
-    default: { accent: 'from-blue-600 to-purple-600', gradient: 'bg-gradient-to-r from-blue-500 to-purple-500' },
-    sunrise: { accent: 'from-orange-500 to-pink-500', gradient: 'bg-gradient-to-r from-orange-400 to-pink-400' },
-    afternoon: { accent: 'from-blue-500 to-cyan-500', gradient: 'bg-gradient-to-r from-blue-400 to-cyan-400' },
-    evening: { accent: 'from-purple-600 to-indigo-600', gradient: 'bg-gradient-to-r from-purple-500 to-indigo-500' },
-    night: { accent: 'from-gray-600 to-blue-800', gradient: 'bg-gradient-to-r from-gray-500 to-blue-700' }
+    default: { accent: 'from-blue-600 to-purple-600' },
+    sunrise: { accent: 'from-orange-500 to-pink-500' },
+    afternoon: { accent: 'from-blue-500 to-cyan-500' },
+    evening: { accent: 'from-purple-600 to-indigo-600' },
+    night: { accent: 'from-gray-600 to-blue-800' }
   };
   const themeConfig = themes || defaultThemes;
 
-  // Status scrappera
+  // Status scrappera (za admina)
   const getScraperStatus = () => {
     if (!scraperData) return { text: "Nepoznato", color: "text-gray-500" };
     if (scraperData.status === "completed") return { text: "Uspešno", color: "text-emerald-500" };
@@ -84,165 +96,120 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
 
   const formatScraperTime = () => {
     if (!scraperData) return "Nepoznato";
-    const candidates = [
-      scraperData.formattedTimestamp,
-      scraperData.timestamp,
-      scraperData.raw?.updated_at,
-      scraperData.raw?.run_started_at,
-      scraperData.raw?.created_at,
-    ];
+    const candidates = [scraperData.formattedTimestamp, scraperData.timestamp, scraperData.raw?.updated_at];
     for (const c of candidates) {
       if (c) {
         const d = new Date(c);
         if (!isNaN(d.getTime())) {
-          return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")} ${String(
-            d.getHours()
-          ).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+          return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
         }
       }
     }
     return "Nepoznato";
   };
 
+  // Zatvaranje na klik izvan menija
   useEffect(() => {
     const handleClickOutside = (e) => {
-      const isOutsideButton = buttonRef.current && !buttonRef.current.contains(e.target);
-      const isOutsideContainer = menuRef.current && !menuRef.current.contains(e.target);
-      const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(e.target);
-      if (isOutsideButton && isOutsideContainer && isOutsideDropdown) {
-        setIsOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside);
-      };
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
-  const handleClick = () => setIsOpen(!isOpen);
   const handleMenuItemClick = (fn) => {
     setIsOpen(false);
     setTimeout(() => fn?.(), 100);
   };
 
   return (
-    <div 
-      className="relative inline-block text-left" 
-      ref={menuRef}
-      style={{ zIndex: isOpen ? 999999 : 'auto', position: 'relative' }}
-    >
-      {/* Enhanced Avatar button - ORIGINALNI STIL */}
+    <div className="relative inline-block text-left" ref={menuRef} style={{ zIndex: isOpen ? 999999 : 50 }}>
+      {/* Avatar Button */}
       <motion.div 
         ref={buttonRef}
-        onClick={handleClick} 
+        onClick={() => setIsOpen(!isOpen)} 
         whileHover={{ scale: 1.05, y: -2 }} 
-        whileTap={{ scale: 0.95 }}
+        className={`flex items-center gap-3 px-3 py-2 ${currentTheme === 'night' ? 'bg-gray-800/40 border-white/10' : 'bg-white/60 border-gray-100/50'} backdrop-blur-2xl rounded-full border cursor-pointer transition-all duration-300 shadow-sm`}
       >
-        <motion.div 
-          className={`flex items-center gap-3 px-3 py-2 ${currentTheme === 'night' ? 'bg-gray-800/40' : 'bg-white/60'} backdrop-blur-2xl rounded-full border ${currentTheme === 'night' ? 'border-white/10' : 'border-gray-100/50'} cursor-pointer transition-all duration-300`}
-          style={{
-            boxShadow: currentTheme === 'night'
-              ? '6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.02)'
-              : '6px 6px 12px rgba(0,0,0,0.08), -6px -6px 12px rgba(255,255,255,0.8)'
-          }}
-        >
-          <motion.div 
-            className={`w-8 h-8 rounded-full bg-gradient-to-br ${themeConfig[currentTheme].accent} flex items-center justify-center text-white font-bold`}
-          >
-            {user?.role === "admin" ? <Crown className="w-6 h-6 text-amber-400" /> : <Truck className="w-6 h-6 text-white" />}
-          </motion.div>
-          <span className={`font-medium ${currentTheme === 'night' ? 'text-gray-200' : 'text-gray-800'}`}>
-            {user?.name || "Korisnik"}
-          </span>
-          <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
-            <ChevronDown className={`w-4 h-4 ${currentTheme === 'night' ? 'text-gray-400' : 'text-gray-500'}`} />
-          </motion.div>
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${themeConfig[currentTheme]?.accent || 'from-blue-500 to-purple-500'} flex items-center justify-center text-white`}>
+          {user?.role === "admin" ? <Crown size={16} /> : <Truck size={16} />}
+        </div>
+        <span className={`font-medium text-sm ${currentTheme === 'night' ? 'text-gray-200' : 'text-gray-800'}`}>
+          {user?.name || "Korisnik"}
+        </span>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
+          <ChevronDown size={14} className={currentTheme === 'night' ? 'text-gray-400' : 'text-gray-500'} />
         </motion.div>
       </motion.div>
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            ref={dropdownRef}
             initial={{ opacity: 0, y: -10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            className={`absolute right-0 mt-2 w-72 ${currentTheme === 'night' ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-3xl border ${currentTheme === 'night' ? 'border-white/30' : 'border-gray-300'} rounded-2xl p-4`}
-            style={{
-              zIndex: 999999,
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              boxShadow: currentTheme === 'night'
-                ? '0 25px 50px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2)'
-                : '0 25px 50px rgba(0,0,0,0.15), 0 10px 30px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.1)'
-            }}
-            onClick={(e) => e.stopPropagation()}
+            className={`absolute right-0 mt-2 w-72 ${currentTheme === 'night' ? 'bg-gray-900/95 border-white/30' : 'bg-white/95 border-gray-300'} backdrop-blur-3xl border rounded-2xl p-4 shadow-2xl`}
+            style={{ top: '100%', right: 0 }}
           >
-            {/* Profile Section */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className={`w-10 h-10 bg-gradient-to-br ${themeConfig[currentTheme].accent} rounded-full flex items-center justify-center text-white font-bold`}>
-                {user?.role === "admin" ? <Crown className="w-6 h-6 text-amber-400" /> : <Truck className="w-6 h-6 text-white" />}
+            {/* Profile Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 bg-gradient-to-br ${themeConfig[currentTheme]?.accent || 'from-blue-500 to-purple-500'} rounded-full flex items-center justify-center text-white font-bold text-lg`}>
+                {(user?.name || "K")[0]}
               </div>
-              <div className="flex-1">
-                <h3 className={`font-semibold text-sm ${currentTheme === 'night' ? 'text-gray-100' : 'text-gray-900'}`}>{user?.name}</h3>
-                <p className={`text-xs ${currentTheme === 'night' ? 'text-gray-400' : 'text-gray-500'}`}>{user?.username}</p>
+              <div className="text-left">
+                <h3 className={`font-bold text-sm leading-none ${currentTheme === 'night' ? 'text-white' : 'text-gray-900'}`}>{user?.name}</h3>
+                <p className={`text-xs opacity-50 mt-1 ${currentTheme === 'night' ? 'text-gray-400' : 'text-gray-500'}`}>{user?.username}</p>
               </div>
             </div>
 
-            {/* Payment Data - POPRAVLJENO */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {user?.role !== "admin" && (
-                <>
-                  <motion.div 
-                    className={`${currentTheme === 'night' ? 'bg-gray-800/50 border-gray-600/50' : 'bg-blue-50/80 border-blue-200/60'} border rounded-xl p-2 backdrop-blur-sm`}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className={`text-[10px] font-bold ${currentTheme === 'night' ? 'text-blue-400' : 'text-blue-600'} uppercase leading-tight`}>
-                      Zadnja plata {latestPayroll.date && `(${latestPayroll.date})`}
-                    </div>
-                    <div className={`font-black ${currentTheme === 'night' ? 'text-blue-300' : 'text-blue-900'} text-sm mt-1`}>
-                      {latestPayroll.amount ? `${latestPayroll.amount} €` : (user?.zadnjaPlata || "-")}
-                    </div>
-                  </motion.div>
-                  <motion.div 
-                    className={`${currentTheme === 'night' ? 'bg-gray-800/50 border-gray-600/50' : 'bg-emerald-50/80 border-emerald-200/60'} border rounded-xl p-2 backdrop-blur-sm`}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className={`text-[10px] font-bold ${currentTheme === 'night' ? 'text-emerald-400' : 'text-emerald-600'} uppercase leading-tight`}>
-                      Ukupna zarada
-                    </div>
-                    <div className={`font-black ${currentTheme === 'night' ? 'text-emerald-300' : 'text-emerald-900'} text-sm mt-1`}>
-                      {user?.ukupnaZarada || "-"}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </div>
+            {/* PODACI O PLATAMA - Povezano sa SQL payroll_amounts */}
+            {user?.role !== "admin" && (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <motion.div 
+                  className={`${currentTheme === 'night' ? 'bg-blue-900/30 border-blue-500/30' : 'bg-blue-50 border-blue-100'} border rounded-xl p-2 text-left`}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="text-[10px] font-bold text-blue-500 uppercase leading-tight">
+                    Plata {latestPayroll.date && `(${latestPayroll.date})`}
+                  </div>
+                  <div className={`font-black ${currentTheme === 'night' ? 'text-blue-300' : 'text-blue-600'} text-sm mt-1 leading-none`}>
+                    {latestPayroll.amount || "---"}
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className={`${currentTheme === 'night' ? 'bg-emerald-900/30 border-emerald-500/30' : 'bg-emerald-50 border-emerald-100'} border rounded-xl p-2 text-left`}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="text-[10px] font-bold text-emerald-500 uppercase leading-tight">Ukupna zarada</div>
+                  <div className={`font-black ${currentTheme === 'night' ? 'text-emerald-300' : 'text-emerald-600'} text-sm mt-1 leading-none`}>
+                    {totalEarnings}
+                  </div>
+                </motion.div>
+              </div>
+            )}
 
-            {/* Admin Scraper Status */}
+            {/* Scraper Status - Samo za Admina */}
             {user?.role === "admin" && scraperData && (
               <div className={`${currentTheme === 'night' ? 'bg-gray-800/50 border-gray-600/50' : 'bg-blue-50/80 border-blue-200/60'} border rounded-xl p-2 mb-3 backdrop-blur-sm`}>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1 opacity-70"><Activity size={12}/> Status:</span>
+                  <span className="flex items-center gap-1 opacity-70 text-gray-400"><Activity size={12}/> Status:</span>
                   <span className={`font-medium ${getScraperStatus().color}`}>{getScraperStatus().text}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs mt-1">
-                  <span className="flex items-center gap-1 opacity-70"><Clock size={12}/> Vrijeme:</span>
-                  <span className="font-mono">{formatScraperTime()}</span>
+                  <span className="flex items-center gap-1 opacity-70 text-gray-400"><Clock size={12}/> Vrijeme:</span>
+                  <span className={`font-mono ${currentTheme === 'night' ? 'text-gray-300' : 'text-gray-700'}`}>{formatScraperTime()}</span>
                 </div>
               </div>
             )}
 
-            {/* Action Buttons - ORIGINALNI STIL */}
+            {/* Dugmad za akcije */}
             <div className="space-y-1">
               <Button
                 variant="ghost" size="sm"
-                className={`w-full justify-start text-left ${user?.role === 'admin' ? 'text-blue-600' : 'text-emerald-600'} rounded-xl py-2 text-sm`}
+                className={`w-full justify-start text-left ${user?.role === 'admin' ? 'text-blue-600 hover:bg-blue-50' : 'text-emerald-600 hover:bg-emerald-50'} rounded-xl py-2 text-sm`}
                 onClick={() => handleMenuItemClick(() => navigate(user?.role === 'admin' ? "/admin" : "/payroll-list"))}
               >
                 {user?.role === "admin" ? <Crown className="w-4 h-4 mr-2" /> : <Wallet className="w-4 h-4 mr-2" />}
@@ -250,14 +217,14 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
               </Button>
               <Button
                 variant="ghost" size="sm"
-                className="w-full justify-start text-left text-amber-600 rounded-xl py-2 text-sm"
+                className="w-full justify-start text-left text-amber-600 hover:bg-amber-50 rounded-xl py-2 text-sm"
                 onClick={() => handleMenuItemClick(onChangePassword)}
               >
                 <KeyRound className="w-4 h-4 mr-2" /> Promijeni šifru
               </Button>
               <Button
                 variant="ghost" size="sm"
-                className="w-full justify-start text-left text-rose-600 rounded-xl py-2 text-sm"
+                className="w-full justify-start text-left text-rose-600 hover:bg-rose-50 rounded-xl py-2 text-sm"
                 onClick={onLogout}
               >
                 <LogOut className="w-4 h-4 mr-2" /> Odjava
