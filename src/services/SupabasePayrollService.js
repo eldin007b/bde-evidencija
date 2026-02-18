@@ -1,35 +1,40 @@
 import { supabase } from '../db/supabaseClient';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+import pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker?url';
 
-// Dohvati sve platne liste za korisnika (folder = tura)
-// Dohvati sve platne liste za vozača (folder = ime)
-export async function getPayrollFiles(ime) {
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+// ========================================
+// LIST FILES
+// ========================================
+export async function getPayrollFiles(driver) {
   const { data, error } = await supabase.storage
     .from('payrolls')
-    .list(ime, { limit: 100, offset: 0 });
+    .list(driver, { limit: 100, offset: 0 });
+
   if (error) {
     console.error('Greška pri listanju fajlova:', error);
     return [];
   }
-  // Vrati samo PDF fajlove, ignoriši foldere
-  // Defensive check: ensure file has valid name property
-  return (data || []).filter(f => 
-    f && 
-    f.name && 
-    typeof f.name === 'string' && 
-    f.name.endsWith('.pdf')
+
+  return (data || []).filter(
+    f => f && f.name && f.name.endsWith('.pdf')
   );
 }
 
-// Download platne liste
-export async function downloadPayrollFile(ime, fileName) {
+// ========================================
+// DOWNLOAD
+// ========================================
+export async function downloadPayrollFile(driver, fileName) {
   const { data, error } = await supabase.storage
     .from('payrolls')
-    .download(`${ime}/${fileName}`);
+    .download(`${driver}/${fileName}`);
+
   if (error) {
-    console.error('Greška pri downloadu fajla:', error);
+    console.error('Greška pri downloadu:', error);
     return null;
   }
-  // Kreiraj download link
+
   const url = window.URL.createObjectURL(data);
   const link = document.createElement('a');
   link.href = url;
@@ -40,56 +45,192 @@ export async function downloadPayrollFile(ime, fileName) {
   window.URL.revokeObjectURL(url);
 }
 
-// Briši platnu listu
-export async function deletePayrollFile(ime, fileName) {
-  await supabase.storage.from('payrolls').remove([`${ime}/${fileName}`]);
+// ========================================
+// DELETE
+// ========================================
+export async function deletePayrollFile(driver, fileName) {
+  await supabase.storage
+    .from('payrolls')
+    .remove([`${driver}/${fileName}`]);
+
+  await supabase
+    .from('payroll_amounts')
+    .delete()
+    .eq('driver_name', driver)
+    .eq('file_name', fileName);
 }
 
-// Upload platne liste (overwrite ako postoji)
-export async function uploadPayrollFile(ime, file) {
-  console.log('[uploadPayrollFile] Početak upload:', ime, file.name);
-  const { error } = await supabase.storage
-    .from('payrolls')
-    .upload(`${ime}/${file.name}`, file, {
-      cacheControl: '3600',
-      upsert: true, // automatski overwrite
-      contentType: 'application/pdf'
-    });
-  if (error) {
-    console.error('[uploadPayrollFile] Greška pri uploadu:', error);
-    throw error;
-  }
-  console.log('[uploadPayrollFile] Upload OK:', ime, file.name);
-
-  // Parsiraj PDF i upsert neto/bruto odmah nakon upload-a
+// ========================================
+// 100% AUTOMATSKI UPLOAD + VALIDACIJA
+// ========================================
+export async function uploadPayrollFile(folderDriver, file) {
   try {
-    const { data, error: dlError } = await supabase.storage
+    if (!file) throw new Error('Nema izabranog fajla.');
+
+    const folderName = folderDriver.trim().toLowerCase();
+
+    // =========================
+    // 1️⃣ UČITAJ PDF
+    // =========================
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      fullText += content.items.map(item => item.str).join(' ') + ' ';
+    }
+
+    if (!fullText) {
+      throw new Error('PDF je prazan ili nečitljiv.');
+    }
+
+    // =========================
+    // 2️⃣ VALIDACIJA VOZAČA
+    // =========================
+    const nameMatch = fullText.match(
+      /([A-ZČĆŽŠĐ][a-zčćžšđ]+)[,\s]+([A-ZČĆŽŠĐ][a-zčćžšđ]+)/
+    );
+
+    if (!nameMatch) {
+      throw new Error('Ime vozača nije pronađeno u PDF-u.');
+    }
+
+    let imeIzPdf = nameMatch[0].includes(',')
+      ? nameMatch[2]
+      : nameMatch[1];
+
+    imeIzPdf = imeIzPdf.trim().toLowerCase();
+
+    if (imeIzPdf !== folderName) {
+      throw new Error(
+        `PDF pripada vozaču "${imeIzPdf}", a upload ide u folder "${folderName}".`
+      );
+    }
+
+    // =========================
+    // 3️⃣ PARSIRAJ NETO
+    // =========================
+    let neto = 0;
+    const nettoIndex = fullText.indexOf('Netto');
+
+    if (nettoIndex !== -1) {
+      const afterNetto = fullText.substring(nettoIndex + 5);
+      const euroMatches = afterNetto.match(/-?[\d\.\,]+/g);
+
+      if (euroMatches) {
+        const firstPositive = euroMatches.find(val => !val.startsWith('-'));
+        if (firstPositive) {
+          neto = parseFloat(
+            firstPositive.replace(/\./g, '').replace(',', '.')
+          );
+        }
+      }
+    }
+
+    // =========================
+    // 4️⃣ PARSIRAJ BRUTO
+    // =========================
+    const bruttoMatch = fullText.match(/Brutto\s*([\d\.\,]+)/i);
+    const bruto = bruttoMatch
+      ? parseFloat(bruttoMatch[1].replace(/\./g, '').replace(',', '.'))
+      : 0;
+
+    // =========================
+    // 5️⃣ PARSIRAJ UKUPNI TROŠAK
+    // =========================
+    let ukupni_trosak = 0;
+    const gesamtMatch = fullText.match(
+      /Gesamtaufwand[\s\S]*?(\d{1,3}(?:\.\d{3})*,\d{2})/i
+    );
+
+    if (gesamtMatch && gesamtMatch[1]) {
+      ukupni_trosak = parseFloat(
+        gesamtMatch[1].replace(/\./g, '').replace(',', '.')
+      );
+    }
+
+    // =========================
+    // 6️⃣ IZVUCI MJESEC I GODINU
+    // =========================
+    const monthMatch = fullText.match(
+      /(Jänner|Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s+(\d{4})/i
+    );
+
+    if (!monthMatch) {
+      throw new Error('Mjesec i godina nisu pronađeni.');
+    }
+
+    const monthMap = {
+      'Jänner': '01',
+      'Januar': '01',
+      'Februar': '02',
+      'März': '03',
+      'April': '04',
+      'Mai': '05',
+      'Juni': '06',
+      'Juli': '07',
+      'August': '08',
+      'September': '09',
+      'Oktober': '10',
+      'November': '11',
+      'Dezember': '12'
+    };
+
+    const month = monthMap[monthMatch[1]];
+    const year = monthMatch[2];
+
+    const newFileName = `${month}_${year}.pdf`;
+    const storagePath = `${folderName}/${newFileName}`;
+
+    // =========================
+    // 7️⃣ UPLOAD (OVERWRITE)
+    // =========================
+    const { error: uploadError } = await supabase.storage
       .from('payrolls')
-      .download(`${ime}/${file.name}`);
-    if (dlError || !data) {
-      console.error('[uploadPayrollFile] Greška pri downloadu PDF-a:', dlError);
-      return true;
-    }
-    console.log('[uploadPayrollFile] Download OK:', ime, file.name);
-    const arrayBuffer = await data.arrayBuffer();
-    const { extractNetoBrutoFromPDF } = await import('../utils/pdfPayrollParser');
-    const { neto, bruto } = await extractNetoBrutoFromPDF(arrayBuffer);
-    console.log('[uploadPayrollFile] Parsed PDF:', file.name, 'neto:', neto, 'bruto:', bruto);
-    if (neto > 0 || bruto > 0) {
-      const upsertRes = await supabase
-        .from('payroll_amounts')
-        .upsert({
-          driver_name: ime,
-          file_name: file.name,
+      .upload(storagePath, file, {
+        upsert: true,
+        contentType: 'application/pdf'
+      });
+
+    if (uploadError) throw uploadError;
+
+    // =========================
+    // 8️⃣ UPSERT U BAZU
+    // =========================
+    const { error: dbError } = await supabase
+      .from('payroll_amounts')
+      .upsert(
+        {
+          driver_name: folderName,
+          file_name: newFileName,
           neto,
-          bruto
-        }, { onConflict: ['driver_name', 'file_name'] });
-      console.log('[uploadPayrollFile] Upsert payroll_amounts:', upsertRes);
-    } else {
-      console.warn('[uploadPayrollFile] Neto/bruto nisu > 0, preskačem upsert.');
-    }
-  } catch (e) {
-    console.error('[uploadPayrollFile] Greška u parsiranju/upsertu:', e);
+          bruto,
+          ukupni_trosak,
+          created_at: new Date()
+        },
+        {
+          onConflict: ['driver_name', 'file_name']
+        }
+      );
+
+    if (dbError) throw dbError;
+
+    return {
+      success: true,
+      fileName: newFileName,
+      neto,
+      bruto,
+      ukupni_trosak
+    };
+
+  } catch (err) {
+    console.error('Payroll upload error:', err);
+    return {
+      success: false,
+      message: err.message
+    };
   }
-  return true;
 }
