@@ -1,14 +1,18 @@
+
 import { motion } from "framer-motion";
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, Download, FileText, Calendar, User } from 'lucide-react';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Toast from '../components/shared/Toast';
-import { supabase } from '../db/supabaseClient'; // Putanja koju si potvrdio
+import PDFViewer from '../components/common/PDFViewer';
+import { getPayrollFiles, downloadPayrollFile } from '../services/SupabasePayrollService';
+import { supabase } from '../db/supabaseClient';
 import { useUserContext } from '../context/UserContext';
 
 /**
- * PayrollScreen - Pregled platnih lista iz Supabase DB i Storage-a
+ * PayrollScreen - Pregled i preuzimanje platnih lista za vozače
+ * Platne liste se čuvaju u Supabase Storage bucket 'payrolls'
  */
 function PayrollScreen() {
   const user = useUserContext();
@@ -21,165 +25,301 @@ function PayrollScreen() {
   const [pdfViewer, setPdfViewer] = useState({ isOpen: false, url: null, fileName: null });
   const [driverInfo, setDriverInfo] = useState(null);
 
+  // Učitaj platne liste za vozača
   useEffect(() => {
     if (!user) {
       navigate('/');
       return;
     }
-
+    // Provjeri da li je vozač
     if (user.driverRole === 'admin' || user.isAdmin) {
       setError('Admini nemaju pristup platnim listama');
       setLoading(false);
       return;
     }
-
-    // Koristimo ili username ili driverName ovisno o tome šta tvoj Context šalje
-    const dName = user.username || user.driverName || window.localStorage.getItem('DRIVER_NAME');
-    
-    if (!dName) {
-      setError('Ime vozača nije pronađeno.');
+    // Ako nema ime vozača, ne učitavaj platne liste
+    if (!user.driverName) {
       setLoading(false);
       return;
     }
-
-    fetchInitialData(dName.trim());
+    // Dohvati podatke o vozaču iz Supabase
+    const fetchDriverInfo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('drivers')
+          .select('ime, tura')
+          .eq('ime', user.driverName.trim())
+          .eq('deleted', 0)
+          .single();
+        if (!error && data) {
+          setDriverInfo(data);
+        }
+      } catch (err) {
+        // ignoriraj grešku
+      }
+    };
+    fetchDriverInfo();
+    loadPayrollFiles(user.driverName.trim().toLowerCase());
   }, [user, navigate]);
+  // Fallback forma za unos imena vozača
+  const [inputDriverName, setInputDriverName] = useState('');
+  const handleDriverNameSubmit = (e) => {
+    e.preventDefault();
+    if (inputDriverName.trim().length < 3) {
+      setError('Unesite puno ime vozača (min 3 slova)');
+      return;
+    }
+    window.localStorage.setItem('DRIVER_NAME', inputDriverName.trim());
+    if (typeof user.refreshStatus === 'function') user.refreshStatus();
+    setError(null);
+    setInputDriverName('');
+    setLoading(true);
+    // Ponovo učitaj platne liste
+    loadPayrollFiles(inputDriverName.trim().toLowerCase());
+  };
 
-  const fetchInitialData = async (name) => {
+  // Učitaj platne liste iz Supabase Storage
+  const loadPayrollFiles = async (driverId) => {
     try {
       setLoading(true);
-      // 1. Dohvati info o vozaču (za turu)
-      const { data: dData } = await supabase
-        .from('drivers')
-        .select('ime, tura')
-        .eq('ime', name)
-        .eq('deleted', 0)
-        .single();
-      
-      if (dData) setDriverInfo(dData);
-
-      // 2. Dohvati liste iz TABELE 'payrolls' (gdje je upisana 2026)
-      const { data: pData, error: pError } = await supabase
-        .from('payrolls')
-        .select('*')
-        .eq('driver_name', name.toLowerCase());
-
-      if (pError) throw pError;
-
-      // Mapiranje podataka za UI
-      const formatted = (pData || []).map(item => ({
-        id: item.id,
-        name: item.file_name,
-        // Pravimo labelu "01/2026" iz naziva fajla "01_2026.pdf"
-        displayMonth: item.file_name.replace('.pdf', '').replace('.PDF', '').replace('_', '/'),
-        created_at: item.created_at,
-        size: 'PDF'
-      }));
-
-      // Sortiranje: najnovija godina i mjesec na vrh
-      const sorted = formatted.sort((a, b) => {
-        const parse = (f) => {
-          const m = f.name.match(/(\d{2})_(\d{4})/);
-          return m ? { y: parseInt(m[2]), m: parseInt(m[1]) } : { y: 0, m: 0 };
-        };
-        const bD = parse(b);
-        const aD = parse(a);
-        return bD.y !== aD.y ? bD.y - aD.y : bD.m - aD.m;
-      });
-
-      setPayrollFiles(sorted);
-    } catch (err) {
-      console.error('Greška:', err);
-      setError('Nije moguće učitati platne liste.');
-    } finally {
+      const files = await getPayrollFiles(driverId);
+      setPayrollFiles(files);
+      setLoading(false);
+    } catch (error) {
+      console.error('Greška pri učitavanju platnih lista:', error);
+      setError('Greška pri učitavanju platnih lista iz Supabase Storage');
       setLoading(false);
     }
   };
 
+
+
+  // Preuzmi platnu listu
   const downloadPayroll = async (file) => {
     try {
       setDownloading(file.id);
-      const folder = (user.username || user.driverName).toLowerCase();
-      
-      const { data, error } = await supabase.storage
-        .from('payroll-lists') // Provjeri da li je bucket 'payrolls' ili 'payroll-lists'
-        .download(`${folder}/${file.name}`);
-
-      if (error) throw error;
-
-      const url = URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = file.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      setToast({ open: true, type: 'success', message: 'Uspješno preuzeto!' });
-    } catch (err) {
-      setToast({ open: true, type: 'error', message: 'Greška pri preuzimanju.' });
+      const folder = driverInfo?.ime ? driverInfo.ime.trim().toLowerCase() : user.driverName.trim().toLowerCase();
+      await downloadPayrollFile(folder, file.name || file.fileName);
+      setToast({
+        open: true,
+        type: 'success',
+        message: `Platna lista ${file.name || file.fileName} je uspješno preuzeta!`
+      });
+    } catch (error) {
+      console.error('Greška pri preuzimanju:', error);
+      setToast({
+        open: true,
+        type: 'error',
+        message: 'Greška pri preuzimanju platne liste'
+      });
     } finally {
       setDownloading(null);
     }
   };
 
+  // Prikaži PDF u viewer-u
   const viewPayroll = async (file) => {
-    try {
-      const folder = (user.username || user.driverName).toLowerCase();
-      const { data, error } = await supabase.storage
-        .from('payroll-lists')
-        .createSignedUrl(`${folder}/${file.name}`, 60);
-
-      if (error) throw error;
-
-      setPdfViewer({ isOpen: true, url: data.signedUrl, fileName: file.name });
-    } catch (err) {
-      setToast({ open: true, type: 'error', message: 'Nije moguće prikazati PDF.' });
+    const folder = driverInfo?.ime ? driverInfo.ime.trim().toLowerCase() : user.driverName.trim().toLowerCase();
+    console.log('[viewPayroll] folder:', folder, 'file:', file.name);
+    const { data, error } = await supabase
+      .storage
+      .from('payrolls')
+      .createSignedUrl(`${folder}/${file.name}`, 60);
+    console.log('[viewPayroll] Supabase result:', { data, error });
+    const pdfUrl = data?.signedUrl;
+    if (pdfUrl) {
+      setPdfViewer({
+        isOpen: true,
+        url: pdfUrl,
+        fileName: file.name
+      });
+    } else {
+      setToast({
+        open: true,
+        type: 'error',
+        message: 'PDF nije pronađen ili nije moguće prikazati.'
+      });
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner /></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center bg-white p-6 text-center">
-    <div>
-      <h2 className="text-xl font-bold mb-4">{error}</h2>
-      <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-4 py-2 rounded">Nazad</button>
-    </div>
-  </div>;
+  // Formatiranje datuma
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('bs-BA', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+  };
+
+  // Sortiraj platne liste po godini i mjesecu silazno
+  const sortedPayrollFiles = [...payrollFiles].sort((a, b) => {
+    // Podržava formate: 01_2025.pdf, 09_2024.pdf, 12_2026.pdf
+    const parse = (file) => {
+      // Defensive check: ensure file and file.name exist
+      if (!file || !file.name || typeof file.name !== 'string') {
+        return { year: 0, month: 0 };
+      }
+      const match = file.name.match(/(\d{2})_(\d{4})/);
+      if (!match) return { year: 0, month: 0 };
+      return { year: parseInt(match[2]), month: parseInt(match[1]) };
+    };
+    const aDate = parse(a);
+    const bDate = parse(b);
+    if (aDate.year !== bDate.year) return bDate.year - aDate.year;
+    return bDate.month - aDate.month;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <LoadingSpinner />
+          <p className="mt-4 text-gray-600">Učitavam platne liste...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md mx-4"
+        >
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Greška</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => navigate('/')}
+          >
+            Nazad na početnu
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white border-b p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/80 backdrop-blur-sm border-b border-gray-200/60 p-6"
+      >
         <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="text-gray-600"><ArrowLeft /></button>
-          <div>
-            <h1 className="text-2xl font-bold">Platne Liste</h1>
-            <p className="text-gray-500">Vozač: <strong>{driverInfo?.ime || user?.username}</strong></p>
+          <button 
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="hidden sm:inline">Nazad</span>
+          </button>
+          
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <FileText className="w-6 h-6 text-blue-600" />
+              Platne Liste
+            </h1>
+            <p className="text-gray-600 flex items-center gap-2 mt-1">
+              <User className="w-4 h-4" />
+              Vozač: <strong>{driverInfo?.ime || user?.name || user?.driverName}</strong>
+              {driverInfo?.tura ? (
+                <span className="text-sm">({driverInfo.tura})</span>
+              ) : null}
+            </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Grid */}
+      {/* Content */}
       <div className="max-w-6xl mx-auto p-6">
         {payrollFiles.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl shadow-sm">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p>Nema dostupnih lista (uključujući 2026).</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-sm p-12 text-center"
+          >
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Nema dostupnih platnih lista</h3>
+            <p className="text-gray-600">Trenutno nema uploadovanih platnih lista za vaš ID vozača.</p>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {payrollFiles.map((file) => (
-              <motion.div key={file.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-6 rounded-2xl shadow-sm border">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">
-                    {file.displayMonth}
+            {sortedPayrollFiles.map((file, index) => (
+              <motion.div 
+                key={file.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                      <Calendar className="w-4 h-4" />
+                      {file.month}
+                    </div>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {file.size}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-400">{file.size}</span>
-                </div>
-                <h3 className="font-semibold mb-4 truncate">{file.name}</h3>
-                <div className="flex gap-2">
-                  <button onClick={() => viewPayroll(file)} className="flex-1 flex items-center justify-center gap-2 bg-gray-50 py-2 rounded-lg text-sm"><Eye size={16}/> Prikaži</button>
-                  <button onClick={() => downloadPayroll(file)} className="flex-1 flex items-center justify-center gap-2 bg-green-50 text-green-700 py-2 rounded-lg text-sm"><Download size={16}/> Preuzmi</button>
+                  
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <FileText className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-1">{file.name}</h3>
+                    {file.created_at && (
+                      <p className="text-sm text-gray-500">
+                        Uploaded: {formatDate(file.created_at)}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button 
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 py-2 px-4 rounded-lg hover:bg-blue-100 transition-colors"
+                      onClick={() => viewPayroll(file)}
+                      title="Prikaži PDF"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="text-sm font-medium">Prikaži</span>
+                    </button>
+                    
+                    <button 
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg transition-colors ${
+                        downloading === file.id 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                      }`}
+                      onClick={() => downloadPayroll(file)}
+                      disabled={downloading === file.id}
+                    >
+                      {downloading === file.id ? (
+                        <>
+                          <LoadingSpinner size="small" />
+                          <span className="text-sm">Preuzimam...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          <span className="text-sm font-medium">Preuzmi</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -187,20 +327,37 @@ function PayrollScreen() {
         )}
       </div>
 
-      {/* PDF Viewer Modal */}
+      {/* Toast notifications */}
+      {toast.open && (
+        <Toast
+          isOpen={toast.open}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, open: false })}
+        />
+      )}
+
+      {/* PDF Viewer */}
       {pdfViewer.isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-bold">{pdfViewer.fileName}</h3>
-              <button onClick={() => setPdfViewer({ isOpen: false })} className="text-2xl">&times;</button>
-            </div>
-            <iframe src={pdfViewer.url} className="flex-1 w-full rounded-b-2xl" />
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-6 relative flex flex-col">
+            <button
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl"
+              onClick={() => setPdfViewer({ isOpen: false, url: null, fileName: null })}
+              title="Zatvori"
+            >
+              &times;
+            </button>
+            <h3 className="text-lg font-bold mb-4">{pdfViewer.fileName || 'PDF Dokument'}</h3>
+            <iframe
+              src={pdfViewer.url}
+              className="w-full h-[70vh] border rounded-lg"
+              title={pdfViewer.fileName || 'PDF Dokument'}
+              frameBorder="0"
+            />
           </div>
         </div>
       )}
-
-      {toast.open && <Toast {...toast} onClose={() => setToast({ ...toast, open: false })} />}
     </div>
   );
 }
