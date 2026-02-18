@@ -1,66 +1,17 @@
 import { supabase } from '../db/supabaseClient';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?worker';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.js?worker';
 
 pdfjsLib.GlobalWorkerOptions.workerPort = new pdfWorker();
-// LIST FILES
-// ==============================
-export async function getPayrollFiles(ime) {
-  const { data, error } = await supabase.storage
-    .from('payrolls')
-    .list(ime, { limit: 100, offset: 0 });
-
-  if (error) {
-    console.error('Greška pri listanju fajlova:', error);
-    return [];
-  }
-
-  return (data || []).filter(f =>
-    f &&
-    f.name &&
-    typeof f.name === 'string' &&
-    f.name.endsWith('.pdf')
-  );
-}
 
 // ==============================
-// DOWNLOAD
+// UPLOAD + PARSE + VALIDACIJA
 // ==============================
-export async function downloadPayrollFile(ime, fileName) {
-  const { data, error } = await supabase.storage
-    .from('payrolls')
-    .download(`${ime}/${fileName}`);
-
-  if (error) {
-    console.error('Greška pri downloadu fajla:', error);
-    return null;
-  }
-
-  const url = window.URL.createObjectURL(data);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-}
-
-// ==============================
-// DELETE
-// ==============================
-export async function deletePayrollFile(ime, fileName) {
-  await supabase.storage.from('payrolls').remove([`${ime}/${fileName}`]);
-}
-
-// ==============================
-// UPLOAD (AUTOMATSKI PARSE + VALIDACIJA)
-// ==============================
-export async function uploadPayrollFile(imeFolder, file) {
+export async function uploadPayrollFile(folderDriver, file) {
   try {
-    const folderName = imeFolder.trim().toLowerCase();
+    const folderName = folderDriver.trim().toLowerCase();
 
-    // ====== UČITAJ PDF ======
+    // ===== UČITAJ PDF =====
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
@@ -69,11 +20,10 @@ export async function uploadPayrollFile(imeFolder, file) {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      const strings = content.items.map(item => item.str);
-      fullText += strings.join(' ') + ' ';
+      fullText += content.items.map(item => item.str).join(' ') + ' ';
     }
 
-    // ====== IZVUCI IME ======
+    // ===== IZVUCI IME =====
     const nameMatch = fullText.match(/([A-ZČĆŽŠĐ][a-zčćžšđ]+)[,\s]+([A-ZČĆŽŠĐ][a-zčćžšđ]+)/);
 
     if (!nameMatch) {
@@ -86,26 +36,26 @@ export async function uploadPayrollFile(imeFolder, file) {
 
     imeIzPdf = imeIzPdf.trim().toLowerCase();
 
-    // ====== VALIDACIJA IMENA ======
+    // ===== VALIDACIJA VOZAČA =====
     if (imeIzPdf !== folderName) {
       throw new Error(
-        `PDF pripada vozaču "${imeIzPdf}", ali pokušavaš upload u folder "${folderName}".`
+        `PDF pripada vozaču "${imeIzPdf}", a pokušavaš upload u folder "${folderName}".`
       );
     }
 
-    // ====== IZVUCI NETO ======
+    // ===== NETO =====
     const nettoMatch = fullText.match(/Auszahlung\s+([\d.,]+)/i);
     const neto = nettoMatch
       ? parseFloat(nettoMatch[1].replace(/\./g, '').replace(',', '.'))
       : 0;
 
-    // ====== IZVUCI BRUTO ======
+    // ===== BRUTO =====
     const bruttoMatch = fullText.match(/Brutto\s+([\d.,]+)/i);
     const bruto = bruttoMatch
       ? parseFloat(bruttoMatch[1].replace(/\./g, '').replace(',', '.'))
       : 0;
 
-    // ====== IZVUCI MJESEC + GODINU ======
+    // ===== MJESEC + GODINA =====
     const monthMatch = fullText.match(
       /(Jänner|Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s+(\d{4})/i
     );
@@ -136,36 +86,32 @@ export async function uploadPayrollFile(imeFolder, file) {
     const newFileName = `${month}_${year}.pdf`;
     const storagePath = `${folderName}/${newFileName}`;
 
-    // ====== UPLOAD SA OVERWRITE ======
+    // ===== UPLOAD (OVERWRITE) =====
     const { error: uploadError } = await supabase.storage
       .from('payrolls')
       .upload(storagePath, file, {
-        cacheControl: '3600',
         upsert: true,
         contentType: 'application/pdf'
       });
 
-    if (uploadError) {
-      throw uploadError;
-    }
+    if (uploadError) throw uploadError;
 
-    // ====== UPSERT U BAZU ======
+    // ===== UPSERT U BAZU =====
     const { error: dbError } = await supabase
       .from('payroll_amounts')
       .upsert({
         driver_name: folderName,
         file_name: newFileName,
         neto,
-        bruto
+        bruto,
+        created_at: new Date()
       }, {
         onConflict: ['driver_name', 'file_name']
       });
 
-    if (dbError) {
-      throw dbError;
-    }
+    if (dbError) throw dbError;
 
-    alert(`Uspješan upload: ${newFileName}`);
+    alert(`Uspješno dodano: ${newFileName}`);
     return true;
 
   } catch (err) {
