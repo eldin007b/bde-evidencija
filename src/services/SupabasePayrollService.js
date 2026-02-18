@@ -1,9 +1,9 @@
+
 import { supabase } from '../db/supabaseClient';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
-import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.js?worker';
 
-pdfjsLib.GlobalWorkerOptions.workerPort = new pdfWorker();
-
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 /* =======================================================
    POMOĆNE FUNKCIJE
 ======================================================= */
