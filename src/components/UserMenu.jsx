@@ -4,11 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "../db/supabaseClient"; 
 import {
-  User,
   ChevronDown,
   LogOut,
   KeyRound,
-  LayoutDashboard,
   Wallet,
   Crown,
   Activity,
@@ -18,22 +16,20 @@ import {
 
 export default function UserMenu({ user, onChangePassword, onLogout, scraperData, currentTheme = 'default', themes }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [latestPayroll, setLatestPayroll] = useState({ amount: null, date: null });
-  const [totalEarnings, setTotalEarnings] = useState("0.00 €");
+  // Postavljamo "---" kao početno stanje da izbjegnemo "0.00 €" dok se podaci učitavaju
+  const [latestPayroll, setLatestPayroll] = useState({ amount: "---", date: "" });
+  const [totalEarnings, setTotalEarnings] = useState("0,00 €");
   
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
-  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Glavna funkcija za dohvat podataka iz payroll_amounts tabele
   useEffect(() => {
     const fetchPayrollData = async () => {
-      // Sigurnosne provjere: ako nema korisnika, ako je admin ili ako supabase nije učitan, ne radi ništa
       if (!user || user.role === "admin" || !supabase) return;
 
       try {
-        // SQL podaci pokazuju driver_name: 'arnes', 'denis' (mala slova)
+        // SQL podaci u tabeli su pisani malim slovima ('arnes', 'denis')
         const searchName = (user.username || user.name || "").toLowerCase().trim();
         
         const { data, error } = await supabase
@@ -42,25 +38,26 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
           .eq('driver_name', searchName);
 
         if (!error && data && data.length > 0) {
-          // 1. Izračunaj ukupnu zaradu (suma svih neto iznosa za tog vozača)
+          // 1. Izračunaj ukupnu zaradu (suma svih neto iznosa)
           const sum = data.reduce((acc, curr) => acc + parseFloat(curr.neto || 0), 0);
           setTotalEarnings(sum.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €");
 
-          // 2. Pametno sortiranje: 01_2026 mora biti ispred 12_2025
+          // 2. Napredno sortiranje po godini i mjesecu (01_2026 > 12_2025)
           const sorted = data.sort((a, b) => {
-            const parseDate = (name) => {
+            const parse = (name) => {
               const match = name.match(/(\d{2})_(\d{4})/);
-              return match ? { m: parseInt(match[1]), y: parseInt(match[2]) } : { m: 0, y: 0 };
+              if (!match) return { m: 0, y: 0 };
+              return { m: parseInt(match[1]), y: parseInt(match[2]) };
             };
-            const aD = parseDate(a.file_name);
-            const bD = parseDate(b.file_name);
+            const dA = parse(a.file_name);
+            const dB = parse(b.file_name);
             
-            // Prvo poredi godinu, pa mjesec (silazno)
-            if (bD.y !== aD.y) return bD.y - aD.y;
-            return bD.m - aD.m;
+            // Prvo poredi godinu, pa mjesec silazno
+            if (dB.y !== dA.y) return dB.y - dA.y;
+            return dB.m - dA.m;
           });
 
-          // Uzmi prvi (najnoviji) rezultat
+          // Uzmi najnoviji podatak (Arnes će sada vidjeti 2.092,30 €)
           const top = sorted[0];
           setLatestPayroll({
             amount: parseFloat(top.neto).toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €",
@@ -68,14 +65,13 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
           });
         }
       } catch (err) {
-        console.error("Greška pri dohvatu platnih podataka:", err);
+        console.error("Greška pri dohvatu podataka:", err);
       }
     };
 
     fetchPayrollData();
   }, [user]);
 
-  // Teme (originalni stil)
   const defaultThemes = {
     default: { accent: 'from-blue-600 to-purple-600' },
     sunrise: { accent: 'from-orange-500 to-pink-500' },
@@ -85,7 +81,6 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
   };
   const themeConfig = themes || defaultThemes;
 
-  // Status scrappera (za admina)
   const getScraperStatus = () => {
     if (!scraperData) return { text: "Nepoznato", color: "text-gray-500" };
     if (scraperData.status === "completed") return { text: "Uspešno", color: "text-emerald-500" };
@@ -108,7 +103,6 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
     return "Nepoznato";
   };
 
-  // Zatvaranje na klik izvan menija
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
@@ -164,7 +158,7 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
               </div>
             </div>
 
-            {/* PODACI O PLATAMA - Povezano sa SQL payroll_amounts */}
+            {/* Podaci o platama - FIKSIRANO */}
             {user?.role !== "admin" && (
               <div className="grid grid-cols-2 gap-2 mb-4">
                 <motion.div 
@@ -175,7 +169,7 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
                     Plata {latestPayroll.date && `(${latestPayroll.date})`}
                   </div>
                   <div className={`font-black ${currentTheme === 'night' ? 'text-blue-300' : 'text-blue-600'} text-sm mt-1 leading-none`}>
-                    {latestPayroll.amount || "---"}
+                    {latestPayroll.amount}
                   </div>
                 </motion.div>
                 
@@ -191,7 +185,7 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
               </div>
             )}
 
-            {/* Scraper Status - Samo za Admina */}
+            {/* Scraper Status */}
             {user?.role === "admin" && scraperData && (
               <div className={`${currentTheme === 'night' ? 'bg-gray-800/50 border-gray-600/50' : 'bg-blue-50/80 border-blue-200/60'} border rounded-xl p-2 mb-3 backdrop-blur-sm`}>
                 <div className="flex items-center justify-between text-xs">
@@ -205,7 +199,7 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
               </div>
             )}
 
-            {/* Dugmad za akcije */}
+            {/* Akcije */}
             <div className="space-y-1">
               <Button
                 variant="ghost" size="sm"
