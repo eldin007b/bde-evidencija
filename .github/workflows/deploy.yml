@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - stable-v5
       - release/**
   workflow_dispatch: {}
 
