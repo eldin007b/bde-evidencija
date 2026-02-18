@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Toast from '../components/shared/Toast';
 import PDFViewer from '../components/common/PDFViewer';
-// ISPRAVLJENA PUTANJA: Idemo gore u src, pa u db folder
+// ISPRAVLJENA PUTANJA PREMA TVOJOJ STRUKTURI
 import { supabase } from '../db/supabaseClient'; 
 import './PayrollScreen.css';
 
@@ -44,12 +44,12 @@ function PayrollScreen({ user }) {
 
       if (dbError) throw dbError;
 
-      // SORTIRANJE: Najnoviji unos (2026) ide prvi na listu
+      // SORTIRANJE: Najnoviji unos (2026) ide prvi na listu hronološki
       const sortedData = (data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       const formattedFiles = sortedData.map(item => ({
         id: item.id,
-        // Pretvara "01_2026.pdf" u "01/2026" za ljepši prikaz
+        // Pretvara "01_2026.pdf" u "01/2026" za ljepši prikaz na ekranu
         month: item.file_name.replace('.pdf', '').replace('.PDF', '').replace('_', '/'),
         fileName: item.file_name,
         fileId: item.id,
@@ -69,7 +69,7 @@ function PayrollScreen({ user }) {
   const downloadPayroll = async (file) => {
     try {
       setDownloading(file.id);
-      // Putanja u storage-u: username/filename.pdf
+      // Putanja u storage-u: username/filename.pdf (kao u Admin panelu)
       const filePath = `${user.username.toLowerCase()}/${file.fileName}`;
       
       const { data, error: storageError } = await supabase.storage
@@ -124,10 +124,15 @@ function PayrollScreen({ user }) {
   return (
     <div className="payroll-screen">
       <div className="payroll-header">
-        <button className="back-button" onClick={() => navigate('/')}>Nazad</button>
+        <button className="back-button" onClick={() => navigate('/')}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Nazad
+        </button>
         <div className="header-info">
           <h1>💰 Moje Platne Liste</h1>
-          <p>Korisnik: <strong>{user?.name}</strong></p>
+          <p>Vozač: <strong>{user?.name}</strong></p>
         </div>
       </div>
 
@@ -136,7 +141,7 @@ function PayrollScreen({ user }) {
           <div className="empty-state">
             <div className="empty-icon">📄</div>
             <h3>Nema dostupnih platnih lista</h3>
-            <p>Provjerite ponovo kasnije ili kontaktirajte admina.</p>
+            <p>Provjerite ponovo kasnije.</p>
           </div>
         ) : (
           <div className="payroll-grid">
@@ -147,10 +152,14 @@ function PayrollScreen({ user }) {
                   <div className="file-size">{file.size}</div>
                 </div>
                 <div className="card-body">
-                  <div className="file-icon">📄</div>
+                  <div className="file-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                  </div>
                   <div className="file-info">
                     <h3>{file.fileName}</h3>
-                    <p>Objavljeno: {new Date(file.uploadDate).toLocaleDateString('bs-BA')}</p>
+                    <p>Datum: {new Date(file.uploadDate).toLocaleDateString('bs-BA')}</p>
                   </div>
                 </div>
                 <div className="card-actions">
@@ -188,5 +197,4 @@ function PayrollScreen({ user }) {
   );
 }
 
-export default PayrollScreen
-w
+export default PayrollScreen;
