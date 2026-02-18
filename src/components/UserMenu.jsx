@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+// Uvezi supabase klijent - putanja mora biti tačna prema tvom projektu
+import { supabase } from "../db/supabaseClient"; 
 import {
   User,
   ChevronDown,
@@ -17,12 +19,42 @@ import {
 
 export default function UserMenu({ user, onChangePassword, onLogout, scraperData, currentTheme = 'default', themes }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [latestPayroll, setLatestPayroll] = useState(null); // Stanje za pravu zadnju platu
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Default themes if not provided
+  // NOVO: Učitavanje stvarne zadnje plate direktno iz baze
+  useEffect(() => {
+    const fetchLatestPayroll = async () => {
+      if (!user || user.role === "admin") return;
+
+      try {
+        const { data, error } = await supabase
+          .from('payrolls')
+          .select('file_name')
+          .eq('driver_name', (user.username || user.driverName || "").toLowerCase())
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          // Pretvara "01_2026.pdf" u "01/2026"
+          const display = data[0].file_name
+            .replace('.pdf', '')
+            .replace('.PDF', '')
+            .replace('_', '/');
+          setLatestPayroll(display);
+        }
+      } catch (err) {
+        console.error("Greška pri dohvatu zadnje plate za meni:", err);
+      }
+    };
+
+    fetchLatestPayroll();
+  }, [user]);
+
+  // Ostali postojeći efekti i funkcije (defaultThemes, getScraperStatus, formatScraperTime, itd.)
   const defaultThemes = {
     default: { accent: 'from-blue-600 to-purple-600', gradient: 'bg-gradient-to-r from-blue-500 to-purple-500' },
     sunrise: { accent: 'from-orange-500 to-pink-500', gradient: 'bg-gradient-to-r from-orange-400 to-pink-400' },
@@ -32,7 +64,6 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
   };
   const themeConfig = themes || defaultThemes;
 
-  // Status scrappera
   const getScraperStatus = () => {
     if (!scraperData) return { text: "Nepoznato", color: "text-gray-500" };
     if (scraperData.status === "completed") return { text: "Uspešno", color: "text-emerald-500" };
@@ -65,16 +96,13 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      // Check if click is outside button, container, and dropdown
       const isOutsideButton = buttonRef.current && !buttonRef.current.contains(e.target);
       const isOutsideContainer = menuRef.current && !menuRef.current.contains(e.target);
       const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(e.target);
-      
       if (isOutsideButton && isOutsideContainer && isOutsideDropdown) {
         setIsOpen(false);
       }
     };
-    
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       document.addEventListener("touchstart", handleClickOutside);
@@ -92,269 +120,82 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
   };
 
   return (
-    <div 
-      className="relative inline-block text-left" 
-      ref={menuRef}
-      style={{ 
-        zIndex: isOpen ? 999999 : 'auto',
-        position: 'relative'
-      }}
-    >
-      {/* Enhanced Avatar button */}
-      <motion.div 
-        ref={buttonRef}
-        onClick={handleClick} 
-        whileHover={{ scale: 1.05, y: -2 }} 
-        whileTap={{ scale: 0.95 }}
-      >
-        <motion.div 
-          className={`flex items-center gap-3 px-3 py-2 ${currentTheme === 'night' ? 'bg-gray-800/40' : 'bg-white/60'} backdrop-blur-2xl rounded-full border ${currentTheme === 'night' ? 'border-white/10' : 'border-gray-100/50'} cursor-pointer transition-all duration-300`}
-          style={{
-            boxShadow: currentTheme === 'night'
-              ? '6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.02)'
-              : '6px 6px 12px rgba(0,0,0,0.08), -6px -6px 12px rgba(255,255,255,0.8)'
-          }}
-          whileHover={{
-            boxShadow: currentTheme === 'night'
-              ? '8px 8px 16px rgba(0,0,0,0.6), -8px -8px 16px rgba(255,255,255,0.05)'
-              : '8px 8px 16px rgba(0,0,0,0.12), -8px -8px 16px rgba(255,255,255,0.9)'
-          }}
-        >
-          <motion.div 
-            className={`w-8 h-8 rounded-full bg-gradient-to-br ${themeConfig[currentTheme].accent} flex items-center justify-center text-white font-bold`}
-            whileHover={{ rotate: [0, 5, -5, 0], scale: 1.1 }}
-            transition={{ duration: 0.5 }}
-          >
-            {user?.role === "admin" ? (
-              <Crown className="w-6 h-6 text-amber-400" />
-            ) : (
-              <Truck className="w-6 h-6 text-white" />
-            )}
-          </motion.div>
-          <span className={`font-medium ${currentTheme === 'night' ? 'text-gray-200' : 'text-gray-800'}`}>
-            {user?.name || "Korisnik"}
-          </span>
-          <motion.div 
-            animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ChevronDown className={`w-4 h-4 ${currentTheme === 'night' ? 'text-gray-400' : 'text-gray-500'}`} />
-          </motion.div>
-        </motion.div>
+    <div className="relative inline-block text-left" ref={menuRef} style={{ zIndex: isOpen ? 999999 : 'auto', position: 'relative' }}>
+      {/* Avatar Button */}
+      <motion.div ref={buttonRef} onClick={handleClick} whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+        <div className={`flex items-center gap-3 px-3 py-2 ${currentTheme === 'night' ? 'bg-gray-800/40' : 'bg-white/60'} backdrop-blur-2xl rounded-full border ${currentTheme === 'night' ? 'border-white/10' : 'border-gray-100/50'} cursor-pointer shadow-sm`}>
+          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${themeConfig[currentTheme].accent} flex items-center justify-center text-white font-bold`}>
+            {user?.role === "admin" ? <Crown size={18} /> : <Truck size={18} />}
+          </div>
+          <span className={`font-medium ${currentTheme === 'night' ? 'text-gray-200' : 'text-gray-800'}`}>{user?.name || "Korisnik"}</span>
+          <ChevronDown className="w-4 h-4" />
+        </div>
       </motion.div>
 
-      {/* Dropdown - Simple absolute positioning */}
+      {/* Dropdown Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             ref={dropdownRef}
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.25 }}
-            className={`absolute right-0 mt-2 w-72 ${currentTheme === 'night' ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-3xl border ${currentTheme === 'night' ? 'border-white/30' : 'border-gray-300'} rounded-2xl p-4`}
-            style={{
-              zIndex: 999999,
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              boxShadow: currentTheme === 'night'
-                ? '0 25px 50px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2)'
-                : '0 25px 50px rgba(0,0,0,0.15), 0 10px 30px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.1)',
-              transform: 'translateZ(0)',
-              willChange: 'transform, opacity'
-            }}
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`absolute right-0 mt-2 w-72 ${currentTheme === 'night' ? 'bg-gray-900' : 'bg-white'} border rounded-2xl p-4 shadow-2xl`}
+            style={{ zIndex: 999999 }}
           >
-            {/* Compact Profile Section */}
-            <div className="flex items-center gap-2 mb-3">
-              <motion.div 
-                className={`w-10 h-10 bg-gradient-to-br ${themeConfig[currentTheme].accent} rounded-full flex items-center justify-center text-white font-bold`}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  boxShadow: currentTheme === 'night'
-                    ? '3px 3px 6px rgba(0,0,0,0.6), -2px -2px 4px rgba(255,255,255,0.05)'
-                    : '3px 3px 6px rgba(0,0,0,0.15), -2px -2px 4px rgba(255,255,255,0.8)'
-                }}
-              >
-                {user?.role === "admin" ? (
-                  <Crown className="w-6 h-6 text-amber-400" />
-                ) : (
-                  <Truck className="w-6 h-6 text-white" />
-                )}
-              </motion.div>
-              <div className="flex-1">
-                <h3 className={`font-semibold text-sm ${currentTheme === 'night' ? 'text-gray-100' : 'text-gray-900'}`}>
-                  {user?.name || "Korisnik"}
-                </h3>
-                <p className={`text-xs ${currentTheme === 'night' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {user?.username || "korisnik"}
-                </p>
+            {/* User Info */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 bg-gradient-to-br ${themeConfig[currentTheme].accent} rounded-full flex items-center justify-center text-white`}>
+                {user?.role === "admin" ? <Crown size={20} /> : <Truck size={20} />}
               </div>
-              {user?.role === "admin" && (
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <Crown className="w-4 h-4 text-amber-500" />
-                </motion.div>
-              )}
+              <div>
+                <h3 className="font-bold text-sm">{user?.name}</h3>
+                <p className="text-xs text-gray-500">{user?.username}</p>
+              </div>
             </div>
 
-            {/* Compact Payment Data */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {/* Prikaz plata samo za ne-admin korisnike */}
-              {user?.role !== "admin" && (
-                <>
-                  {/* Zadnja plata */}
-                  <motion.div 
-                    className={`${currentTheme === 'night' 
-                      ? 'bg-gray-800/50 border-gray-600/50' 
-                      : 'bg-blue-50/80 border-blue-200/60'
-                    } border rounded-xl p-2 transition-all hover:shadow-sm backdrop-blur-sm`}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className={`text-xs font-medium ${currentTheme === 'night' ? 'text-blue-400' : 'text-blue-600'} mb-1`}>
-                      Zadnja plata
-                    </div>
-                    <div className={`font-bold ${currentTheme === 'night' ? 'text-blue-300' : 'text-blue-900'} text-sm`}>
-                      {user?.zadnjaPlata || "-"}
-                    </div>
-                  </motion.div>
-                  {/* Ukupna zarada */}
-                  <motion.div 
-                    className={`${currentTheme === 'night' 
-                      ? 'bg-gray-800/50 border-gray-600/50' 
-                      : 'bg-emerald-50/80 border-emerald-200/60'
-                    } border rounded-xl p-2 transition-all hover:shadow-sm backdrop-blur-sm`}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className={`text-xs font-medium ${currentTheme === 'night' ? 'text-emerald-400' : 'text-emerald-600'} mb-1`}>
-                      Ukupna zarada
-                    </div>
-                    <div className={`font-bold ${currentTheme === 'night' ? 'text-emerald-300' : 'text-emerald-900'} text-sm`}>
-                      {user?.ukupnaZarada || "-"}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </div>
-
-            {/* Compact Scraper status - samo admin */}
-            {user?.role === "admin" && scraperData && (
-              <motion.div 
-                className={`${currentTheme === 'night' 
-                  ? 'bg-gray-800/50 border-gray-600/50' 
-                  : 'bg-blue-50/80 border-blue-200/60'
-                } border rounded-xl p-2 mb-3 backdrop-blur-sm`}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className={`${currentTheme === 'night' ? 'text-gray-300' : 'text-gray-600'} flex items-center gap-1`}>
-                    <Activity className={`w-3 h-3 ${currentTheme === 'night' ? 'text-blue-400' : 'text-blue-500'}`} />
-                    Status:
-                  </span>
-                  <span className={`font-medium ${getScraperStatus().color}`}>{getScraperStatus().text}</span>
+            {/* PAYMENT DATA SECTION - Ovdje je popravak */}
+            {user?.role !== "admin" && (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className={`p-2 rounded-xl border ${currentTheme === 'night' ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-blue-100'}`}>
+                  <p className="text-[10px] font-bold text-blue-500 uppercase">Zadnja plata</p>
+                  <p className="text-sm font-black">
+                    {/* Prioritet dajemo novom stanju latestPayroll, ako nema onda starom user.zadnjaPlata */}
+                    {latestPayroll || user?.zadnjaPlata || "-"}
+                  </p>
                 </div>
-                <div className="flex items-center justify-between text-xs mt-1">
-                  <span className={`${currentTheme === 'night' ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-1`}>
-                    <Clock className={`w-3 h-3`} />
-                    Vrijeme:
-                  </span>
-                  <span className={`${currentTheme === 'night' ? 'text-gray-300' : 'text-gray-700'} font-mono`}>{formatScraperTime()}</span>
+                <div className={`p-2 rounded-xl border ${currentTheme === 'night' ? 'bg-gray-800 border-gray-700' : 'bg-emerald-50 border-emerald-100'}`}>
+                  <p className="text-[10px] font-bold text-emerald-500 uppercase">Ukupna zarada</p>
+                  <p className="text-sm font-black">{user?.ukupnaZarada || "-"}</p>
                 </div>
-              </motion.div>
+              </div>
             )}
 
-            {/* Compact Action Buttons */}
+            {/* Scraper info for Admin */}
+            {user?.role === "admin" && scraperData && (
+               <div className="mb-4 p-2 bg-gray-50 rounded-lg text-xs">
+                 <div className="flex justify-between"><span>Status:</span><span className={getScraperStatus().color}>{getScraperStatus().text}</span></div>
+                 <div className="flex justify-between mt-1"><span>Ažurirano:</span><span>{formatScraperTime()}</span></div>
+               </div>
+            )}
+
+            {/* Action Buttons */}
             <div className="space-y-1">
               {user?.role === "admin" ? (
-                <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`w-full justify-start text-left ${currentTheme === 'night' 
-                      ? 'hover:bg-gray-700/50 text-blue-400' 
-                      : 'hover:bg-blue-50 text-blue-600'
-                    } rounded-xl transition-all duration-300 py-2 text-sm`}
-                    onClick={() => handleMenuItemClick(() => navigate("/admin"))}
-                  >
-                    <Crown className="w-4 h-4 mr-2" />
-                    Admin Panel
-                  </Button>
-                </motion.div>
+                <Button variant="ghost" className="w-full justify-start text-blue-600" onClick={() => handleMenuItemClick(() => navigate("/admin"))}>
+                  <Crown className="w-4 h-4 mr-2" /> Admin Panel
+                </Button>
               ) : (
-                <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`w-full justify-start text-left ${currentTheme === 'night' 
-                      ? 'hover:bg-gray-700/50 text-emerald-400' 
-                      : 'hover:bg-green-50 text-emerald-600'
-                    } rounded-xl transition-all duration-300 py-2 text-sm`}
-                    onClick={() => handleMenuItemClick(() => navigate("/payroll-list"))}
-                  >
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Platne liste
-                  </Button>
-                </motion.div>
+                <Button variant="ghost" className="w-full justify-start text-emerald-600" onClick={() => handleMenuItemClick(() => navigate("/payroll-list"))}>
+                  <Wallet className="w-4 h-4 mr-2" /> Platne liste
+                </Button>
               )}
-              
-              <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`w-full justify-start text-left ${currentTheme === 'night' 
-                    ? 'hover:bg-gray-700/50 text-amber-400' 
-                    : 'hover:bg-amber-50 text-amber-600'
-                  } rounded-xl transition-all duration-300 py-2 text-sm`}
-                  onClick={() => {
-                    if (typeof onChangePassword === 'function') {
-                      onChangePassword();
-                    }
-                  }}
-                >
-                  <KeyRound className="w-4 h-4 mr-2" />
-                  Promijeni šifru
-                </Button>
-              </motion.div>
-              
-              <motion.div whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`w-full justify-start text-left ${currentTheme === 'night' 
-                    ? 'hover:bg-gray-700/50 text-rose-400' 
-                    : 'hover:bg-rose-50 text-rose-600'
-                  } rounded-xl transition-all duration-300 py-2 text-sm`}
-                  onClick={() => {
-                    // Close menu first
-                    setIsOpen(false);
-                    setTimeout(() => {
-                      try {
-                        // Perform provided logout callback (clears auth state)
-                        if (typeof onLogout === 'function') onLogout();
-                        // Clear local storage keys related to auth
-                        try { localStorage.removeItem('bde_current_user'); } catch (e) {}
-                        try { localStorage.removeItem('bde_login_time'); } catch (e) {}
-                        // Dispatch a global logout event so App can respond and show the login flow
-                        window.dispatchEvent(new CustomEvent('bde:logout', { detail: { source: 'UserMenu' } }));
-                        // Use router navigate to root to ensure user lands on login flow
-                        navigate('/');
-                      } catch (err) {
-                        console.error('Logout failed', err);
-                      }
-                    }, 120);
-                  }}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Odjava
-                </Button>
-              </motion.div>
+              <Button variant="ghost" className="w-full justify-start" onClick={() => handleMenuItemClick(onChangePassword)}>
+                <KeyRound className="w-4 h-4 mr-2" /> Šifra
+              </Button>
+              <Button variant="ghost" className="w-full justify-start text-red-500" onClick={onLogout}>
+                <LogOut className="w-4 h-4 mr-2" /> Odjava
+              </Button>
             </div>
           </motion.div>
         )}
