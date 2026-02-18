@@ -25,52 +25,85 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPayrollData = async () => {
-      if (!user || user.role === "admin" || !supabase) return;
+  const fetchPayrollData = async () => {
+    if (!user || user.role === "admin" || !supabase) return;
 
-      try {
-        // SQL podaci u tabeli su pisani malim slovima ('arnes', 'denis')
-        const searchName = (user.username || user.name || "").toLowerCase().trim();
-        
-        const { data, error } = await supabase
-          .from('payroll_amounts')
-          .select('file_name, neto')
-          .eq('driver_name', searchName);
+    try {
+      // 🔥 BITNO: tražimo ISKLJUČIVO po imenu vozača
+      const searchName = (user.name || "").toLowerCase().trim();
 
-        if (!error && data && data.length > 0) {
-          // 1. Izračunaj ukupnu zaradu (suma svih neto iznosa)
-          const sum = data.reduce((acc, curr) => acc + parseFloat(curr.neto || 0), 0);
-          setTotalEarnings(sum.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €");
+      if (!searchName) return;
 
-          // 2. Napredno sortiranje po godini i mjesecu (01_2026 > 12_2025)
-          const sorted = data.sort((a, b) => {
-            const parse = (name) => {
-              const match = name.match(/(\d{2})_(\d{4})/);
-              if (!match) return { m: 0, y: 0 };
-              return { m: parseInt(match[1]), y: parseInt(match[2]) };
-            };
-            const dA = parse(a.file_name);
-            const dB = parse(b.file_name);
-            
-            // Prvo poredi godinu, pa mjesec silazno
-            if (dB.y !== dA.y) return dB.y - dA.y;
-            return dB.m - dA.m;
-          });
+      const { data, error } = await supabase
+        .from("payroll_amounts")
+        .select("file_name, neto")
+        .eq("driver_name", searchName);
 
-          // Uzmi najnoviji podatak (Arnes će sada vidjeti 2.092,30 €)
-          const top = sorted[0];
-          setLatestPayroll({
-            amount: parseFloat(top.neto).toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €",
-            date: top.file_name.replace('.pdf', '').replace('.PDF', '').replace('_', '/')
-          });
-        }
-      } catch (err) {
-        console.error("Greška pri dohvatu podataka:", err);
+      if (error) {
+        console.error("Greška pri dohvatu:", error);
+        return;
       }
-    };
 
-    fetchPayrollData();
-  }, [user]);
+      if (!data || data.length === 0) {
+        setLatestPayroll({ amount: "---", date: "" });
+        setTotalEarnings("0,00 €");
+        return;
+      }
+
+      // ✅ ukupna zarada
+      const sum = data.reduce(
+        (acc, curr) => acc + parseFloat(curr?.neto || 0),
+        0
+      );
+
+      setTotalEarnings(
+        sum.toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €"
+      );
+
+      // ✅ sortiranje po GODINI pa MJESECU
+      const sorted = [...data].sort((a, b) => {
+        const parse = (fileName) => {
+          if (!fileName) return { y: 0, m: 0 };
+
+          const clean = fileName
+            .toLowerCase()
+            .replace(".pdf", "")
+            .trim();
+
+          const [m, y] = clean.split("_");
+
+          return {
+            y: parseInt(y) || 0,
+            m: parseInt(m) || 0,
+          };
+        };
+
+        const A = parse(a.file_name);
+        const B = parse(b.file_name);
+
+        if (B.y !== A.y) return B.y - A.y;
+        return B.m - A.m;
+      });
+
+      const top = sorted[0];
+
+      setLatestPayroll({
+        amount:
+          parseFloat(top.neto || 0).toLocaleString("de-DE", {
+            minimumFractionDigits: 2,
+          }) + " €",
+        date: top.file_name
+          .replace(".pdf", "")
+          .replace(".PDF", "")
+          .replace("_", "/"),
+      });
+    } catch (err) {
+      console.error("Neočekivana greška:", err);
+    }
+  };
+
+  fetchPayrollData();
+}, [user]);
 
   const defaultThemes = {
     default: { accent: 'from-blue-600 to-purple-600' },
