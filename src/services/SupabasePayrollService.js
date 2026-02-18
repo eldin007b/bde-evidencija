@@ -1,10 +1,8 @@
 import { supabase } from '../db/supabaseClient';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?worker';
 
-// Koristimo CDN worker – stabilno za Vite build
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-// ==============================
+pdfjsLib.GlobalWorkerOptions.workerPort = new pdfWorker();
 // LIST FILES
 // ==============================
 export async function getPayrollFiles(ime) {
