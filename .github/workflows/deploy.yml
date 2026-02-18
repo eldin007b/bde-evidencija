@@ -24,7 +24,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        - run: npm install
+        run: npm install
 
       - name: Build
         env:
@@ -64,5 +64,3 @@ jobs:
           done
           echo "Site did not become available after retries"
           exit 1
- 
-
