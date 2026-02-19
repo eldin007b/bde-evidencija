@@ -24,53 +24,85 @@ export default function UserMenu({ user, onChangePassword, onLogout, scraperData
   const buttonRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchPayrollData = async () => {
-      if (!user || user.role === "admin" || !supabase) return;
+ useEffect(() => {
+  const fetchPayrollData = async () => {
+    if (!user || user.role === "admin" || !supabase) return;
 
-      try {
-        // SQL podaci u tabeli su pisani malim slovima ('arnes', 'denis')
-        const searchName = (user.username || user.name || "").toLowerCase().trim();
-        
-        const { data, error } = await supabase
-          .from('payroll_amounts')
-          .select('file_name, neto')
-          .eq('driver_name', searchName);
+    try {
+      const searchName = (user.username || user.name || "")
+        .toLowerCase()
+        .trim();
 
-        if (!error && data && data.length > 0) {
-          // 1. Izračunaj ukupnu zaradu (suma svih neto iznosa)
-          const sum = data.reduce((acc, curr) => acc + parseFloat(curr.neto || 0), 0);
-          setTotalEarnings(sum.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €");
+      const { data, error } = await supabase
+        .from('payroll_amounts')
+        .select('file_name, neto, ukupni_trosak')
+        .ilike('driver_name', searchName);
 
-          // 2. Napredno sortiranje po godini i mjesecu (01_2026 > 12_2025)
-          const sorted = data.sort((a, b) => {
-            const parse = (name) => {
-              const match = name.match(/(\d{2})_(\d{4})/);
-              if (!match) return { m: 0, y: 0 };
-              return { m: parseInt(match[1]), y: parseInt(match[2]) };
-            };
-            const dA = parse(a.file_name);
-            const dB = parse(b.file_name);
-            
-            // Prvo poredi godinu, pa mjesec silazno
-            if (dB.y !== dA.y) return dB.y - dA.y;
-            return dB.m - dA.m;
-          });
-
-          // Uzmi najnoviji podatak (Arnes će sada vidjeti 2.092,30 €)
-          const top = sorted[0];
-          setLatestPayroll({
-            amount: parseFloat(top.neto).toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €",
-            date: top.file_name.replace('.pdf', '').replace('.PDF', '').replace('_', '/')
-          });
-        }
-      } catch (err) {
-        console.error("Greška pri dohvatu podataka:", err);
+      if (error) {
+        console.error("Greška u query:", error);
+        return;
       }
-    };
 
-    fetchPayrollData();
-  }, [user]);
+      if (!data || data.length === 0) {
+        setLatestPayroll({ amount: "---", date: "" });
+        setTotalEarnings("0,00 €");
+        return;
+      }
+
+      // ==============================
+      // UKUPNA ZARADA (ukupni_trosak > neto)
+      // ==============================
+
+      const sum = data.reduce((acc, curr) => {
+        const value = parseFloat(
+          curr.ukupni_trosak ?? curr.neto ?? 0
+        );
+        return acc + value;
+      }, 0);
+
+      setTotalEarnings(
+        sum.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €"
+      );
+
+      // ==============================
+      // SORTIRANJE PO GODINI I MJESECU
+      // ==============================
+
+      const sorted = data.sort((a, b) => {
+        const parse = (name) => {
+          const match = name.match(/(\d{2})_(\d{4})/);
+          if (!match) return { m: 0, y: 0 };
+          return {
+            m: parseInt(match[1]),
+            y: parseInt(match[2])
+          };
+        };
+
+        const dA = parse(a.file_name);
+        const dB = parse(b.file_name);
+
+        if (dB.y !== dA.y) return dB.y - dA.y;
+        return dB.m - dA.m;
+      });
+
+      const latest = sorted[0];
+
+      setLatestPayroll({
+        amount: parseFloat(latest.neto ?? 0)
+          .toLocaleString('de-DE', { minimumFractionDigits: 2 }) + " €",
+        date: latest.file_name
+          .replace('.pdf', '')
+          .replace('.PDF', '')
+          .replace('_', '/')
+      });
+
+    } catch (err) {
+      console.error("Greška pri dohvatu podataka:", err);
+    }
+  };
+
+  fetchPayrollData();
+}, [user]);
 
   const defaultThemes = {
     default: { accent: 'from-blue-600 to-purple-600' },
