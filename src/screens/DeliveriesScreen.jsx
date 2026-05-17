@@ -121,8 +121,9 @@ export default function DeliveriesScreen() {
       if (!grouped[delivery.date]) {
         grouped[delivery.date] = {};
       }
-      // koristimo isto polje kao DriversScreen / Dashboard: produktivitaet_stops
-      grouped[delivery.date][delivery.driver] = delivery.produktivitaet_stops || 0;
+      // POPRAVKA: Osiguraj da su oba ključa stringovi bez razmaka za sigurno mapiranje
+      const driverKey = String(delivery.driver).trim();
+      grouped[delivery.date][driverKey] = (grouped[delivery.date][driverKey] || 0) + (parseInt(delivery.produktivitaet_stops) || 0);
     });
 
     console.log('📦 groupedData created with dates:', Object.keys(grouped).join(', '));
@@ -228,7 +229,7 @@ export default function DeliveriesScreen() {
     }
 
     const totalStops = deliveries.reduce((sum, d) => sum + (d.produktivitaet_stops || 0), 0);
-    const activeDrivers = drivers.filter(d => d.aktivan);
+    const activeDrivers = drivers.filter(d => d.aktivan || d.tura === '8650');
     const monthlyTarget = activeDrivers.reduce((sum, driver) => 
       sum + ((driver.target_per_day || 0) * totalWorkdays), 0);
     const targetForWorkedDays = activeDrivers.reduce((sum, driver) => 
