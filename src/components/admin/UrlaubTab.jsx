@@ -14,7 +14,7 @@ export default function UrlaubTab({ drivers: driversFromProps }) {
   const driversList = useMemo(() => {
     return (Array.isArray(driversFromProps) && driversFromProps.length > 0)
       ? driversFromProps
-          .filter(d => d && d.aktivan && d.role !== 'admin')
+          .filter(d => d && d.aktivan)
           .map(d => ({ id: String(d.tura), name: d.ime }))
       : [];
   }, [driversFromProps]);
