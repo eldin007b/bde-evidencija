@@ -54,7 +54,8 @@ export default function DriversScreen() {
   }, []);
 
   const { driverName } = useUserContext();
-  const { data: drivers = [], isLoading: driversLoading } = useDriversQuery();
+  const { data: allDrivers = [], isLoading: driversLoading } = useDriversQuery();
+  const drivers = useMemo(() => allDrivers.filter(d => d.aktivan), [allDrivers]);
   const { data: holidays = [] } = useHolidaysQuery(year);
 
   // Dohvati Urlaub marks iz baze

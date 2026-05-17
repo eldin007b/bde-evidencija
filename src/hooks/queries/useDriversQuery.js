@@ -20,7 +20,8 @@ export function useDriversQuery(options = {}) {
       console.log('✅ Drivers loaded from Supabase:', data?.length || 0);
       return data || [];
     },
-    staleTime: 30 * 60 * 1000, // 30 min - drivers se rijetko mijenjaju (usklađeno sa globalnim)
+    staleTime: 0, // Prisilno osvježavanje
+    refetchOnMount: true, // Osvježi pri svakom ulasku na ekran
     ...options,
   });
 }
@@ -35,7 +36,6 @@ export function useActiveDriversQuery(options = {}) {
       const { data, error } = await supabase
         .from('drivers')
         .select('*')
-        .eq('aktivan', true)
         .order('tura', { ascending: true });
       
       if (error) throw error;

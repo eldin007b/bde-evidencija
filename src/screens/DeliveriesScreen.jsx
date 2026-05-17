@@ -36,6 +36,7 @@ export default function DeliveriesScreen() {
 
   // Dohvati sve potrebne podatke
   const { data: drivers = [], isLoading: driversLoading, error: driversError } = useDriversQuery();
+  console.log('🚚 SVI VOZAČI IZ BAZE:', drivers);
   // useDeliveriesQuery / getAllDeliveriesCloud očekuju mjesec u formatu 0-11
   const { data: deliveries = [], isLoading: deliveriesLoading, error: deliveriesError } = useDeliveriesQuery(year, month);
   const { data: holidays = [] } = useHolidaysQuery(year);
@@ -536,7 +537,7 @@ export default function DeliveriesScreen() {
                     <td className="px-1 py-2 text-xs font-extrabold" style={{ color: currentTheme === 'night' ? '#fff' : '#1f2937' }}>
                       Ukupno
                     </td>
-                    {drivers.filter(d => d.aktivan).map(driver => {
+                    {activeDrivers.map(driver => {
                       const workedDays = workdays.filter(date => {
                         const dateString = format(date, 'yyyy-MM-dd');
                         const dayData = groupedData[dateString] || {};
@@ -579,7 +580,7 @@ export default function DeliveriesScreen() {
                         const workedDays = workdays.filter(date => {
                           const dateString = format(date, 'yyyy-MM-dd');
                           const dayData = groupedData[dateString] || {};
-                          const dayTotal = drivers.filter(d => d.aktivan).reduce((sum, driver) => 
+                          const dayTotal = activeDrivers.reduce((sum, driver) => 
                             sum + (dayData[driver.tura] || 0), 0);
                           return dayTotal > 0;
                         });
@@ -587,17 +588,17 @@ export default function DeliveriesScreen() {
                         const totalAllWorked = workedDays.reduce((sum, date) => {
                           const dateString = format(date, 'yyyy-MM-dd');
                           const dayData = groupedData[dateString] || {};
-                          return sum + drivers.filter(d => d.aktivan).reduce((dsum, driver) => 
+                          return sum + activeDrivers.reduce((dsum, driver) => 
                             dsum + (dayData[driver.tura] || 0), 0);
                         }, 0);
 
-                        const targetAllDays = drivers.filter(d => d.aktivan).reduce((sum, driver) => 
+                        const targetAllDays = activeDrivers.reduce((sum, driver) => 
                           sum + ((driver.target_per_day || 0) * workdays.length), 0);
                         const bilans = totalAllWorked - targetAllDays;
 
                         const successColor = currentTheme === 'night' ? '#4ade80' : '#15803d';
                         const errorColor = currentTheme === 'night' ? '#fb7185' : '#dc2626';
-                        const targetForWorkedDays = drivers.filter(d => d.aktivan).reduce((sum, driver) => 
+                        const targetForWorkedDays = activeDrivers.reduce((sum, driver) => 
                           sum + ((driver.target_per_day || 0) * workedDays.length), 0);
                         const totalColor = totalAllWorked >= targetForWorkedDays ? successColor : errorColor;
                         const bilansColor = bilans >= 0 ? successColor : errorColor;

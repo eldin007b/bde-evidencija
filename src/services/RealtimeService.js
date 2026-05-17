@@ -60,9 +60,10 @@ class RealtimeService {
         }, 
         (payload) => {
           console.log('👤 Drivers update:', payload.eventType, payload.new);
-          invalidateQueries.drivers();
+          // Eksplicitna invalidacija za React Query
+          queryClient.invalidateQueries({ queryKey: queryKeys.drivers.all });
           
-          // Emituj event da sistem zna da je vozač ažuriran (za force logout)
+          // Emituj event za force logout logiku
           window.dispatchEvent(new CustomEvent('driver_updated', { detail: payload.new }));
         }
       )
