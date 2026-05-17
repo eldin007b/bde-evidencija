@@ -10,11 +10,11 @@ import toast from 'react-hot-toast';
 function AuthFlowManager() {
   const [currentStep, setCurrentStep] = useState('init'); 
   const [selectedDriver, setSelectedDriver] = useState(null);
+  const [loading, setLoading] = useState(false); // Lokalno stanje za loading
   
   const navigate = useNavigate();
   
   const {
-    loading,
     checkDriverExists,
     setInitialPassword,
     login: simpleLogin
@@ -22,13 +22,17 @@ function AuthFlowManager() {
 
   const handleDriverSelected = async (tura) => {
     console.log('[AuthFlowManager] handleDriverSelected:', tura);
+    setLoading(true); // Eksplicitno pokreni loading
     try {
       const driver = await checkDriverExists(tura);
       console.log('[AuthFlowManager] Driver found:', driver);
       setSelectedDriver(driver);
-      setCurrentStep('confirm');
+      setCurrentStep('confirm'); // Odmah prebaci korak
     } catch (error) {
       console.error('[AuthFlowManager] Driver check failed:', error);
+      toast.error('Greška pri provjeri ture.');
+    } finally {
+      setLoading(false);
     }
   };
 

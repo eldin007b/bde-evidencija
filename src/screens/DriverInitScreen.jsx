@@ -427,68 +427,49 @@ function DriverInitScreen({ onDriverSelected, loading }) {
           </motion.label>
 
           {/* Enhanced Submit Button with Ripple Effect */}
-          <motion.button 
+          <button 
             type="submit" 
             className={`relative overflow-hidden w-full flex items-center justify-center gap-2 font-semibold py-3 rounded-lg shadow transition-all duration-300 ${buttonClasses}`}
             disabled={loading || !tura.trim()}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            animate={shake ? { x: [0, -10, 10, -10, 10, 0] } : {}}
           >
-            {/* Ripple Effect */}
-            <motion.div
-              className="absolute inset-0 bg-white/20 rounded-full"
-              initial={{ scale: 0, opacity: 1 }}
-              animate={{ scale: 4, opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              key={Math.random()}
-            />
-            
             {loading ? (
               <>
-                <motion.span 
-                  className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                <span 
+                  className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"
                 />
                 Provjeravam...
               </>
             ) : showSuccess ? (
               <>
-                <motion.svg 
+                <svg 
                   width="18" 
                   height="18" 
                   viewBox="0 0 24 24" 
                   fill="none" 
                   stroke="currentColor" 
                   strokeWidth="2"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 >
                   <path d="m9 12 2 2 4-4"/>
                   <circle cx="12" cy="12" r="10"/>
-                </motion.svg>
+                </svg>
                 Uspješno!
               </>
             ) : (
               <>
-                <motion.svg 
+                <svg 
                   width="18" 
                   height="18" 
                   viewBox="0 0 24 24" 
                   fill="none" 
                   stroke="currentColor" 
                   strokeWidth="2"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 >
                   <path d="m9 18 6-6-6-6"/>
-                </motion.svg>
+                </svg>
                 Nastavi
               </>
             )}
-          </motion.button>
+          </button>
         </motion.form>
 
         {/* Enhanced Modern Footer */}
