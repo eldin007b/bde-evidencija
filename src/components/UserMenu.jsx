@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "../db/supabaseClient";
-import useSimpleAuth from "../hooks/useSimpleAuth"; // Uvoz hook-a
+import useSimpleAuth from "../hooks/useSimpleAuth";
+import useDrivers from "../hooks/useDrivers"; // Uvoz hook-a
 import { ChevronDown, LogOut, KeyRound, Wallet, Crown, User, Receipt } from "lucide-react";
+import { calculateEarnedUrlaub, calculateRemainingUrlaub } from "../utils/urlaubUtils";
 
 export default function UserMenu({
   user,
@@ -17,7 +19,9 @@ export default function UserMenu({
 
   const menuRef = useRef(null);
   const navigate = useNavigate();
-  const { logout } = useSimpleAuth(); // Korištenje logout iz hook-a
+  const { logout } = useSimpleAuth();
+  const driverHook = useDrivers(); 
+  const { getDriverUrlaubStats } = driverHook;
 
   const isAdmin = user?.role === "admin";
   
@@ -38,87 +42,58 @@ export default function UserMenu({
 
   useEffect(() => {
     const fetchData = async () => {
+      // 1. Sigurnosna provjera korisnika
       if (!user || isAdmin) return;
+      
+      console.log('🔍 [UserMenu] Pokrećem dohvat podataka za:', user.username);
+      
+      // 2. Urlaub Stats
+      try {
+        const days = await getDriverUrlaubStats(user.username);
+        setUrlaubDays(days || 0);
+      } catch (err) {
+        console.error('❌ [UserMenu] Error fetching Urlaub stats:', err);
+        setUrlaubDays(0);
+      }
 
+      // 3. Payroll Stats
       try {
         const searchName = user?.name?.toLowerCase()?.trim();
-        if (!searchName) return;
+        if (searchName) {
+          const { data: payrollData } = await supabase
+            .from("payroll_amounts")
+            .select("file_name, neto, ukupni_trosak")
+            .ilike("driver_name", searchName);
 
-        const { data: payrollData } = await supabase.from("payroll_amounts").select("file_name, neto, ukupni_trosak").ilike("driver_name", searchName);
+          if (payrollData && payrollData.length > 0) {
+            const sum = payrollData.reduce((acc, curr) => acc + parseFloat(curr.ukupni_trosak ?? curr.neto ?? 0), 0);
+            setTotalEarnings(sum.toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €");
 
-        if (payrollData && payrollData.length > 0) {
-          const sum = payrollData.reduce((acc, curr) => acc + parseFloat(curr.ukupni_trosak ?? curr.neto ?? 0), 0);
-          setTotalEarnings(sum.toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €");
+            const sorted = [...payrollData].sort((a, b) => {
+              const parse = (name) => {
+                const match = name.match(/(\d{2})_(\d{4})/);
+                return match ? { m: parseInt(match[1]), y: parseInt(match[2]) } : { m: 0, y: 0 };
+              };
+              const dA = parse(a.file_name);
+              const dB = parse(b.file_name);
+              if (dB.y !== dA.y) return dB.y - dA.y;
+              return dB.m - dA.m;
+            });
 
-          const sorted = [...payrollData].sort((a, b) => {
-            const parse = (name) => {
-              const match = name.match(/(\d{2})_(\d{4})/);
-              return match ? { m: parseInt(match[1]), y: parseInt(match[2]) } : { m: 0, y: 0 };
-            };
-            const dA = parse(a.file_name);
-            const dB = parse(b.file_name);
-            if (dB.y !== dA.y) return dB.y - dA.y;
-            return dB.m - dA.m;
-          });
-
-          const latest = sorted[0];
-          setLatestPayroll({
-            amount: parseFloat(latest.neto ?? 0).toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €",
-            date: latest.file_name.replace(".pdf", "").replace("_", "/"),
-          });
+            const latest = sorted[0];
+            setLatestPayroll({
+              amount: parseFloat(latest.neto ?? 0).toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €",
+              date: latest.file_name?.replace(".pdf", "")?.replace("_", "/") || "",
+            });
+          }
         }
-
-        const driverCode = user?.username;
-        console.log('🔍 [UserMenu] Fetching vacation for driverCode:', driverCode);
-        if (!driverCode) return;
-
-        // Koristimo .maybeSingle() umjesto .single() da izbjegnemo grešku ako nema podataka
-        const { data: settings, error: settingsError } = await supabase
-          .from("urlaub_settings")
-          .select("*")
-          .eq("driver", String(driverCode)) 
-          .maybeSingle();
-
-        if (settingsError) {
-          console.error('❌ [UserMenu] Error fetching settings:', settingsError);
-          return;
-        }
-
-        if (!settings) {
-          console.log('ℹ️ [UserMenu] No vacation settings found, defaulting to 0');
-          setUrlaubDays(0);
-          return;
-        }
-
-        console.log('✅ [UserMenu] Settings found:', settings);
-
-import { calculateEarnedUrlaub, calculateRemainingUrlaub } from "../utils/urlaubUtils";
-// ... ostali importi
-
-// ... unutar fetchData:
-        const earned = calculateEarnedUrlaub(settings.start_date, settings.start_days);
-        console.log('📈 [UserMenu] Earned vacation days:', earned);
-
-        const { data: usedData, error: usedError } = await supabase
-          .from("urlaub_marks")
-          .select("id")
-          .eq("driver", String(driverCode))
-          .eq("is_active", true)
-          .gte("date", settings.start_date);
-          
-        if (usedError) {
-          console.error('❌ [UserMenu] Error fetching used Urlaub:', usedError);
-        }
-        
-        const usedCount = usedData ? usedData.length : 0;
-        console.log('📅 [UserMenu] Used vacation days count:', usedCount);
-        setUrlaubDays(calculateRemainingUrlaub(earned, usedCount));
-
-      } catch (err) {}
+      } catch (err) {
+        console.error('❌ [UserMenu] Error fetching payroll data:', err);
+      }
     };
 
     fetchData();
-  }, [user, isAdmin]);
+  }, [user, isAdmin]); // Uklonjeno getDriverUrlaubStats jer je sad memoizovan iz hook-a
 
   useEffect(() => {
     const handleClickOutside = (e) => {

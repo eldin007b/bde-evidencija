@@ -286,6 +286,57 @@ export default function useDrivers() {
     )).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }, [drivers]);
 
+  // Business function - Calculate Urlaub
+  const getDriverUrlaubStats = useCallback(async (tura) => {
+    console.log('🔍 [useDrivers] Calculating Urlaub for tura:', tura);
+    try {
+      // 1. Dohvati SVE postavke da debugujemo
+      const { data, error } = await supabase
+        .from("urlaub_settings")
+        .select("*");
+
+      if (error) {
+        console.error('❌ [useDrivers] Error fetching settings:', error);
+        return 0;
+      }
+      
+      console.log('📋 [useDrivers] Svi redovi u urlaub_settings:', data);
+
+      // Ručno nađi vozača (bez obzira na tip podataka)
+      const settings = data.find(s => String(s.driver).trim() === String(tura).trim());
+
+      if (!settings) {
+        console.warn('⚠️ [useDrivers] Vozač nije pronađen u urlaub_settings (traženo:', tura, ')');
+        return 0;
+      }
+      console.log('✅ [useDrivers] Settings found:', settings);
+
+      // 2. Izračunaj zarađene dane
+      const { calculateEarnedUrlaub, calculateRemainingUrlaub } = await import("../utils/urlaubUtils");
+      const earned = calculateEarnedUrlaub(settings.start_date, settings.start_days);
+      console.log('📈 [useDrivers] Earned:', earned);
+
+      // 3. Dohvati iskorištene
+      const { data: usedData, error: usedError } = await supabase
+        .from("urlaub_marks")
+        .select("id")
+        .eq("driver", String(tura))
+        .eq("is_active", true)
+        .gte("date", settings.start_date);
+          
+      const usedCount = usedError ? 0 : (usedData?.length || 0);
+      console.log('📅 [useDrivers] Used:', usedCount);
+      
+      const remaining = calculateRemainingUrlaub(earned, usedCount);
+      console.log('🏁 [useDrivers] Remaining:', remaining);
+      
+      return remaining;
+    } catch (err) {
+      console.error('Error fetching urlaub stats:', err);
+      return 0;
+    }
+  }, [supabase]);
+
   useEffect(() => {
     fetchDrivers();
   }, [fetchDrivers]);
@@ -319,6 +370,7 @@ export default function useDrivers() {
     getDriverByTura,
     getActiveDrivers,
     getDriversWithTargets,
+    getDriverUrlaubStats, // DODANO
     
     // Utils
     refresh: fetchDrivers

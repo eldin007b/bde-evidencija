@@ -70,6 +70,9 @@ export default function DeliveriesScreen() {
   // Ref za praćenje da li su urlaub podaci već učitani
   const hasFetchedUrlaub = useRef(false);
 
+  // 1. Dinamički niz aktivnih vozača
+  const activeDrivers = useMemo(() => drivers.filter(d => d.aktivan), [drivers]);
+
   // Učitaj urlaub oznake - samo jednom
   useEffect(() => {
     if (hasFetchedUrlaub.current) return;
@@ -452,7 +455,7 @@ export default function DeliveriesScreen() {
                     <th className="px-1 py-2 text-left text-xs font-bold w-16" style={{ color: currentTheme === 'night' ? '#fff' : '#1f2937' }}>
                       Datum
                     </th>
-                    {drivers.filter(d => d.aktivan).map(driver => (
+                    {activeDrivers.map(driver => (
                       <th key={driver.tura} className="px-1 py-2 text-center text-xs font-bold" style={{ color: currentTheme === 'night' ? '#fff' : '#1f2937' }}>
                         <div className="font-semibold">{driver.ime}</div>
                         <div className="text-[10px] opacity-70">{driver.tura}</div>
@@ -469,7 +472,7 @@ export default function DeliveriesScreen() {
                     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
                     .map((dateString, index) => {
                       const dayData = groupedDataWithUrlaub[dateString] || {};
-                      const total = drivers.filter(d => d.aktivan).reduce((sum, driver) => 
+                      const total = activeDrivers.reduce((sum, driver) => 
                         sum + (dayData[driver.tura] || 0), 0);
                       const isHoliday = holidays.some(h => h.date === dateString);
 
@@ -484,7 +487,7 @@ export default function DeliveriesScreen() {
                           <td className="px-1 py-1.5 text-xs font-bold" style={{ color: currentTheme === 'night' ? '#e5e7eb' : '#374151' }}>
                             {format(new Date(dateString), 'dd.MM.')}
                           </td>
-                          {drivers.filter(d => d.aktivan).map(driver => {
+                          {activeDrivers.map(driver => {
                             const value = dayData[driver.tura];
                             const target = driver.target_per_day || 0;
                             const isSuccess = value >= target;
