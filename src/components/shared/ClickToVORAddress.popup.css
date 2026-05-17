@@ -1,0 +1,16 @@
+/* Ukloni bijelu pozadinu i border sa Leaflet popup-a za ovaj slučaj */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+/* Sakrij Leaflet default X dugme samo za custom popup */
+.leaflet-popup-content-wrapper.no-leaflet-x .leaflet-popup-close-button {
+  display: none !important;
+}
+
+/* Također sakrij X dugme na svim popupovima ako parent ima .no-leaflet-x */
+.leaflet-popup.no-leaflet-x .leaflet-popup-close-button {
+  display: none !important;
+}
