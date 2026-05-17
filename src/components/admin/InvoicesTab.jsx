@@ -3,6 +3,8 @@ import { jsPDF } from "jspdf";
 import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 import { FileText, Download, Printer, Mail, Calendar, Euro, Calculator, CheckCircle, Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
+import useWorkdays from "../../hooks/useWorkdays";
+import { useHolidaysQuery } from "../../hooks/queries";
 
 export default function InvoicesTab() {
   // 1. PROMJENA: Postavi trenutni mjesec i godinu automatski
@@ -12,12 +14,20 @@ export default function InvoicesTab() {
   const [taxRate, setTaxRate] = useState(20);
   const [showToast, setShowToast] = useState(false);
 
+  // Dohvati praznike
+  const { data: holidays = [] } = useHolidaysQuery(year);
+  
+  // 2. PROMJENA: Koristi useWorkdays hook (koji filtrira vikende i praznike)
+  // useWorkdays očekuje month 0-11
+  const workdays = useWorkdays(year, month - 1, holidays.map(h => h.date));
+  const workingDays = workdays.length;
+
   // 🔹 Array of invoice items (stavke)
   const [invoiceItems, setInvoiceItems] = useState([
     {
       id: 1,
       description: "Abholung Klagenfurt",
-      quantity: 0, // Inicijalno 0, useEffect će ovo odmah ažurirati
+      quantity: 0, 
       unit: "Tour",
       pricePerUnit: 150.00
     }
@@ -29,25 +39,13 @@ export default function InvoicesTab() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // 2. PROMJENA: Prvo samo izračunaj dane (čista matematika)
-  const workingDays = useMemo(() => {
-    const daysInMonth = new Date(year, month, 0).getDate();
-    let count = 0;
-    for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(year, month - 1, day);
-      if (d.getDay() !== 0 && d.getDay() !== 6) count++;
-    }
-    return count;
-  }, [month, year]);
-
-  // 3. PROMJENA: Ažuriraj stavku SAMO kada se promijeni mjesec (workingDays)
-  // Ovo omogućava da ručno izmijeniš broj (npr. 22), a da se on ne vrati na 21 
-  // osim ako ponovno ne promijeniš mjesec.
+  // 3. PROMJENA: Ažuriraj stavku SAMO kada se promijeni workingDays
   useEffect(() => {
     setInvoiceItems(prev => prev.map((item, index) => 
       index === 0 ? { ...item, quantity: workingDays } : item 
     ));
   }, [workingDays]);
+
 
 
   // 🔹 Dinamičke vrijednosti

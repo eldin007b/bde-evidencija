@@ -236,6 +236,14 @@ class ModernAuthService {
         .single();
 
       if (!error && driver) {
+        // Provjeri da li je vozač deaktiviran
+        if (!driver.aktivan) {
+          console.log('⚠️ [Auth] Driver deactivated, logging out...');
+          this.logout();
+          window.location.href = '/bde-evidencija/login';
+          return;
+        }
+
         this.currentUser = {
           ...this.currentUser,
           ime: driver.ime,

@@ -9,6 +9,8 @@ const storage = {
 
 const UserContext = createContext();
 
+export { UserContext };
+
 export function UserProvider({ children, forceShowInit }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [driverTura, setDriverTura] = useState('');
@@ -16,6 +18,7 @@ export function UserProvider({ children, forceShowInit }) {
   const [driverRole, setDriverRole] = useState('user');
   const [deviceId, setDeviceId] = useState('');
   const [userColor, setUserColor] = useState('#1769aa');
+  const [loginTime, setLoginTime] = useState(null); // Dodano
 
   // Dohvati status iz localStorage
   const refreshStatus = useCallback(() => {
@@ -24,13 +27,14 @@ export function UserProvider({ children, forceShowInit }) {
     const storedRole = storage.getItem('DRIVER_ROLE');
     const storedDeviceId = storage.getItem('DEVICE_ID');
     const storedIsAdmin = storage.getItem('IS_ADMIN');
-
+    const storedLoginTime = storage.getItem('loginTime'); // Dodano
 
     setDriverTura(storedTura || '');
     setDriverName(storedName || '');
     setDriverRole(storedRole || 'user');
     setDeviceId(storedDeviceId || '');
     setIsAdmin(storedIsAdmin === 'true');
+    setLoginTime(storedLoginTime ? new Date(storedLoginTime) : null); // Dodano
 
     if (storedIsAdmin === 'true') {
       setUserColor('#cc0000');
@@ -46,6 +50,22 @@ export function UserProvider({ children, forceShowInit }) {
     }
   }, [refreshStatus]);
 
+  // Dodaj slušač za promjene vozača (force logout)
+  useEffect(() => {
+    const handleDriverUpdated = (e) => {
+      const updatedDriver = e.detail;
+      if (updatedDriver && driverTura && updatedDriver.tura === driverTura) {
+        if (loginTime && updatedDriver.last_updated && new Date(updatedDriver.last_updated) > loginTime) {
+          console.log('⚠️ Force logout triggered for', driverTura);
+          resetLoginData();
+          window.location.reload();
+        }
+      }
+    };
+    window.addEventListener('driver_updated', handleDriverUpdated);
+    return () => window.removeEventListener('driver_updated', handleDriverUpdated);
+  }, [driverTura, loginTime]);
+
   // Resetiraj login podatke
   const resetLoginData = () => {
     storage.deleteItem('DRIVER_TURA');
@@ -54,12 +74,14 @@ export function UserProvider({ children, forceShowInit }) {
     storage.deleteItem('DEVICE_ID');
     storage.deleteItem('IS_ADMIN');
     storage.deleteItem('APP_LANG');
+    storage.deleteItem('loginTime'); // Dodano
     refreshStatus();
     if (typeof forceShowInit === 'function') {
       forceShowInit();
     }
     return true;
   };
+
 
   // Provjeri validnost ture i device_id
   const validateDriverAccess = () => {

@@ -1,118 +1,97 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useSimpleAuth from '../hooks/useSimpleAuth';
 import DriverInitScreen from '../screens/DriverInitScreen';
 import DriverConfirmScreen from '../screens/DriverConfirmScreen';
 import PasswordSetupScreen from '../screens/PasswordSetupScreen';
 import LoginScreen from '../screens/LoginScreen';
+import toast from 'react-hot-toast';
 
-/**
- * AuthFlowManager - Upravlja cijelim auth procesom
- */
-function AuthFlowManager({ onAuthSuccess }) {
-  const [currentStep, setCurrentStep] = useState('init'); // 'init', 'confirm', 'setup', 'login'
+function AuthFlowManager() {
+  const [currentStep, setCurrentStep] = useState('init'); 
   const [selectedDriver, setSelectedDriver] = useState(null);
+  
+  const navigate = useNavigate();
   
   const {
     loading,
-    error,
     checkDriverExists,
     setInitialPassword,
-    login
+    login: simpleLogin
   } = useSimpleAuth();
 
-  // Korak 1: Vozač unese turu
   const handleDriverSelected = async (tura) => {
+    console.log('[AuthFlowManager] handleDriverSelected:', tura);
     try {
       const driver = await checkDriverExists(tura);
+      console.log('[AuthFlowManager] Driver found:', driver);
       setSelectedDriver(driver);
-      
-      // Debug info removed for production
-      
-      // Uvijek idi na confirm ekran da pokaže podatke
       setCurrentStep('confirm');
-      
     } catch (error) {
-      console.error('Driver check failed:', error);
-      // Greška će biti prikazana kroz error state u hook-u
+      console.error('[AuthFlowManager] Driver check failed:', error);
     }
   };
 
-  // Korak 2: Potvrdi vozača i nastavi na odgovarajući ekran
   const handleDriverConfirmed = () => {
+    console.log('[AuthFlowManager] Driver confirmed, hasPassword:', selectedDriver?.hasPassword);
     if (selectedDriver.hasPassword) {
-      // Vozač već ima lozinku, idi na login
       setCurrentStep('login');
     } else {
-      // Prvi put, postavi lozinku
       setCurrentStep('setup');
     }
   };
 
-  // Korak 2: Postavljanje početne lozinke
   const handlePasswordSet = async (password, rememberMe = false) => {
+    console.log('[AuthFlowManager] Setting initial password');
     try {
       await setInitialPassword(selectedDriver.id, password);
-      
-      // Automatski login nakon postavljanja lozinke
-  const user = await login(selectedDriver.tura, password);
-  console.log('[AuthFlowManager] Login user:', user);
-      
-      // Ako je "Zapamti me" označeno, produžiti sesiju
-      if (rememberMe) {
-        localStorage.setItem('bde_remember_me', 'true');
-      }
-      
-      if (user?.name) {
-        localStorage.setItem('DRIVER_NAME', user.name);
-        if (window.__USER_CONTEXT__?.refreshStatus) window.__USER_CONTEXT__.refreshStatus();
-      }
-      onAuthSuccess(user);
-      
+      await handleLogin(selectedDriver.tura, password, rememberMe);
     } catch (error) {
-      console.error('Password setup failed:', error);
+      console.error('[AuthFlowManager] Password setup failed:', error);
+      toast.error('Greška pri postavljanju lozinke.');
     }
   };
 
-  // Korak 3: Normalan login sa turom i lozinkom
   const handleLogin = async (tura, password, rememberMe = false) => {
+    console.log('[AuthFlowManager] handleLogin triggered');
     try {
-  const user = await login(tura, password);
-  console.log('[AuthFlowManager] Login user:', user);
+      const user = await simpleLogin(tura, password);
+      console.log('[AuthFlowManager] Login uspješan, user:', user);
       
-      // Ako je "Zapamti me" označeno, produžiti sesiju
-      if (rememberMe) {
-        // Možemo dodati logiku za duže čuvanje sesije
-        localStorage.setItem('bde_remember_me', 'true');
+      if (rememberMe) localStorage.setItem('bde_remember_me', 'true');
+      if (user?.name || user?.ime) localStorage.setItem('DRIVER_NAME', user.name || user.ime);
+      
+      // Spašavamo loginTime za sistem prisilne odjave
+      localStorage.setItem('loginTime', new Date().toISOString());
+      
+      // Osvježavamo globalni UserContext
+      if (window.__USER_CONTEXT__ && typeof window.__USER_CONTEXT__.refreshStatus === 'function') {
+        window.__USER_CONTEXT__.refreshStatus();
       }
       
-      if (user?.ime) {
-        localStorage.setItem('DRIVER_NAME', user.ime);
-        if (window.__USER_CONTEXT__?.refreshStatus) window.__USER_CONTEXT__.refreshStatus();
-      }
-      onAuthSuccess(user);
+      console.log('[AuthFlowManager] Navigacija počinje...');
+      // Forsiraj navigaciju na Home
+      navigate('/', { replace: true });
+      // Reload za sigurnost ako navigacija ne osvježi stablo
+      window.location.reload(); 
+      
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('[AuthFlowManager] Login failed:', error);
+      toast.error('Pogrešna lozinka ili greška pri prijavi.');
     }
   };
 
-  // Nazad na početak
   const handleBack = () => {
     setCurrentStep('init');
     setSelectedDriver(null);
   };
 
-  // Nazad na confirm
   const handleBackToConfirm = () => {
     setCurrentStep('confirm');
   };
 
   if (currentStep === 'init') {
-    return (
-      <DriverInitScreen
-        onDriverSelected={handleDriverSelected}
-        loading={loading}
-      />
-    );
+    return <DriverInitScreen onDriverSelected={handleDriverSelected} loading={loading} />;
   }
 
   if (currentStep === 'confirm') {

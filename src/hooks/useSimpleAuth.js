@@ -197,6 +197,7 @@ export default function useSimpleAuth() {
         loginTime: Date.now()
       };
 
+      console.log('✅ [useSimpleAuth] Setting currentUser:', user);
       setCurrentUser(user);
       saveUserToStorage(user);
 
@@ -266,10 +267,17 @@ export default function useSimpleAuth() {
   }, [currentUser]);
 
   // 5. Logout
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Error signing out of Supabase:', e);
+    }
+    
     setCurrentUser(null);
     localStorage.removeItem('bde_current_user');
     localStorage.removeItem('bde_login_time');
+    localStorage.removeItem('DRIVER_NAME'); // Dodatno čišćenje
     setError(null);
     console.log('✅ User logged out');
   }, []);

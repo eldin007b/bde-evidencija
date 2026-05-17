@@ -14,10 +14,13 @@ import {
   AlertTriangle,
   RefreshCw,
   History,
-  Archive
+  Archive,
+  LogOut
 } from 'lucide-react';
 import { supabase } from '../../db/supabaseClient';
 import ModernModal from './ModernModal.jsx';
+import { toast } from 'react-hot-toast';
+import useDrivers from '../../hooks/useDrivers';
 
 // Helper hook za responsive dizajn
 const useMediaQuery = (query) => {
@@ -93,6 +96,43 @@ const StatusBadge = ({ type, children }) => {
 const SystemTab = () => {
   // Theme logic
   const [currentTheme, setCurrentTheme] = useState('default');
+  const { drivers } = useDrivers();
+  
+  // 🔄 Funkcija za odjavu vozača
+  const forceLogoutDriver = async (driver) => {
+    try {
+      const { error } = await supabase
+        .from('drivers')
+        .update({ aktivan: false }) // Promijenjeno u aktivan: false
+        .eq('id', driver.id);
+      
+      if (error) throw error;
+      
+      toast.success(`Vozač ${driver.ime} je uspješno odjavljen i deaktiviran!`);
+    } catch (err) {
+      console.error('Logout error:', err);
+      toast.error('Greška pri odjavi vozača.');
+    }
+  };
+
+  // 🔄 Funkcija za odjavu svih vozača
+  const forceLogoutAllDrivers = async () => {
+    if (!window.confirm('Da li ste sigurni da želite odjaviti sve vozače?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('drivers')
+        .update({ aktivan: false }) // Promijenjeno u aktivan: false
+        .neq('id', 0);
+      
+      if (error) throw error;
+      
+      toast.success("Svi vozači su uspješno odjavljeni i deaktivirani!");
+    } catch (err) {
+      console.error('Logout all error:', err);
+      toast.error('Greška pri odjavi svih vozača.');
+    }
+  };
   
   useEffect(() => {
     const updateTheme = () => {
@@ -111,6 +151,9 @@ const SystemTab = () => {
 
   const isNightTheme = currentTheme === 'night';
   const isTablet = useMediaQuery('(min-width: 768px)');
+  
+  // ... (dodaj JSX na dno return-a, prije zadnjeg div-a)
+
 
   const [backupData, setBackupData] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
@@ -1270,6 +1313,35 @@ const SystemTab = () => {
           </div>
         </ModernModal>
       )}
+      {/* 🚀 FORCE LOGOUT SEKCIJA */}
+      <div className={`mt-8 p-6 rounded-2xl border ${isNightTheme ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50 border-gray-200'}`}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={`text-lg font-bold flex items-center gap-2 ${isNightTheme ? 'text-white' : 'text-gray-900'}`}>
+            <LogOut className="text-rose-400" /> Upravljanje sesijama vozača
+          </h3>
+          <button 
+            onClick={forceLogoutAllDrivers}
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-bold hover:bg-rose-700 transition-colors"
+          >
+            Odjavi sve vozače
+          </button>
+        </div>
+        
+        <div className="space-y-2">
+          {drivers.map(driver => (
+            <div key={driver.id} className={`flex justify-between items-center p-3 rounded-lg ${isNightTheme ? 'bg-gray-700/50' : 'bg-gray-100/50'}`}>
+              <span className={isNightTheme ? 'text-white' : 'text-gray-900'}>{driver.ime} ({driver.tura})</span>
+              <button 
+                onClick={() => forceLogoutDriver(driver)}
+                className="p-2 text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors"
+                title="Odjavi vozača"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </motion.div>
   );
 };

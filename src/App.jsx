@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast'; // Fix: Ensure Toaster is imported for App
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { UserProvider } from './context/UserContext.jsx';
 import { DriversProvider } from './context/DriversContext.jsx';
@@ -32,9 +32,9 @@ import UserMenu from './components/UserMenu.jsx';
 /**
  * AppContent - Glavni sadržaj aplikacije kada je korisnik ulogovan
  */
-function AppContent({ onLogout }) {
+function AppContent({ currentUser, logout, changePassword }) {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
-  const { currentUser, changePassword, logout, loading } = useSimpleAuth();
+  const navigate = useNavigate(); 
   const location = useLocation();
   const isHome = location.pathname === '/' || location.pathname === '';
 
@@ -46,10 +46,10 @@ function AppContent({ onLogout }) {
     await changePassword(oldPassword, newPassword);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm('Da li ste sigurni da se želite odjaviti?')) {
-      logout();
-      onLogout && onLogout(); // Pozovi callback iz glavni App komponente
+      await logout();
+      navigate('/login'); 
     }
   };
 
@@ -89,7 +89,7 @@ function AppContent({ onLogout }) {
             <Route path="/deliveries" element={<DeliveriesScreen />} />
             <Route path="/drivers" element={<DriversScreen />} />
             <Route path="/extra-rides" element={<ExtraRidesScreen />} />
-            <Route path="/imenik" element={<ImenikScreen />} /> {/* <-- DODANA RUTA ZA IMENIK */}
+            <Route path="/imenik" element={<ImenikScreen />} />
             <Route path="/admin" element={
               currentUser?.role === 'admin' ? <AdminPanelScreen /> : <Navigate to="/" />
             } />
@@ -135,49 +135,7 @@ function AppContent({ onLogout }) {
  * Glavni App component
  */
 export default function App() {
-  const { currentUser, isAuthenticated } = useSimpleAuth();
-  const [authCompleted, setAuthCompleted] = useState(false);
-  const [logoutCompleted, setLogoutCompleted] = useState(false);
-
-  const handleAuthSuccess = (user) => {
-    setAuthCompleted(true);
-    setLogoutCompleted(false); // Reset logout flag kada se login
-    // currentUser će biti automatski ažuriran kroz hook
-    if (user?.name) {
-      localStorage.setItem('DRIVER_NAME', user.name);
-      if (window.__USER_CONTEXT__?.refreshStatus) window.__USER_CONTEXT__.refreshStatus();
-      console.log('[App] DRIVER_NAME postavljen:', user.name);
-    }
-  };
-
-  const handleLogout = () => {
-    setLogoutCompleted(true);
-    setAuthCompleted(false); // Reset auth flag kada se logout
-  };
-
-  // Reset authCompleted ako se user logout-uje
-  useEffect(() => {
-    if (!currentUser && !isAuthenticated) {
-      setAuthCompleted(false);
-    }
-    // Reset logoutCompleted ako se user login-uje
-    if (currentUser && isAuthenticated) {
-      setLogoutCompleted(false);
-    }
-  }, [currentUser, isAuthenticated]);
-
-  // Listen for global logout events (dispatched from components like UserMenu)
-  useEffect(() => {
-    const handler = (e) => {
-      console.log('Global logout event received', e.detail);
-      // Clear auth-related localStorage to be safe
-      try { localStorage.removeItem('bde_current_user'); } catch (err) {}
-      try { localStorage.removeItem('bde_login_time'); } catch (err) {}
-      handleLogout();
-    };
-    window.addEventListener('bde:logout', handler);
-    return () => window.removeEventListener('bde:logout', handler);
-  }, []);
+  const { currentUser, isAuthenticated, logout, changePassword } = useSimpleAuth();
 
   return (
     <Router 
@@ -192,16 +150,18 @@ export default function App() {
           <DriversProvider>
             <SyncProvider>
               <div className="app">
-                {(isAuthenticated || authCompleted) && !logoutCompleted ? (
-                  <AppContent onLogout={handleLogout} />
+                {isAuthenticated && currentUser ? (
+                  <AppContent 
+                    currentUser={currentUser} 
+                    logout={logout} 
+                    changePassword={changePassword} 
+                  />
                 ) : (
-                  <AuthFlowManager onAuthSuccess={handleAuthSuccess} />
+                  <AuthFlowManager />
                 )}
                 
-                {/* PWA Install Prompt - prikazuje se kad je instalacija dostupna */}
                 <PWAInstallPrompt />
                 
-                {/* Globalni Toast kontejner */}
                 <Toaster position="top-center" reverseOrder={false} />
               </div>
             </SyncProvider>

@@ -59,8 +59,11 @@ class RealtimeService {
           table: 'drivers' 
         }, 
         (payload) => {
-          console.log('👤 Drivers update:', payload.eventType);
+          console.log('👤 Drivers update:', payload.eventType, payload.new);
           invalidateQueries.drivers();
+          
+          // Emituj event da sistem zna da je vozač ažuriran (za force logout)
+          window.dispatchEvent(new CustomEvent('driver_updated', { detail: payload.new }));
         }
       )
       .subscribe();

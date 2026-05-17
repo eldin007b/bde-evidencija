@@ -5,7 +5,6 @@ import * as pdfjsLib from 'pdfjs-dist'
 // GASIMO WORKER zbog PWA + mobile konflikta
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = null
-  pdfjsLib.disableWorker = true
 }
 
 /**

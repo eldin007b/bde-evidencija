@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { supabase } from "../db/supabaseClient";
+import useSimpleAuth from "../hooks/useSimpleAuth"; // Uvoz hook-a
 import { ChevronDown, LogOut, KeyRound, Wallet, Crown, User, Receipt } from "lucide-react";
 
 export default function UserMenu({
   user,
   onChangePassword,
-  onLogout,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [latestPayroll, setLatestPayroll] = useState({ amount: "---", date: "" });
@@ -17,8 +17,24 @@ export default function UserMenu({
 
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const { logout } = useSimpleAuth(); // Korištenje logout iz hook-a
 
   const isAdmin = user?.role === "admin";
+  
+  // ... (ostatak koda ostaje isti)
+  const handleLogout = async () => {
+    if (window.confirm('Da li ste sigurni da se želite odjaviti?')) {
+      await logout();
+      navigate('/login');
+    }
+  };
+  
+  // Ažuriraj JSX za logout dugme
+  /* 
+     Promijeniti u JSX-u:
+     <button onClick={() => { setIsOpen(false); handleLogout(); }} ...>
+  */
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -172,7 +188,7 @@ export default function UserMenu({
               <div className={`h-px my-2 ${isAdmin ? 'bg-rose-800/50' : 'bg-slate-700/50'}`}></div>
 
               <button
-                onClick={() => { setIsOpen(false); onLogout(); }}
+                onClick={() => { setIsOpen(false); handleLogout(); }}
                 className="w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-rose-500/10 transition-all group"
               >
                 <div className="bg-rose-500/10 p-2 rounded-xl group-hover:bg-rose-500/20">
