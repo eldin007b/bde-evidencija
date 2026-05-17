@@ -277,9 +277,13 @@ export default function useSimpleAuth() {
     setCurrentUser(null);
     localStorage.removeItem('bde_current_user');
     localStorage.removeItem('bde_login_time');
-    localStorage.removeItem('DRIVER_NAME'); // Dodatno čišćenje
+    localStorage.removeItem('DRIVER_NAME'); 
+    localStorage.removeItem('loginTime'); // Očisti i loginTime
     setError(null);
-    console.log('✅ User logged out');
+    console.log('✅ User logged out, reloading...');
+    
+    // Prisilno osvježi stranicu da očisti sve state-ove
+    window.location.href = '/bde-evidencija/login';
   }, []);
 
   // Initialize auth state on mount
