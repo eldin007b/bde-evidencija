@@ -25,18 +25,15 @@ const PasswordChangeModal = ({ onClose, onSubmit }) => {
     if (/[0-9]/.test(password)) score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
     
-    if (score < 3) return { level: 'weak', text: '🔴 Slaba lozinka' };
-    if (score < 4) return { level: 'medium', text: '🟡 Srednja lozinka' };
-    return { level: 'strong', text: '🟢 Jaka lozinka' };
+    if (score < 3) return { level: 'weak', text: '🔴 Slaba lozinka', color: 'text-red-500' };
+    if (score < 4) return { level: 'medium', text: '🟡 Srednja lozinka', color: 'text-yellow-500' };
+    return { level: 'strong', text: '🟢 Jaka lozinka', color: 'text-green-500' };
   };
 
   const validateForm = () => {
     const errors = {};
     
-    if (!formData.oldPassword) {
-      errors.oldPassword = 'Stara lozinka je obavezna';
-    }
-    
+    if (!formData.oldPassword) errors.oldPassword = 'Stara lozinka je obavezna';
     if (!formData.newPassword) {
       errors.newPassword = 'Nova lozinka je obavezna';
     } else if (formData.newPassword.length < 6) {
@@ -49,7 +46,7 @@ const PasswordChangeModal = ({ onClose, onSubmit }) => {
       errors.confirmPassword = 'Lozinke se ne poklapaju';
     }
     
-    if (formData.oldPassword === formData.newPassword) {
+    if (formData.oldPassword && formData.oldPassword === formData.newPassword) {
       errors.newPassword = 'Nova lozinka mora biti različita od stare';
     }
     
@@ -59,11 +56,7 @@ const PasswordChangeModal = ({ onClose, onSubmit }) => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear validation error when user starts typing
-    if (validationErrors[field]) {
-      setValidationErrors(prev => ({ ...prev, [field]: null }));
-    }
+    if (validationErrors[field]) setValidationErrors(prev => ({ ...prev, [field]: null }));
   };
 
   const togglePasswordVisibility = (field) => {
@@ -72,7 +65,6 @@ const PasswordChangeModal = ({ onClose, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
     
     setIsSubmitting(true);
@@ -86,168 +78,47 @@ const PasswordChangeModal = ({ onClose, onSubmit }) => {
     }
   };
 
-  const isFormValid = formData.oldPassword && 
-                     formData.newPassword && 
-                     formData.confirmPassword && 
-                     formData.newPassword === formData.confirmPassword &&
-                     formData.newPassword.length >= 6 &&
-                     formData.oldPassword !== formData.newPassword;
+  const isFormValid = formData.oldPassword && formData.newPassword && formData.confirmPassword && formData.newPassword === formData.confirmPassword && formData.newPassword.length >= 6 && formData.oldPassword !== formData.newPassword;
 
   const passwordStrength = getPasswordStrength(formData.newPassword);
 
   return (
-    <form className={styles.modalForm} onSubmit={handleSubmit}>
-      {/* Header */}
-      <div className={styles.formHeader}>
-        <h2 className={styles.formTitle}>
-          🔐 Promena lozinke
-        </h2>
-        <p className={styles.formSubtitle}>
-          Unesite staru lozinku i definišite novu sigurnu lozinku
-        </p>
+    <form className="bg-slate-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-slate-700" onSubmit={handleSubmit}>
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-white mb-2">🔐 Promena lozinke</h2>
+        <p className="text-sm text-slate-400">Unesite staru lozinku i definišite novu sigurnu lozinku</p>
       </div>
 
-      {/* Old Password */}
-      <div className={styles.inputGroup}>
-        <label className={styles.inputLabel} htmlFor="oldPassword">
-          Trenutna lozinka
-        </label>
-        <div className={styles.inputWrapper}>
-          <input
-            id="oldPassword"
-            type={showPasswords.old ? 'text' : 'password'}
-            value={formData.oldPassword}
-            onChange={(e) => handleInputChange('oldPassword', e.target.value)}
-            placeholder="Unesite trenutnu lozinku"
-            className={styles.passwordInput}
-            autoComplete="current-password"
-          />
-          <button
-            type="button"
-            className={styles.toggleButton}
-            onClick={() => togglePasswordVisibility('old')}
-            aria-label="Prikaži/sakrij lozinku"
-          >
-            {showPasswords.old ? '👁️' : '🙈'}
-          </button>
-        </div>
-        {validationErrors.oldPassword && (
-          <div className={`${styles.validationMessage} ${styles.validationError}`}>
-            ❌ {validationErrors.oldPassword}
-          </div>
-        )}
+      <div className="space-y-4">
+        {['old', 'new', 'confirm'].map((field, idx) => {
+          const fieldName = field === 'old' ? 'oldPassword' : field === 'new' ? 'newPassword' : 'confirmPassword';
+          const labels = { old: 'Trenutna lozinka', new: 'Nova lozinka', confirm: 'Potvrdite novu lozinku' };
+          
+          return (
+            <div key={field}>
+              <label className="block text-sm font-medium text-slate-300 mb-1">{labels[field]}</label>
+              <div className="relative">
+                <input
+                  type={showPasswords[field] ? 'text' : 'password'}
+                  value={formData[fieldName]}
+                  onChange={(e) => handleInputChange(fieldName, e.target.value)}
+                  className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 border border-slate-600 focus:ring-2 focus:ring-indigo-500"
+                />
+                <button type="button" className="absolute right-3 top-2.5 text-slate-400 hover:text-white" onClick={() => togglePasswordVisibility(field)}>
+                  {showPasswords[field] ? '👁️' : '🙈'}
+                </button>
+              </div>
+              {validationErrors[fieldName] && <div className="text-red-500 text-xs mt-1">❌ {validationErrors[fieldName]}</div>}
+            </div>
+          );
+        })}
       </div>
 
-      {/* New Password */}
-      <div className={styles.inputGroup}>
-        <label className={styles.inputLabel} htmlFor="newPassword">
-          Nova lozinka
-        </label>
-        <div className={styles.inputWrapper}>
-          <input
-            id="newPassword"
-            type={showPasswords.new ? 'text' : 'password'}
-            value={formData.newPassword}
-            onChange={(e) => handleInputChange('newPassword', e.target.value)}
-            placeholder="Unesite novu lozinku"
-            className={styles.passwordInput}
-            autoComplete="new-password"
-          />
-          <button
-            type="button"
-            className={styles.toggleButton}
-            onClick={() => togglePasswordVisibility('new')}
-            aria-label="Prikaži/sakrij lozinku"
-          >
-            {showPasswords.new ? '👁️' : '🙈'}
-          </button>
-        </div>
-        
-        {/* Password Strength Indicator */}
-        {passwordStrength && (
-          <div className={`${styles.strengthIndicator} ${styles[`strength${passwordStrength.level.charAt(0).toUpperCase() + passwordStrength.level.slice(1)}`]}`}>
-            {passwordStrength.text}
-          </div>
-        )}
-        
-        {validationErrors.newPassword && (
-          <div className={`${styles.validationMessage} ${styles.validationError}`}>
-            ❌ {validationErrors.newPassword}
-          </div>
-        )}
-      </div>
+      {passwordStrength && <div className={`text-xs mt-2 ${passwordStrength.color}`}>{passwordStrength.text}</div>}
 
-      {/* Confirm Password */}
-      <div className={styles.inputGroup}>
-        <label className={styles.inputLabel} htmlFor="confirmPassword">
-          Potvrdite novu lozinku
-        </label>
-        <div className={styles.inputWrapper}>
-          <input
-            id="confirmPassword"
-            type={showPasswords.confirm ? 'text' : 'password'}
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            placeholder="Ponovite novu lozinku"
-            className={styles.passwordInput}
-            autoComplete="new-password"
-          />
-          <button
-            type="button"
-            className={styles.toggleButton}
-            onClick={() => togglePasswordVisibility('confirm')}
-            aria-label="Prikaži/sakrij lozinku"
-          >
-            {showPasswords.confirm ? '👁️' : '🙈'}
-          </button>
-        </div>
-        
-        {formData.confirmPassword && formData.newPassword === formData.confirmPassword && (
-          <div className={`${styles.validationMessage} ${styles.validationSuccess}`}>
-            ✅ Lozinke se poklapaju
-          </div>
-        )}
-        
-        {validationErrors.confirmPassword && (
-          <div className={`${styles.validationMessage} ${styles.validationError}`}>
-            ❌ {validationErrors.confirmPassword}
-          </div>
-        )}
-      </div>
-
-      {/* Security Tips */}
-      <div className={styles.securityTips}>
-        <h4>💡 Saveti za sigurnu lozinku:</h4>
-        <ul>
-          <li>Najmanje 8 karaktera</li>
-          <li>Kombinacija velikih i malih slova</li>
-          <li>Brojevi i specijalni karakteri (!@#$%)</li>
-          <li>Izbegavajte lične podatke</li>
-        </ul>
-      </div>
-
-      {/* Submit Error */}
-      {validationErrors.submit && (
-        <div className={`${styles.validationMessage} ${styles.validationError}`}>
-          ❌ {validationErrors.submit}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className={styles.modalActions}>
-        <button
-          type="button"
-          className={styles.cancelBtn}
-          onClick={onClose}
-          disabled={isSubmitting}
-        >
-          ❌ Otkaži
-        </button>
-        <button
-          type="submit"
-          className={styles.submitBtn}
-          disabled={!isFormValid || isSubmitting}
-        >
+      <div className="mt-6 flex justify-end gap-3">
+        <button type="button" className="px-4 py-2 text-slate-400 hover:text-white" onClick={onClose} disabled={isSubmitting}>Otkaži</button>
+        <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50" disabled={!isFormValid || isSubmitting}>
           {isSubmitting ? '🔄 Menjam...' : '🔐 Promeni lozinku'}
         </button>
       </div>

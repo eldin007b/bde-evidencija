@@ -69,19 +69,50 @@ export default function UserMenu({
         }
 
         const driverCode = user?.username;
+        console.log('🔍 [UserMenu] Fetching vacation for driverCode:', driverCode);
         if (!driverCode) return;
 
-        const { data: settings } = await supabase.from("urlaub_settings").select("*").eq("driver", driverCode).single();
-        if (!settings) return;
+        // Koristimo .maybeSingle() umjesto .single() da izbjegnemo grešku ako nema podataka
+        const { data: settings, error: settingsError } = await supabase
+          .from("urlaub_settings")
+          .select("*")
+          .eq("driver", String(driverCode)) 
+          .maybeSingle();
 
-        const startDate = new Date(settings.start_date);
-        const startDays = settings.start_days;
-        const now = new Date();
-        const months = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-        const earned = startDays + months * 2;
+        if (settingsError) {
+          console.error('❌ [UserMenu] Error fetching settings:', settingsError);
+          return;
+        }
 
-        const { data: usedData } = await supabase.from("urlaub_marks").select("id").eq("driver", driverCode).eq("is_active", true).gte("date", settings.start_date);
-        setUrlaubDays(earned - (usedData?.length || 0));
+        if (!settings) {
+          console.log('ℹ️ [UserMenu] No vacation settings found, defaulting to 0');
+          setUrlaubDays(0);
+          return;
+        }
+
+        console.log('✅ [UserMenu] Settings found:', settings);
+
+import { calculateEarnedUrlaub, calculateRemainingUrlaub } from "../utils/urlaubUtils";
+// ... ostali importi
+
+// ... unutar fetchData:
+        const earned = calculateEarnedUrlaub(settings.start_date, settings.start_days);
+        console.log('📈 [UserMenu] Earned vacation days:', earned);
+
+        const { data: usedData, error: usedError } = await supabase
+          .from("urlaub_marks")
+          .select("id")
+          .eq("driver", String(driverCode))
+          .eq("is_active", true)
+          .gte("date", settings.start_date);
+          
+        if (usedError) {
+          console.error('❌ [UserMenu] Error fetching used Urlaub:', usedError);
+        }
+        
+        const usedCount = usedData ? usedData.length : 0;
+        console.log('📅 [UserMenu] Used vacation days count:', usedCount);
+        setUrlaubDays(calculateRemainingUrlaub(earned, usedCount));
 
       } catch (err) {}
     };

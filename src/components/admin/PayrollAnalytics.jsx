@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, Users, RefreshCw, Calendar } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function PayrollAnalytics({ drivers, currentTheme = 'default' }) {
   const [payrollData, setPayrollData] = useState({ drivers: [], total: 0 });

@@ -14,43 +14,32 @@ export const StatsCard = ({
 
   const cardStyle = {
     '--shadow-color': shadowColor,
-    '--gradient-start': gradient[0],
-    '--gradient-end': gradient[1]
+    background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
+    boxShadow: isHovered ? `0 10px 30px ${shadowColor}` : '0 4px 6px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease',
+    padding: '1.5rem',
+    borderRadius: '1rem',
+    cursor: onClick ? 'pointer' : 'default',
+    color: 'white',
+    position: 'relative',
+    overflow: 'hidden'
   };
 
   return (
     <div 
-      className={`${styles.card} ${isHovered ? styles.hovered : ''}`}
       style={cardStyle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
-      {/* Glow effect */}
-      <div className={styles.glowEffect}></div>
-      
-      {/* Icon */}
-      <div className={styles.iconContainer}>
-        <span className={styles.icon}>{icon}</span>
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-4xl">{icon}</span>
+        </div>
+        <div className="text-3xl font-bold mb-1">{value}</div>
+        <div className="text-sm font-semibold opacity-90 mb-1">{title}</div>
+        <div className="text-xs opacity-75">{subtitle}</div>
       </div>
-
-      {/* Main value */}
-      <div className={styles.valueContainer}>
-        <span className={styles.value}>{value}</span>
-      </div>
-
-      {/* Title */}
-      <div className={styles.titleContainer}>
-        <span className={styles.title}>{title}</span>
-      </div>
-
-      {/* Subtitle */}
-      <div className={styles.subtitleContainer}>
-        <span className={styles.subtitle}>{subtitle}</span>
-      </div>
-
-      {/* Shine effect */}
-      <div className={styles.shineEffect}></div>
     </div>
   );
 };

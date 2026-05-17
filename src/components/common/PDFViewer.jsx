@@ -16,7 +16,7 @@ function PDFViewer({ pdfUrl, fileName, onClose, isVisible }) {
     }
   }, [pdfUrl, isVisible]);
 
-    const loadPdf = async () => {
+  const loadPDF = async () => {
     if (!pdfUrl) return;
 
     try {
